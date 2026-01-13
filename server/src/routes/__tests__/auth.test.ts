@@ -39,8 +39,7 @@ describe('Auth Routes', () => {
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
-      expect(response.body.error.code).toBe('VALIDATION_ERROR');
-      expect(response.body.error.message).toBe('Email and password required');
+      expect(response.body.error).toBe('Email and password required');
     });
 
     it('should return 400 if password is missing', async () => {
@@ -50,8 +49,7 @@ describe('Auth Routes', () => {
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
-      expect(response.body.error.code).toBe('VALIDATION_ERROR');
-      expect(response.body.error.message).toBe('Email and password required');
+      expect(response.body.error).toBe('Email and password required');
     });
 
     it('should return 401 if user does not exist', async () => {
@@ -62,8 +60,7 @@ describe('Auth Routes', () => {
 
       expect(response.status).toBe(401);
       expect(response.body.success).toBe(false);
-      expect(response.body.error.code).toBe('INVALID_CREDENTIALS');
-      expect(response.body.error.message).toBe('Invalid email or password');
+      expect(response.body.error).toBe('Invalid email or password');
     });
 
     it('should return 401 if password is incorrect', async () => {
@@ -77,8 +74,7 @@ describe('Auth Routes', () => {
 
       expect(response.status).toBe(401);
       expect(response.body.success).toBe(false);
-      expect(response.body.error.code).toBe('INVALID_CREDENTIALS');
-      expect(response.body.error.message).toBe('Invalid email or password');
+      expect(response.body.error).toBe('Invalid email or password');
     });
 
     it('should return 200 and user data with valid credentials', async () => {
@@ -92,7 +88,7 @@ describe('Auth Routes', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      expect(response.body.data.user).toEqual({
+      expect(response.body.user).toEqual({
         id: createdUser.id,
         email: createdUser.email,
       });
@@ -147,8 +143,7 @@ describe('Auth Routes', () => {
 
       expect(response.status).toBe(401);
       expect(response.body.success).toBe(false);
-      expect(response.body.error.code).toBe('UNAUTHORIZED');
-      expect(response.body.error.message).toBe('Not authenticated');
+      expect(response.body.error).toBe('Not authenticated');
     });
 
     it('should return current user if authenticated', async () => {
@@ -168,7 +163,7 @@ describe('Auth Routes', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      expect(response.body.data.user).toEqual({
+      expect(response.body.user).toEqual({
         id: createdUser.id,
         email: createdUser.email,
       });
@@ -194,8 +189,7 @@ describe('Auth Routes', () => {
 
       expect(response.status).toBe(401);
       expect(response.body.success).toBe(false);
-      expect(response.body.error.code).toBe('USER_NOT_FOUND');
-      expect(response.body.error.message).toBe('User no longer exists');
+      expect(response.body.error).toBe('User no longer exists');
     });
   });
 
@@ -217,14 +211,14 @@ describe('Auth Routes', () => {
         .set('Cookie', cookies);
 
       expect(response1.status).toBe(200);
-      expect(response1.body.data.user.id).toBe(createdUser.id);
+      expect(response1.body.user.id).toBe(createdUser.id);
 
       const response2 = await request(app)
         .get('/api/auth/me')
         .set('Cookie', cookies);
 
       expect(response2.status).toBe(200);
-      expect(response2.body.data.user.id).toBe(createdUser.id);
+      expect(response2.body.user.id).toBe(createdUser.id);
     });
 
     it('should clear session after logout', async () => {
