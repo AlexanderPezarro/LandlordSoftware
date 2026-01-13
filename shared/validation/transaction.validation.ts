@@ -132,6 +132,15 @@ export const TransactionSchema = z
     }
   );
 
+// Transaction Query Params Schema (for filtering)
+export const TransactionQueryParamsSchema = z.object({
+  property_id: z.string().uuid('Invalid property ID').optional(),
+  type: TransactionTypeSchema.optional(),
+  category: TransactionCategorySchema.optional(),
+  from_date: z.coerce.date().optional(),
+  to_date: z.coerce.date().optional(),
+});
+
 // Inferred TypeScript types
 export type TransactionType = z.infer<typeof TransactionTypeSchema>;
 export type IncomeCategory = z.infer<typeof IncomeCategorySchema>;
@@ -140,3 +149,4 @@ export type TransactionCategory = z.infer<typeof TransactionCategorySchema>;
 export type CreateTransaction = z.infer<typeof CreateTransactionSchema>;
 export type UpdateTransaction = z.infer<typeof UpdateTransactionSchema>;
 export type Transaction = z.infer<typeof TransactionSchema>;
+export type TransactionQueryParams = z.infer<typeof TransactionQueryParamsSchema>;

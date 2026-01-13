@@ -988,7 +988,7 @@ describe('Leases Routes', () => {
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
-      expect(response.body.error).toBe('Cannot create lease: overlapping active lease exists for this property');
+      expect(response.body.error).toBe('Cannot update lease: overlapping active lease exists for this property');
     });
 
     it('should allow updating dates if no overlap exists', async () => {
