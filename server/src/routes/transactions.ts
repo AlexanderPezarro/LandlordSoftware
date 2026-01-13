@@ -134,25 +134,34 @@ router.get('/summary', async (req, res) => {
       }
     }
 
-    // Get all matching transactions
-    const transactions = await prisma.transaction.findMany({
-      where,
-    });
-
-    // Calculate summary
+    // If type filter is specified, only query that type; otherwise query both
     let total_income = 0;
     let total_expense = 0;
+    let income_count = 0;
+    let expense_count = 0;
 
-    transactions.forEach((transaction) => {
-      if (transaction.type === 'Income') {
-        total_income += transaction.amount;
-      } else if (transaction.type === 'Expense') {
-        total_expense += transaction.amount;
-      }
-    });
+    if (!type || type === 'Income') {
+      const incomeResult = await prisma.transaction.aggregate({
+        where: { ...where, type: 'Income' },
+        _sum: { amount: true },
+        _count: true,
+      });
+      total_income = incomeResult._sum.amount || 0;
+      income_count = incomeResult._count;
+    }
 
+    if (!type || type === 'Expense') {
+      const expenseResult = await prisma.transaction.aggregate({
+        where: { ...where, type: 'Expense' },
+        _sum: { amount: true },
+        _count: true,
+      });
+      total_expense = expenseResult._sum.amount || 0;
+      expense_count = expenseResult._count;
+    }
+
+    const transaction_count = income_count + expense_count;
     const net = total_income - total_expense;
-    const transaction_count = transactions.length;
 
     return res.json({
       success: true,
