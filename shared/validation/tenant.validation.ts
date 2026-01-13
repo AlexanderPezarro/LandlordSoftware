@@ -51,8 +51,22 @@ export const TenantSchema = z.object({
   updatedAt: z.date(),
 });
 
+// Query Parameters Schema (for filtering)
+export const TenantQueryParamsSchema = z.object({
+  status: TenantStatusSchema.optional(),
+  search: z.string().optional(),
+});
+
+// Lease History Query Parameters Schema (for date filtering)
+export const LeaseHistoryQueryParamsSchema = z.object({
+  fromDate: z.coerce.date().optional(),
+  toDate: z.coerce.date().optional(),
+});
+
 // Inferred TypeScript types
 export type TenantStatus = z.infer<typeof TenantStatusSchema>;
 export type CreateTenant = z.infer<typeof CreateTenantSchema>;
 export type UpdateTenant = z.infer<typeof UpdateTenantSchema>;
 export type Tenant = z.infer<typeof TenantSchema>;
+export type TenantQueryParams = z.infer<typeof TenantQueryParamsSchema>;
+export type LeaseHistoryQueryParams = z.infer<typeof LeaseHistoryQueryParamsSchema>;
