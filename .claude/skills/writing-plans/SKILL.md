@@ -18,11 +18,13 @@ Assume they are a skilled developer, but know almost nothing about our toolset o
 ## Bite-Sized Bead Granularity
 
 **Each bead is a cohesive feature (15-30 minutes):**
+
 - Group related test-write-test-commit cycles into one bead
 - Each bead should be independently verifiable
 - Each bead should be a complete, shippable unit
 
 **Bead structure contains:**
+
 - Clear title describing what will be implemented
 - Complete task description with all steps
 - Files to create/modify with exact paths
@@ -34,11 +36,13 @@ Assume they are a skilled developer, but know almost nothing about our toolset o
 
 Each bead description should contain:
 
-```markdown
+````markdown
 ## Overview
+
 [What this bead implements and why]
 
 ## Files
+
 - Create: `exact/path/to/file.py`
 - Modify: `exact/path/to/existing.py:123-145`
 - Test: `tests/exact/path/to/test.py`
@@ -52,6 +56,7 @@ def test_specific_behavior():
     result = function(input)
     assert result == expected
 ```
+````
 
 Run: `pytest tests/path/test.py::test_name -v`
 Expected: FAIL with "function not defined"
@@ -82,7 +87,8 @@ git commit -m "feat: add specific feature"
 ## Notes
 
 [Any important context, gotchas, or design decisions]
-```
+
+````
 
 ## Creating the Beads
 
@@ -142,9 +148,10 @@ bd create --title="Implement landlord CRUD operations" \
 
 # Add dependency (CRUD depends on schema)
 bd dep add beads-abc123 beads-def456
-```
+````
 
 ## Remember
+
 - Exact file paths always
 - Complete code in bead description (not "add validation")
 - Exact commands with expected output
@@ -158,6 +165,7 @@ bd dep add beads-abc123 beads-def456
 **Beads created. Ready for implementation.**
 
 Use **superpowers:subagent-driven-development** to execute:
+
 - Finds ready beads with `bd ready`
 - Dispatches implementer per bead
 - Reviews (spec compliance, then code quality)
@@ -167,9 +175,11 @@ Use **superpowers:subagent-driven-development** to execute:
 ## Integration
 
 **Required before this skill:**
+
 - **superpowers:brainstorming** - Creates design doc this skill uses
 - **superpowers:using-git-worktrees** - Creates isolated workspace
 
 **Used after this skill:**
+
 - **superpowers:subagent-driven-development** - Executes the beads
 - **superpowers:dispatching-parallel-agents** - Creates beads in parallel efficiently

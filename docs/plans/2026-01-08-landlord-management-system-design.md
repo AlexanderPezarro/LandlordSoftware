@@ -11,6 +11,7 @@ A web-based property management system for tracking rental properties, tenants, 
 ## Requirements
 
 ### Core Features
+
 - Property management with status tracking (vacant, on market, rented, maintenance)
 - Financial tracking: income and expenses per property with receipt storage
 - Holistic financial reporting with categorized expenses
@@ -18,6 +19,7 @@ A web-based property management system for tracking rental properties, tenants, 
 - Tenant information management (prospective and active)
 
 ### User Context
+
 - Single user (landlord)
 - UK-based (address formats, etc.)
 - Advanced developer comfort with Node.js/TypeScript/React
@@ -28,6 +30,7 @@ A web-based property management system for tracking rental properties, tenants, 
 ### Technology Stack
 
 **Backend:**
+
 - Node.js with TypeScript
 - Express.js for HTTP server
 - SQLite database with Prisma ORM
@@ -35,6 +38,7 @@ A web-based property management system for tracking rental properties, tenants, 
 - Bcrypt for password hashing
 
 **Frontend:**
+
 - React with TypeScript
 - Vite for build tooling
 - Material-UI component library
@@ -43,6 +47,7 @@ A web-based property management system for tracking rental properties, tenants, 
 - react-big-calendar or similar for calendar view
 
 **Supporting Libraries:**
+
 - date-fns or Day.js for date operations
 - Helmet.js for security headers
 - express-rate-limit for rate limiting
@@ -82,6 +87,7 @@ A web-based property management system for tracking rental properties, tenants, 
 ## Database Schema
 
 ### Properties
+
 ```typescript
 {
   id: string (UUID)
@@ -103,6 +109,7 @@ A web-based property management system for tracking rental properties, tenants, 
 ```
 
 ### Tenants
+
 ```typescript
 {
   id: string (UUID)
@@ -120,6 +127,7 @@ A web-based property management system for tracking rental properties, tenants, 
 ```
 
 ### Leases
+
 ```typescript
 {
   id: string (UUID)
@@ -137,6 +145,7 @@ A web-based property management system for tracking rental properties, tenants, 
 ```
 
 ### Transactions
+
 ```typescript
 {
   id: string (UUID)
@@ -153,6 +162,7 @@ A web-based property management system for tracking rental properties, tenants, 
 ```
 
 ### Documents
+
 ```typescript
 {
   id: string (UUID)
@@ -167,6 +177,7 @@ A web-based property management system for tracking rental properties, tenants, 
 ```
 
 ### Events
+
 ```typescript
 {
   id: string (UUID)
@@ -187,11 +198,13 @@ A web-based property management system for tracking rental properties, tenants, 
 ### REST Endpoints
 
 **Authentication:**
+
 - `POST /api/auth/login` - Authenticate user
 - `POST /api/auth/logout` - End session
 - `GET /api/auth/me` - Get current user session
 
 **Properties:**
+
 - `GET /api/properties` - List all properties with summary stats
 - `GET /api/properties/:id` - Get property details
 - `POST /api/properties` - Create property
@@ -199,6 +212,7 @@ A web-based property management system for tracking rental properties, tenants, 
 - `DELETE /api/properties/:id` - Delete property
 
 **Tenants:**
+
 - `GET /api/tenants?status=active|prospective|former` - List tenants
 - `GET /api/tenants/:id` - Get tenant details with lease history
 - `POST /api/tenants` - Create tenant
@@ -206,6 +220,7 @@ A web-based property management system for tracking rental properties, tenants, 
 - `DELETE /api/tenants/:id` - Delete tenant
 
 **Leases:**
+
 - `GET /api/leases?property_id=&status=` - List leases with filters
 - `GET /api/leases/:id` - Get lease details
 - `POST /api/leases` - Create lease
@@ -213,6 +228,7 @@ A web-based property management system for tracking rental properties, tenants, 
 - `DELETE /api/leases/:id` - Delete lease
 
 **Transactions:**
+
 - `GET /api/transactions?property_id=&type=&category=&start_date=&end_date=` - List transactions
 - `GET /api/transactions/:id` - Get transaction with documents
 - `POST /api/transactions` - Create transaction
@@ -221,6 +237,7 @@ A web-based property management system for tracking rental properties, tenants, 
 - `GET /api/transactions/summary?property_id=&start_date=&end_date=` - Financial summaries
 
 **Events:**
+
 - `GET /api/events?property_id=&completed=&start_date=&end_date=` - List events
 - `GET /api/events/:id` - Get event details
 - `POST /api/events` - Create event
@@ -228,6 +245,7 @@ A web-based property management system for tracking rental properties, tenants, 
 - `DELETE /api/events/:id` - Delete event
 
 **Documents:**
+
 - `POST /api/documents` - Upload document (multipart/form-data)
 - `GET /api/documents/:id` - Download/view document
 - `DELETE /api/documents/:id` - Delete document and file
@@ -235,6 +253,7 @@ A web-based property management system for tracking rental properties, tenants, 
 ### Response Format
 
 **Success:**
+
 ```json
 {
   "success": true,
@@ -243,6 +262,7 @@ A web-based property management system for tracking rental properties, tenants, 
 ```
 
 **Error:**
+
 ```json
 {
   "success": false,
@@ -259,12 +279,14 @@ A web-based property management system for tracking rental properties, tenants, 
 ### Pages & Navigation
 
 **Dashboard (Home):**
+
 - Overview cards: total properties, occupied/vacant counts, monthly income/expenses
 - Upcoming events (next 7-14 days)
 - Recent transactions (last 5-10)
 - Quick actions (add property, record transaction, schedule event)
 
 **Properties Page:**
+
 - List view with status badges and search/filter
 - Property detail view:
   - Property information with edit capability
@@ -274,6 +296,7 @@ A web-based property management system for tracking rental properties, tenants, 
   - Recent transactions
 
 **Tenants Page:**
+
 - Tabs for prospective/active/former tenants
 - Search by name or contact
 - Tenant detail view:
@@ -283,6 +306,7 @@ A web-based property management system for tracking rental properties, tenants, 
   - Associated documents
 
 **Finances Page:**
+
 - Transaction list with comprehensive filters
 - Summary section:
   - Overall income vs expenses (monthly, yearly)
@@ -292,6 +316,7 @@ A web-based property management system for tracking rental properties, tenants, 
 - Export to CSV
 
 **Calendar Page:**
+
 - Monthly calendar view with color-coded events
 - Filter by property and event type
 - Click to add/edit events
@@ -299,6 +324,7 @@ A web-based property management system for tracking rental properties, tenants, 
 - Mark events as completed
 
 **Navigation:**
+
 - Side navigation bar (collapsible on mobile)
 - Links: Dashboard, Properties, Tenants, Finances, Calendar
 - User menu with logout
@@ -306,6 +332,7 @@ A web-based property management system for tracking rental properties, tenants, 
 ### UI Components
 
 **Shared Components:**
+
 - PropertyCard - Summary card for property list
 - TenantCard - Summary card for tenant list
 - TransactionRow - Table row for transaction display
@@ -321,6 +348,7 @@ A web-based property management system for tracking rental properties, tenants, 
 ### Report Types
 
 **Income Statement (P&L):**
+
 - Time period selector (month, quarter, year, custom)
 - Per-property or consolidated view
 - Income: rent, other income
@@ -329,12 +357,14 @@ A web-based property management system for tracking rental properties, tenants, 
 - CSV export for tax purposes
 
 **Transaction History:**
+
 - Filterable and sortable table
 - Quick stats for filtered view
 - Pagination
 - Inline receipt viewing
 
 **Property Performance:**
+
 - Total income vs expenses (lifetime and yearly)
 - Occupancy rate calculation
 - Average monthly income
@@ -342,11 +372,13 @@ A web-based property management system for tracking rental properties, tenants, 
 - ROI calculation (if purchase price available)
 
 **Category Breakdown:**
+
 - Pie charts and bar graphs
 - Expense distribution analysis
 - Time period and property filters
 
 **Tax-Ready Reports:**
+
 - Annual summary with categorized expenses
 - Printable/PDF export
 
@@ -355,6 +387,7 @@ A web-based property management system for tracking rental properties, tenants, 
 ### Event Management
 
 **Event Types:**
+
 - Repair (orange)
 - Renovation (blue)
 - Rent change (green)
@@ -363,22 +396,26 @@ A web-based property management system for tracking rental properties, tenants, 
 - Other (gray)
 
 **Calendar View:**
+
 - Monthly grid with color-coded events
 - Click date to add event
 - Click event to view/edit/complete
 
 **Event List View:**
+
 - Chronological list alternative to calendar
 - Filters: property, type, completion status, date range
 - Overdue events highlighted
 
 **Property Timeline:**
+
 - Shown on property detail page
 - Lease periods and tenant changes
 - Completed and planned events
 - Vacancy period visualization
 
 **Reminders:**
+
 - Dashboard highlights upcoming events (3-7 days)
 - Overdue events shown with warning styling
 - No email/SMS in v1
@@ -388,6 +425,7 @@ A web-based property management system for tracking rental properties, tenants, 
 ### Validation
 
 **Shared Schemas (Zod):**
+
 - UK postcode format validation
 - Email and phone format validation
 - Positive numbers for financial amounts
@@ -395,11 +433,13 @@ A web-based property management system for tracking rental properties, tenants, 
 - File type and size validation
 
 **Backend Validation:**
+
 - All API inputs validated with Zod
 - File uploads: MIME type checking, 10MB size limit
 - Proper error messages with field-specific details
 
 **Frontend Validation:**
+
 - React Hook Form with Zod resolver
 - Real-time validation feedback
 - Reuse backend validation schemas
@@ -407,11 +447,13 @@ A web-based property management system for tracking rental properties, tenants, 
 ### Error Handling
 
 **Backend:**
+
 - Standardized error response format
 - HTTP status codes: 400 (validation), 401 (auth), 404 (not found), 500 (server error)
 - Error logging for debugging
 
 **Frontend:**
+
 - Global error boundary for React crashes
 - Toast notifications (Material-UI Snackbar) for API errors
 - Loading states and error states in components
@@ -421,6 +463,7 @@ A web-based property management system for tracking rental properties, tenants, 
 ### Storage Strategy
 
 **Current (Local Filesystem):**
+
 ```
 /uploads
   /{propertyId}
@@ -429,18 +472,22 @@ A web-based property management system for tracking rental properties, tenants, 
 ```
 
 **Future (Cloud Storage):**
+
 - Abstract storage behind service interface:
+
 ```typescript
 interface StorageService {
-  upload(file: Buffer, path: string): Promise<string>
-  download(path: string): Promise<Buffer>
-  delete(path: string): Promise<void>
+  upload(file: Buffer, path: string): Promise<string>;
+  download(path: string): Promise<Buffer>;
+  delete(path: string): Promise<void>;
 }
 ```
+
 - Implement `LocalStorageService` now
 - Swap to `S3StorageService` (or Cloudflare R2) later
 
 **File Management:**
+
 - Metadata stored in Documents table
 - Cascade delete: remove files when parent entity deleted
 - Allowed types: jpg, png, pdf
@@ -450,18 +497,21 @@ interface StorageService {
 ## Security
 
 ### Authentication
+
 - Single user account created during first setup
 - Bcrypt password hashing (10 rounds)
 - Express-session with SQLite session store
 - Session cookies: httpOnly, secure (production), sameSite
 
 ### API Security
+
 - All endpoints except `/api/auth/login` require authentication
 - Helmet.js for security headers
 - Rate limiting on API endpoints
 - CSRF protection via sameSite cookies
 
 ### File Security
+
 - MIME type validation
 - Path sanitization to prevent directory traversal
 - Access control: only authenticated user can access files
@@ -471,6 +521,7 @@ interface StorageService {
 ### Local Development
 
 **Setup:**
+
 ```bash
 npm install
 npx prisma migrate dev
@@ -478,6 +529,7 @@ npm run dev
 ```
 
 **Development Mode:**
+
 - Backend: tsx watch on port 3000
 - Frontend: Vite dev server with proxy to backend
 - Hot reload for both frontend and backend
@@ -485,12 +537,14 @@ npm run dev
 ### Production Build
 
 **Build Process:**
+
 ```bash
 npm run build        # Build both client and server
 npm run start        # Start production server
 ```
 
 **Environment Variables:**
+
 - `PORT` - Server port (default: 3000)
 - `NODE_ENV` - production/development
 - `SESSION_SECRET` - Secret for session signing
@@ -499,15 +553,18 @@ npm run start        # Start production server
 ### Deployment Options
 
 **Local Network:**
+
 - Run on home server/NAS
 - Access via local IP from phone/computer
 
 **Cloud Deployment (Future):**
+
 - Deploy to Railway, Render, or DigitalOcean
 - Use Caddy or nginx reverse proxy for HTTPS
 - Let's Encrypt for SSL certificates
 
 **Data Backup:**
+
 - Database: `/data/landlord.db`
 - Files: `/uploads/*`
 - Simple backup: copy both folders
@@ -516,6 +573,7 @@ npm run start        # Start production server
 ## Future Enhancements
 
 Potential features for future versions:
+
 - Email/SMS notifications for upcoming events
 - Mobile app (React Native)
 - Multi-user support with permissions

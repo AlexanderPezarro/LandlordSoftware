@@ -83,7 +83,7 @@ Task tool (general-purpose):
 
 ## Example Dispatch
 
-```
+````
 Task tool (general-purpose):
   description: "Implement beads-a3f2dd: Setup database schema"
   prompt: |
@@ -201,4 +201,4 @@ Task tool (general-purpose):
 
     Dependencies completed: None (this is a foundation bead)
     Working directory: /mnt/c/Users/stuff/Documents/Projects/LandlordSoftware
-```
+````

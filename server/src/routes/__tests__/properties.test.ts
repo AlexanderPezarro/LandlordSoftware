@@ -42,7 +42,7 @@ describe('Properties Routes', () => {
       password: testUser.password,
     });
 
-    authCookies = loginResponse.headers['set-cookie'] as unknown as string[];
+    authCookies = [loginResponse.headers['set-cookie']];
   });
 
   afterAll(async () => {
@@ -50,7 +50,6 @@ describe('Properties Routes', () => {
     await prisma.property.deleteMany({});
     await prisma.user.deleteMany({});
     await prisma.$disconnect();
-    await new Promise((resolve) => setTimeout(resolve, 100));
   });
 
   beforeEach(async () => {

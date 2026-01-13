@@ -20,7 +20,9 @@ function App() {
         setServerStatus(data.status);
         setError(null);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to connect to server');
+        setError(
+          err instanceof Error ? err.message : 'Failed to connect to server'
+        );
         setServerStatus('error');
       }
     };

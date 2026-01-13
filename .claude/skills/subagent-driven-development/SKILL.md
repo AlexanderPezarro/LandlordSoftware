@@ -29,6 +29,7 @@ digraph when_to_use {
 ```
 
 **Key differences from plan-based approach:**
+
 - Uses `bd ready` to find available work (not reading plan file)
 - Uses `bd show <id>` to get bead specification (not extracting from file)
 - Uses `bd update --status=in_progress` to claim work (not TodoWrite)
@@ -90,6 +91,7 @@ digraph process {
 ## Workflow Commands
 
 **Finding work:**
+
 ```bash
 # Find available beads (no blockers, status=open)
 bd ready
@@ -102,12 +104,14 @@ bd list --status=in_progress
 ```
 
 **Claiming work:**
+
 ```bash
 # Mark bead as in progress
 bd update beads-abc123 --status=in_progress
 ```
 
 **Completing work:**
+
 ```bash
 # Close single bead
 bd close beads-abc123
@@ -120,6 +124,7 @@ bd close beads-abc123 --reason="Implemented with React hooks"
 ```
 
 **Checking progress:**
+
 ```bash
 # See what's blocking remaining work
 bd blocked
@@ -206,6 +211,7 @@ Done!
 ## Advantages
 
 **vs. Plan file approach:**
+
 - No need to read/parse plan file
 - Automatic dependency tracking
 - Persistent across sessions
@@ -214,18 +220,21 @@ Done!
 - Clear audit trail of what was implemented when
 
 **vs. Manual execution:**
+
 - Subagents follow TDD naturally
 - Fresh context per bead (no confusion)
 - Parallel-safe (subagents don't interfere)
 - Subagent can ask questions (before AND during work)
 
 **Efficiency gains:**
+
 - Controller provides full bead text (no file reading)
 - Beads contain complete information upfront
 - Questions surfaced before work begins (not after)
 - Dependencies prevent wasted effort on blocked work
 
 **Quality gates:**
+
 - Self-review catches issues before handoff
 - Two-stage review: spec compliance, then code quality
 - Review loops ensure fixes actually work
@@ -233,6 +242,7 @@ Done!
 - Code quality ensures implementation is well-built
 
 **Cost:**
+
 - More subagent invocations (implementer + 2 reviewers per bead)
 - Review loops add iterations
 - But catches issues early (cheaper than debugging later)
@@ -240,6 +250,7 @@ Done!
 ## Red Flags
 
 **Never:**
+
 - Skip reviews (spec compliance OR code quality)
 - Proceed with unfixed issues
 - Dispatch multiple implementation subagents in parallel (conflicts)
@@ -253,21 +264,25 @@ Done!
 - Move to next bead while either review has open issues
 
 **If subagent asks questions:**
+
 - Answer clearly and completely
 - Provide additional context if needed
 - Don't rush them into implementation
 
 **If reviewer finds issues:**
+
 - Implementer (same subagent) fixes them
 - Reviewer reviews again
 - Repeat until approved
 - Don't skip the re-review
 
 **If subagent fails bead:**
+
 - Dispatch fix subagent with specific instructions
 - Don't try to fix manually (context pollution)
 
 **At session end:**
+
 - Run `bd sync --from-main` to pull latest beads
 - Commit your code changes
 - In-progress beads stay in-progress (can resume later)
@@ -275,9 +290,11 @@ Done!
 ## Integration
 
 **Required workflow skills:**
+
 - **superpowers:writing-plans** - Creates the beads this skill executes
 - **superpowers:requesting-code-review** - Code review template for reviewer subagents
 - **superpowers:finishing-a-development-branch** - Complete development after all beads
 
 **Subagents should use:**
+
 - **superpowers:test-driven-development** - Subagents follow TDD for each bead

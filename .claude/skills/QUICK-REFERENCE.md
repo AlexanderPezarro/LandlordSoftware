@@ -4,23 +4,27 @@
 
 ### Phase 1: Planning
 
-| Plan Files | Beads |
-|------------|-------|
-| Write plan to `docs/plans/implementation-plan.md` | Create beads with `bd create` |
-| Single file with all tasks | Multiple beads in database |
-| Manual task numbering | Auto-generated bead IDs |
-| Prose descriptions of dependencies | `bd dep add` for explicit dependencies |
+| Plan Files                                        | Beads                                  |
+| ------------------------------------------------- | -------------------------------------- |
+| Write plan to `docs/plans/implementation-plan.md` | Create beads with `bd create`          |
+| Single file with all tasks                        | Multiple beads in database             |
+| Manual task numbering                             | Auto-generated bead IDs                |
+| Prose descriptions of dependencies                | `bd dep add` for explicit dependencies |
 
 **Plan Files Example:**
+
 ```markdown
 ### Task 1: Setup database schema
+
 [specification]
 
 ### Task 2: Implement landlord CRUD (depends on Task 1)
+
 [specification]
 ```
 
 **Beads Example:**
+
 ```bash
 bd create --title="Setup database schema" --description="[spec]"
 bd create --title="Implement landlord CRUD" --description="[spec]"
@@ -29,13 +33,14 @@ bd dep add beads-abc beads-def  # CRUD depends on schema
 
 ### Phase 2: Finding Work
 
-| Plan Files | Beads |
-|------------|-------|
-| Read entire plan file | `bd ready` |
+| Plan Files             | Beads                          |
+| ---------------------- | ------------------------------ |
+| Read entire plan file  | `bd ready`                     |
 | Extract tasks manually | Auto-filtered (unblocked only) |
-| Track with TodoWrite | Track with bead status |
+| Track with TodoWrite   | Track with bead status         |
 
 **Plan Files Example:**
+
 ```
 Read docs/plans/implementation-plan.md
 Extract Task 1, Task 2, Task 3...
@@ -43,6 +48,7 @@ Create TodoWrite with all tasks
 ```
 
 **Beads Example:**
+
 ```bash
 $ bd ready
 beads-a3f2dd: Setup database schema (priority: 1)
@@ -52,13 +58,14 @@ beads-7b8c21: Create API authentication (priority: 1)
 
 ### Phase 3: Getting Task Details
 
-| Plan Files | Beads |
-|------------|-------|
-| Parse from plan file | `bd show <id>` |
-| Copy/paste section | Structured output |
+| Plan Files               | Beads                             |
+| ------------------------ | --------------------------------- |
+| Parse from plan file     | `bd show <id>`                    |
+| Copy/paste section       | Structured output                 |
 | Manual context gathering | Dependencies listed automatically |
 
 **Plan Files Example:**
+
 ```
 Read docs/plans/implementation-plan.md
 Find "### Task 1: Setup database schema"
@@ -67,6 +74,7 @@ Provide to subagent
 ```
 
 **Beads Example:**
+
 ```bash
 $ bd show beads-a3f2dd
 ID: beads-a3f2dd
@@ -81,46 +89,50 @@ Description:
 
 ### Phase 4: Claiming Work
 
-| Plan Files | Beads |
-|------------|-------|
-| Mark todo as `in_progress` | `bd update --status=in_progress` |
-| Only visible in current session | Visible across all sessions |
-| Lost on context clear | Persists in database |
+| Plan Files                      | Beads                            |
+| ------------------------------- | -------------------------------- |
+| Mark todo as `in_progress`      | `bd update --status=in_progress` |
+| Only visible in current session | Visible across all sessions      |
+| Lost on context clear           | Persists in database             |
 
 **Plan Files Example:**
+
 ```
 TodoWrite: Mark "Setup database schema" as in_progress
 ```
 
 **Beads Example:**
+
 ```bash
 $ bd update beads-a3f2dd --status=in_progress
 ```
 
 ### Phase 5: Implementation
 
-| Plan Files | Beads |
-|------------|-------|
-| Same process | Same process |
-| Dispatch implementer subagent | Dispatch implementer subagent |
-| Provide task text from plan | Provide bead text from `bd show` |
+| Plan Files                    | Beads                            |
+| ----------------------------- | -------------------------------- |
+| Same process                  | Same process                     |
+| Dispatch implementer subagent | Dispatch implementer subagent    |
+| Provide task text from plan   | Provide bead text from `bd show` |
 
 **Both use same implementer-prompt.md template** (just different content source)
 
 ### Phase 6: Review
 
-| Plan Files | Beads |
-|------------|-------|
+| Plan Files                   | Beads                         |
+| ---------------------------- | ----------------------------- |
 | Compare to plan file section | Compare to bead specification |
-| Manual cross-reference | Direct reference to bead ID |
+| Manual cross-reference       | Direct reference to bead ID   |
 
 **Plan Files Example:**
+
 ```
 Spec reviewer: "Check if implementation matches Task 1 in plan file"
 (Must read plan file to verify)
 ```
 
 **Beads Example:**
+
 ```
 Spec reviewer: "Check if implementation matches beads-a3f2dd"
 (Use bd show beads-a3f2dd to get spec)
@@ -128,18 +140,20 @@ Spec reviewer: "Check if implementation matches beads-a3f2dd"
 
 ### Phase 7: Completion
 
-| Plan Files | Beads |
-|------------|-------|
-| Mark todo as `completed` | `bd close <id>` |
-| Only in current session | Permanently closed in database |
-| Lost on context clear | Persists across sessions |
+| Plan Files               | Beads                          |
+| ------------------------ | ------------------------------ |
+| Mark todo as `completed` | `bd close <id>`                |
+| Only in current session  | Permanently closed in database |
+| Lost on context clear    | Persists across sessions       |
 
 **Plan Files Example:**
+
 ```
 TodoWrite: Mark "Setup database schema" as completed
 ```
 
 **Beads Example:**
+
 ```bash
 $ bd close beads-a3f2dd
 # Or close multiple at once
@@ -148,18 +162,20 @@ $ bd close beads-a3f2dd beads-7b8c21 beads-9d4e56
 
 ### Phase 8: Next Task
 
-| Plan Files | Beads |
-|------------|-------|
-| Check TodoWrite for next pending | `bd ready` |
-| Manual dependency checking | Auto-filtered (dependency blocking) |
+| Plan Files                       | Beads                               |
+| -------------------------------- | ----------------------------------- |
+| Check TodoWrite for next pending | `bd ready`                          |
+| Manual dependency checking       | Auto-filtered (dependency blocking) |
 
 **Plan Files Example:**
+
 ```
 TodoWrite: Find next pending task
 Check if dependencies are met (manual verification)
 ```
 
 **Beads Example:**
+
 ```bash
 $ bd ready
 beads-9d4e56: Implement landlord CRUD (priority: 1)
@@ -284,6 +300,7 @@ bd list --status=in_progress # Resume work
 ## When to Use Each
 
 **Use Plan Files when:**
+
 - Simple, linear implementation
 - Single developer/agent
 - Short session (won't hit context limits)
@@ -291,6 +308,7 @@ bd list --status=in_progress # Resume work
 - Want simple, readable plan document
 
 **Use Beads when:**
+
 - Complex dependency trees
 - Multiple parallel work streams
 - Long-running implementations
