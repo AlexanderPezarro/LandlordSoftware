@@ -7,6 +7,7 @@ import Database from 'better-sqlite3';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import authRouter from './routes/auth.js';
+import propertiesRouter from './routes/properties.js';
 
 // ES module __dirname equivalent
 const __filename = fileURLToPath(import.meta.url);
@@ -64,6 +65,9 @@ export function createApp() {
 
   // Auth routes
   app.use('/api/auth', authRouter);
+
+  // Properties routes
+  app.use('/api/properties', propertiesRouter);
 
   return app;
 }
