@@ -124,18 +124,18 @@ export default apiClient;
 
 // Export convenience function for making requests
 export const api = {
-  get: <T = any>(url: string, config?: AxiosRequestConfig) =>
+  get: <T = unknown>(url: string, config?: AxiosRequestConfig) =>
     apiClient.get<T>(url, config),
 
-  post: <T = any>(url: string, data?: any, config?: AxiosRequestConfig) =>
+  post: <T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig) =>
     apiClient.post<T>(url, data, config),
 
-  put: <T = any>(url: string, data?: any, config?: AxiosRequestConfig) =>
+  put: <T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig) =>
     apiClient.put<T>(url, data, config),
 
-  patch: <T = any>(url: string, data?: any, config?: AxiosRequestConfig) =>
+  patch: <T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig) =>
     apiClient.patch<T>(url, data, config),
 
-  delete: <T = any>(url: string, config?: AxiosRequestConfig) =>
+  delete: <T = unknown>(url: string, config?: AxiosRequestConfig) =>
     apiClient.delete<T>(url, config),
 };

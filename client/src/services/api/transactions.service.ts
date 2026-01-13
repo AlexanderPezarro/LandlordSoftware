@@ -13,13 +13,18 @@ import type {
 export const transactionsService = {
   /**
    * Get all transactions with optional filters
-   * @param filters - Optional filters for property_id, type, category, and date range
+   * @param filters - Optional filters for propertyId, type, category, and date range
    * @returns Array of transactions
    */
   async getTransactions(filters?: TransactionFilters): Promise<Transaction[]> {
-    const response = await api.get<TransactionsResponse>('/transactions', {
-      params: filters,
-    });
+    const params: Record<string, string> = {};
+    if (filters?.propertyId) params.property_id = filters.propertyId;
+    if (filters?.type) params.type = filters.type;
+    if (filters?.category) params.category = filters.category;
+    if (filters?.startDate) params.start_date = filters.startDate;
+    if (filters?.endDate) params.end_date = filters.endDate;
+
+    const response = await api.get<TransactionsResponse>('/transactions', { params });
     return response.data.transactions;
   },
 
@@ -64,13 +69,18 @@ export const transactionsService = {
 
   /**
    * Get financial summary with optional filters
-   * @param filters - Optional filters for property_id and date range
+   * @param filters - Optional filters for propertyId and date range
    * @returns Financial summary with totals
    */
   async getTransactionSummary(filters?: TransactionFilters): Promise<TransactionSummary> {
-    const response = await api.get<TransactionSummaryResponse>('/transactions/summary', {
-      params: filters,
-    });
+    const params: Record<string, string> = {};
+    if (filters?.propertyId) params.property_id = filters.propertyId;
+    if (filters?.type) params.type = filters.type;
+    if (filters?.category) params.category = filters.category;
+    if (filters?.startDate) params.start_date = filters.startDate;
+    if (filters?.endDate) params.end_date = filters.endDate;
+
+    const response = await api.get<TransactionSummaryResponse>('/transactions/summary', { params });
     return response.data.summary;
   },
 };

@@ -1,4 +1,3 @@
-import { api } from '../api';
 import apiClient from '../api';
 import type {
   Document,
@@ -49,7 +48,7 @@ export const documentsService = {
    * @param id - Document ID
    */
   async deleteDocument(id: string): Promise<void> {
-    await api.delete(`/documents/${id}`);
+    await apiClient.delete(`/documents/${id}`);
   },
 
   /**
@@ -59,11 +58,11 @@ export const documentsService = {
    * @returns Array of documents
    */
   async getDocuments(entityType?: string, entityId?: string): Promise<Document[]> {
-    const params: any = {};
+    const params: Record<string, string> = {};
     if (entityType) params.entityType = entityType;
     if (entityId) params.entityId = entityId;
 
-    const response = await api.get<DocumentsResponse>('/documents', { params });
+    const response = await apiClient.get<DocumentsResponse>('/documents', { params });
     return response.data.documents;
   },
 
@@ -73,7 +72,7 @@ export const documentsService = {
    * @returns Document metadata
    */
   async getDocument(id: string): Promise<Document> {
-    const response = await api.get<DocumentResponse>(`/documents/${id}`);
+    const response = await apiClient.get<DocumentResponse>(`/documents/${id}`);
     return response.data.document;
   },
 };

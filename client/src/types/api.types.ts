@@ -1,12 +1,12 @@
 // API Response Types
 export interface ApiSuccessResponse {
   success: true;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface ApiErrorResponse {
   success: false;
-  error: string | { code: string; message: string; details?: any };
+  error: string | { code: string; message: string; details?: unknown };
 }
 
 export type ApiResponse = ApiSuccessResponse | ApiErrorResponse;
@@ -14,9 +14,9 @@ export type ApiResponse = ApiSuccessResponse | ApiErrorResponse;
 // Custom Error Class
 export class ApiError extends Error {
   status: number;
-  details?: any;
+  details?: unknown;
 
-  constructor(status: number, message: string, details?: any) {
+  constructor(status: number, message: string, details?: unknown) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
@@ -213,8 +213,8 @@ export interface UpdateLeaseRequest {
 }
 
 export interface LeaseFilters {
-  property_id?: string;
-  tenant_id?: string;
+  propertyId?: string;
+  tenantId?: string;
   status?: 'Active' | 'Expired' | 'Terminated';
 }
 
@@ -265,11 +265,11 @@ export interface UpdateTransactionRequest {
 }
 
 export interface TransactionFilters {
-  property_id?: string;
+  propertyId?: string;
   type?: 'Income' | 'Expense';
   category?: string;
-  start_date?: string;
-  end_date?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 export interface TransactionSummary {

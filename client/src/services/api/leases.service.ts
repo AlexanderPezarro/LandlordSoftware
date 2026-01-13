@@ -11,13 +11,16 @@ import type {
 export const leasesService = {
   /**
    * Get all leases with optional filters
-   * @param filters - Optional filters for property_id, tenant_id, and status
+   * @param filters - Optional filters for propertyId, tenantId, and status
    * @returns Array of leases
    */
   async getLeases(filters?: LeaseFilters): Promise<Lease[]> {
-    const response = await api.get<LeasesResponse>('/leases', {
-      params: filters,
-    });
+    const params: Record<string, string> = {};
+    if (filters?.propertyId) params.property_id = filters.propertyId;
+    if (filters?.tenantId) params.tenant_id = filters.tenantId;
+    if (filters?.status) params.status = filters.status;
+
+    const response = await api.get<LeasesResponse>('/leases', { params });
     return response.data.leases;
   },
 
