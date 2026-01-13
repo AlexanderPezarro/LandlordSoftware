@@ -83,3 +83,9 @@ export {
   type Document,
   type FileUpload,
 } from './document.validation.js';
+
+// Auth Validation
+export {
+  LoginFormSchema,
+  type LoginFormData,
+} from './auth.validation.js';

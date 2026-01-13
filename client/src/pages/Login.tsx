@@ -12,26 +12,28 @@ import {
   Alert,
 } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
-import { LoginFormSchema, LoginFormData } from '../validation/auth.validation';
+import { LoginFormSchema, LoginFormData } from '../../../shared/validation/auth.validation';
 
 export const Login: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isValid },
+    formState: { errors, isValid, isSubmitting },
   } = useForm<LoginFormData>({
     resolver: zodResolver(LoginFormSchema),
     mode: 'onChange',
+    defaultValues: {
+      email: '',
+      password: '',
+    },
   });
 
   const onSubmit = async (data: LoginFormData) => {
     setError(null);
-    setIsLoading(true);
 
     try {
       const result = await login(data);
@@ -42,8 +44,6 @@ export const Login: React.FC = () => {
       }
     } catch (err) {
       setError('An unexpected error occurred');
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -88,7 +88,7 @@ export const Login: React.FC = () => {
               autoFocus
               error={!!errors.email}
               helperText={errors.email?.message}
-              disabled={isLoading}
+              disabled={isSubmitting}
               {...register('email')}
             />
             <TextField
@@ -100,7 +100,7 @@ export const Login: React.FC = () => {
               autoComplete="current-password"
               error={!!errors.password}
               helperText={errors.password?.message}
-              disabled={isLoading}
+              disabled={isSubmitting}
               {...register('password')}
             />
             <Button
@@ -108,9 +108,9 @@ export const Login: React.FC = () => {
               fullWidth
               variant="contained"
               sx={{ mt: 3, mb: 2 }}
-              disabled={isLoading || !isValid}
+              disabled={isSubmitting || !isValid}
             >
-              {isLoading ? 'Signing in...' : 'Sign In'}
+              {isSubmitting ? 'Signing in...' : 'Sign In'}
             </Button>
           </Box>
         </Paper>
