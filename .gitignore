@@ -18,7 +18,9 @@ npm-debug.log*
 .env.*.local
 
 # Database
-data/
+data/*.db
+data/*.db-journal
+!data/.gitkeep
 *.db
 *.db-journal
 

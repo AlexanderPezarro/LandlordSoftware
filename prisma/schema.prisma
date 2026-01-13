@@ -1,0 +1,125 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+model Property {
+  id            String   @id @default(uuid())
+  name          String
+  street        String
+  city          String
+  county        String
+  postcode      String
+  propertyType  String   @map("property_type")
+  purchaseDate  DateTime? @map("purchase_date")
+  purchasePrice Float?    @map("purchase_price")
+  status        String
+  notes         String?
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  leases       Lease[]
+  transactions Transaction[]
+  events       Event[]
+
+  @@map("properties")
+}
+
+model Tenant {
+  id                    String   @id @default(uuid())
+  firstName             String   @map("first_name")
+  lastName              String   @map("last_name")
+  email                 String
+  phone                 String
+  emergencyContactName  String?  @map("emergency_contact_name")
+  emergencyContactPhone String?  @map("emergency_contact_phone")
+  status                String
+  notes                 String?
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  leases    Lease[]
+
+  @@map("tenants")
+}
+
+model Lease {
+  id                      String    @id @default(uuid())
+  propertyId              String    @map("property_id")
+  tenantId                String    @map("tenant_id")
+  startDate               DateTime  @map("start_date")
+  endDate                 DateTime? @map("end_date")
+  monthlyRent             Float     @map("monthly_rent")
+  securityDepositAmount   Float     @map("security_deposit_amount")
+  securityDepositPaidDate DateTime? @map("security_deposit_paid_date")
+  status                  String
+  createdAt               DateTime  @default(now()) @map("created_at")
+  updatedAt               DateTime  @updatedAt @map("updated_at")
+
+  property     Property      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  tenant       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@map("leases")
+}
+
+model Transaction {
+  id              String   @id @default(uuid())
+  propertyId      String   @map("property_id")
+  leaseId         String?  @map("lease_id")
+  type            String
+  category        String
+  amount          Float
+  transactionDate DateTime @map("transaction_date")
+  description     String
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  property  Property   @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  lease     Lease?     @relation(fields: [leaseId], references: [id], onDelete: SetNull)
+
+  @@map("transactions")
+}
+
+model Event {
+  id            String    @id @default(uuid())
+  propertyId    String    @map("property_id")
+  eventType     String    @map("event_type")
+  title         String
+  description   String?
+  scheduledDate DateTime  @map("scheduled_date")
+  completed     Boolean   @default(false)
+  completedDate DateTime? @map("completed_date")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@map("events")
+}
+
+model Document {
+  id         String   @id @default(uuid())
+  entityType String   @map("entity_type")
+  entityId   String   @map("entity_id")
+  fileName   String   @map("file_name")
+  filePath   String   @map("file_path")
+  fileType   String   @map("file_type")
+  fileSize   Int      @map("file_size")
+  uploadedAt DateTime @default(now()) @map("uploaded_at")
+
+  @@map("documents")
+}
