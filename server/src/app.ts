@@ -10,6 +10,7 @@ import authRouter from './routes/auth.js';
 import propertiesRouter from './routes/properties.js';
 import eventsRouter from './routes/events.js';
 import tenantsRouter from './routes/tenants.js';
+import documentsRouter from './routes/documents.js';
 
 // ES module __dirname equivalent
 const __filename = fileURLToPath(import.meta.url);
@@ -76,6 +77,9 @@ export function createApp() {
 
   // Tenants routes
   app.use('/api/tenants', tenantsRouter);
+
+  // Documents routes
+  app.use('/api/documents', documentsRouter);
 
   return app;
 }
