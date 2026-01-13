@@ -164,8 +164,8 @@ import { transactionsService } from '../services/api';
 
 const summary = await transactionsService.getTransactionSummary({
   property_id: 'property-id',
-  from_date: '2024-01-01',
-  to_date: '2024-12-31',
+  start_date: '2024-01-01',
+  end_date: '2024-12-31',
 });
 // Expected: { total_income: number, total_expense: number, net: number, transaction_count: number }
 ```

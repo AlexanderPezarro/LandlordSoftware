@@ -268,8 +268,8 @@ export interface TransactionFilters {
   property_id?: string;
   type?: 'Income' | 'Expense';
   category?: string;
-  from_date?: string;
-  to_date?: string;
+  start_date?: string;
+  end_date?: string;
 }
 
 export interface TransactionSummary {

@@ -189,8 +189,8 @@ import { transactionsService } from './services/api';
 const getSummary = async () => {
   const summary = await transactionsService.getTransactionSummary({
     property_id: propertyId,
-    from_date: '2024-01-01',
-    to_date: '2024-12-31',
+    start_date: '2024-01-01',
+    end_date: '2024-12-31',
   });
 
   console.log(`Income: $${summary.total_income}`);
