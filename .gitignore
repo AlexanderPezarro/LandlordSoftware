@@ -3,15 +3,19 @@
 
 # Dependencies
 node_modules/
+package-lock.json
 
 # Build outputs
 dist/
 build/
+*.tsbuildinfo
 *.log
+npm-debug.log*
 
 # Environment
 .env
 .env.local
+.env.*.local
 
 # Database
 data/
@@ -26,7 +30,16 @@ uploads/
 .idea/
 *.swp
 *.swo
+*~
 
 # OS
 .DS_Store
 Thumbs.db
+
+# Testing
+coverage/
+
+# Misc
+.cache/
+temp/
+tmp/
