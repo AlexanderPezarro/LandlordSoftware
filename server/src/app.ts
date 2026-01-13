@@ -8,6 +8,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import authRouter from './routes/auth.js';
 import propertiesRouter from './routes/properties.js';
+import eventsRouter from './routes/events.js';
 
 // ES module __dirname equivalent
 const __filename = fileURLToPath(import.meta.url);
@@ -68,6 +69,9 @@ export function createApp() {
 
   // Properties routes
   app.use('/api/properties', propertiesRouter);
+
+  // Events routes
+  app.use('/api/events', eventsRouter);
 
   return app;
 }

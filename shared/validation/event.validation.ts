@@ -53,8 +53,22 @@ export const EventSchema = z.object({
   updatedAt: z.date(),
 });
 
+// Event Query Parameters Schema (for filtering)
+export const EventQueryParamsSchema = z.object({
+  propertyId: z.string().uuid('Invalid property ID').optional(),
+  eventType: EventTypeSchema.optional(),
+  completed: z
+    .string()
+    .transform((val) => val === 'true')
+    .pipe(z.boolean())
+    .optional(),
+  fromDate: z.coerce.date().optional(),
+  toDate: z.coerce.date().optional(),
+});
+
 // Inferred TypeScript types
 export type EventType = z.infer<typeof EventTypeSchema>;
 export type CreateEvent = z.infer<typeof CreateEventSchema>;
 export type UpdateEvent = z.infer<typeof UpdateEventSchema>;
 export type Event = z.infer<typeof EventSchema>;
+export type EventQueryParams = z.infer<typeof EventQueryParamsSchema>;
