@@ -346,7 +346,7 @@ router.put('/:id', requireAuth, async (req, res) => {
       if (overlappingLeases.length > 0) {
         return res.status(400).json({
           success: false,
-          error: 'Cannot create lease: overlapping active lease exists for this property',
+          error: 'Cannot update lease: overlapping active lease exists for this property',
         });
       }
     }
