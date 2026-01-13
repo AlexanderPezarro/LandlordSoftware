@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import prisma from '../db/client.js';
-import { CreatePropertySchema, UpdatePropertySchema } from '../../../shared/validation/property.validation.js';
+import { CreatePropertySchema, UpdatePropertySchema, PropertyQueryParamsSchema } from '../../../shared/validation/property.validation.js';
 import { z } from 'zod';
 
 const router = Router();
@@ -9,20 +9,30 @@ const router = Router();
 // GET /api/properties - List properties with filtering
 router.get('/', async (req, res) => {
   try {
-    const { status, propertyType, search } = req.query;
+    // Validate query parameters
+    const validationResult = PropertyQueryParamsSchema.safeParse(req.query);
+
+    if (!validationResult.success) {
+      return res.status(400).json({
+        success: false,
+        error: validationResult.error.issues[0].message,
+      });
+    }
+
+    const { status, propertyType, search } = validationResult.data;
 
     // Build filter object
     const where: any = {};
 
-    if (status && typeof status === 'string') {
+    if (status) {
       where.status = status;
     }
 
-    if (propertyType && typeof propertyType === 'string') {
+    if (propertyType) {
       where.propertyType = propertyType;
     }
 
-    if (search && typeof search === 'string') {
+    if (search) {
       where.OR = [
         { name: { contains: search } },
         { street: { contains: search } },

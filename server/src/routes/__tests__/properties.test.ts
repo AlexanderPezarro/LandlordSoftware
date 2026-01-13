@@ -374,6 +374,26 @@ describe('Properties Routes', () => {
       expect(response.body.properties).toHaveLength(1);
       expect(response.body.properties[0].name).toBe('Sunny Flat');
     });
+
+    it('should reject invalid query parameters - invalid status', async () => {
+      const response = await request(app)
+        .get('/api/properties')
+        .query({ status: 'InvalidStatus' });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBeDefined();
+    });
+
+    it('should reject invalid query parameters - invalid propertyType', async () => {
+      const response = await request(app)
+        .get('/api/properties')
+        .query({ propertyType: 'InvalidType' });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBeDefined();
+    });
   });
 
   describe('GET /api/properties/:id', () => {
@@ -678,6 +698,55 @@ describe('Properties Routes', () => {
         const next = new Date(listResponse.body.properties[i + 1].createdAt);
         expect(current.getTime()).toBeGreaterThanOrEqual(next.getTime());
       }
+    });
+  });
+
+  describe('Edge cases', () => {
+    it('should allow creating properties with duplicate addresses', async () => {
+      // Create first property
+      const response1 = await request(app)
+        .post('/api/properties')
+        .set('Cookie', authCookies)
+        .send(validProperty);
+
+      expect(response1.status).toBe(201);
+      expect(response1.body.success).toBe(true);
+
+      // Create second property with identical address
+      const response2 = await request(app)
+        .post('/api/properties')
+        .set('Cookie', authCookies)
+        .send(validProperty);
+
+      expect(response2.status).toBe(201);
+      expect(response2.body.success).toBe(true);
+      expect(response2.body.property.street).toBe(validProperty.street);
+      expect(response2.body.property.postcode).toBe(validProperty.postcode);
+
+      // Verify different IDs
+      expect(response2.body.property.id).not.toBe(response1.body.property.id);
+
+      // Verify both exist in database
+      const listResponse = await request(app).get('/api/properties');
+      expect(listResponse.status).toBe(200);
+      expect(listResponse.body.properties).toHaveLength(2);
+    });
+
+    it('should protect against SQL injection in search parameter', async () => {
+      // Create a test property
+      await prisma.property.create({ data: validProperty });
+
+      // Attempt SQL injection in search parameter
+      const response = await request(app)
+        .get('/api/properties')
+        .query({ search: "' OR '1'='1" });
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+
+      // Should return empty array (Prisma protects against SQL injection)
+      // The injection string should be treated as a literal search term
+      expect(response.body.properties).toHaveLength(0);
     });
   });
 });

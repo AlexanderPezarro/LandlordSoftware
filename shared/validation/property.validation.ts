@@ -65,9 +65,17 @@ export const PropertySchema = z.object({
   updatedAt: z.date(),
 });
 
+// Query Parameters Schema (for GET /api/properties filtering)
+export const PropertyQueryParamsSchema = z.object({
+  status: PropertyStatusSchema.optional(),
+  propertyType: PropertyTypeSchema.optional(),
+  search: z.string().optional(),
+});
+
 // Inferred TypeScript types
 export type PropertyType = z.infer<typeof PropertyTypeSchema>;
 export type PropertyStatus = z.infer<typeof PropertyStatusSchema>;
 export type CreateProperty = z.infer<typeof CreatePropertySchema>;
 export type UpdateProperty = z.infer<typeof UpdatePropertySchema>;
 export type Property = z.infer<typeof PropertySchema>;
+export type PropertyQueryParams = z.infer<typeof PropertyQueryParamsSchema>;
