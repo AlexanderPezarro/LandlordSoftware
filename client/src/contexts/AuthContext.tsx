@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { User, LoginRequest, AuthResponse } from '../../../shared/types/auth.types';
+import { authService } from '../services/api/auth.service';
+import { ApiError } from '../types/api.types';
 
 interface AuthContextType {
   user: User | null;
@@ -31,23 +33,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const checkAuth = useCallback(async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/auth/me', {
-        credentials: 'include', // Important for sending cookies
-      });
-
-      if (response.ok) {
-        const data: AuthResponse = await response.json();
-        if (data.success && data.user) {
-          setUser(data.user);
-        } else {
-          setUser(null);
-        }
+      const userData = await authService.getMe();
+      setUser(userData);
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        // User not authenticated, this is expected
+        setUser(null);
       } else {
+        console.error('Error checking authentication:', error);
         setUser(null);
       }
-    } catch (error) {
-      console.error('Error checking authentication:', error);
-      setUser(null);
     } finally {
       setIsLoading(false);
     }
@@ -55,37 +50,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (credentials: LoginRequest): Promise<AuthResponse> => {
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(credentials),
-      });
+      const response = await authService.login(credentials.email, credentials.password);
 
-      const data: AuthResponse = await response.json();
-
-      if (data.success && data.user) {
-        setUser(data.user);
+      if (response.success && response.user) {
+        setUser(response.user);
       }
 
-      return data;
+      return response;
     } catch (error) {
       console.error('Login error:', error);
       return {
         success: false,
-        error: 'An unexpected error occurred',
+        error: error instanceof ApiError ? error.message : 'An unexpected error occurred',
       };
     }
   };
 
   const logout = async () => {
     try {
-      await fetch('/api/auth/logout', {
-        method: 'POST',
-        credentials: 'include',
-      });
+      await authService.logout();
       setUser(null);
     } catch (error) {
       console.error('Logout error:', error);
@@ -93,6 +76,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUser(null);
     }
   };
+
+  // Listen for unauthorized events from API client
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      setUser(null);
+      // Optionally redirect to login page
+      // window.location.href = '/login';
+    };
+
+    window.addEventListener('api:unauthorized', handleUnauthorized);
+
+    return () => {
+      window.removeEventListener('api:unauthorized', handleUnauthorized);
+    };
+  }, []);
 
   // Check authentication on mount
   useEffect(() => {

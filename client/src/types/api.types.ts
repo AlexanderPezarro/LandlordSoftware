@@ -1,0 +1,366 @@
+// API Response Types
+export interface ApiSuccessResponse {
+  success: true;
+  [key: string]: any;
+}
+
+export interface ApiErrorResponse {
+  success: false;
+  error: string | { code: string; message: string; details?: any };
+}
+
+export type ApiResponse = ApiSuccessResponse | ApiErrorResponse;
+
+// Custom Error Class
+export class ApiError extends Error {
+  status: number;
+  details?: any;
+
+  constructor(status: number, message: string, details?: any) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.details = details;
+    Object.setPrototypeOf(this, ApiError.prototype);
+  }
+}
+
+// Auth Types
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface User {
+  id: string;
+  email: string;
+}
+
+export interface AuthResponse {
+  success: boolean;
+  user?: User;
+  error?: string;
+}
+
+// Properties Types
+export interface Property {
+  id: string;
+  name: string;
+  street: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  propertyType: 'Single Family' | 'Multi-Family' | 'Condo' | 'Townhouse' | 'Apartment';
+  numberOfUnits: number;
+  numberOfBedrooms: number;
+  numberOfBathrooms: number;
+  squareFootage?: number | null;
+  yearBuilt?: number | null;
+  status: 'Vacant' | 'Occupied' | 'For Sale';
+  purchasePrice?: number | null;
+  currentValue?: number | null;
+  notes?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreatePropertyRequest {
+  name: string;
+  street: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  propertyType: 'Single Family' | 'Multi-Family' | 'Condo' | 'Townhouse' | 'Apartment';
+  numberOfUnits: number;
+  numberOfBedrooms: number;
+  numberOfBathrooms: number;
+  squareFootage?: number | null;
+  yearBuilt?: number | null;
+  status: 'Vacant' | 'Occupied' | 'For Sale';
+  purchasePrice?: number | null;
+  currentValue?: number | null;
+  notes?: string | null;
+}
+
+export interface UpdatePropertyRequest {
+  name?: string;
+  street?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  propertyType?: 'Single Family' | 'Multi-Family' | 'Condo' | 'Townhouse' | 'Apartment';
+  numberOfUnits?: number;
+  numberOfBedrooms?: number;
+  numberOfBathrooms?: number;
+  squareFootage?: number | null;
+  yearBuilt?: number | null;
+  status?: 'Vacant' | 'Occupied' | 'For Sale';
+  purchasePrice?: number | null;
+  currentValue?: number | null;
+  notes?: string | null;
+}
+
+export interface PropertyFilters {
+  status?: 'Vacant' | 'Occupied' | 'For Sale';
+  propertyType?: 'Single Family' | 'Multi-Family' | 'Condo' | 'Townhouse' | 'Apartment';
+  search?: string;
+}
+
+export interface PropertiesResponse {
+  success: true;
+  properties: Property[];
+}
+
+export interface PropertyResponse {
+  success: true;
+  property: Property;
+}
+
+// Tenants Types
+export interface Tenant {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string | null;
+  status: 'Prospective' | 'Active' | 'Former';
+  emergencyContactName?: string | null;
+  emergencyContactPhone?: string | null;
+  notes?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateTenantRequest {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string | null;
+  status: 'Prospective' | 'Active' | 'Former';
+  emergencyContactName?: string | null;
+  emergencyContactPhone?: string | null;
+  notes?: string | null;
+}
+
+export interface UpdateTenantRequest {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string | null;
+  status?: 'Prospective' | 'Active' | 'Former';
+  emergencyContactName?: string | null;
+  emergencyContactPhone?: string | null;
+  notes?: string | null;
+}
+
+export interface TenantFilters {
+  status?: 'Prospective' | 'Active' | 'Former';
+  search?: string;
+}
+
+export interface LeaseHistoryFilters {
+  fromDate?: string;
+  toDate?: string;
+}
+
+export interface TenantsResponse {
+  success: true;
+  tenants: Tenant[];
+}
+
+export interface TenantResponse {
+  success: true;
+  tenant: Tenant;
+}
+
+// Leases Types
+export interface Lease {
+  id: string;
+  propertyId: string;
+  tenantId: string;
+  startDate: string;
+  endDate?: string | null;
+  rentAmount: number;
+  securityDeposit?: number | null;
+  status: 'Active' | 'Expired' | 'Terminated';
+  terms?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  property?: Property;
+  tenant?: Tenant;
+}
+
+export interface CreateLeaseRequest {
+  propertyId: string;
+  tenantId: string;
+  startDate: string;
+  endDate?: string | null;
+  rentAmount: number;
+  securityDeposit?: number | null;
+  status: 'Active' | 'Expired' | 'Terminated';
+  terms?: string | null;
+}
+
+export interface UpdateLeaseRequest {
+  propertyId?: string;
+  tenantId?: string;
+  startDate?: string;
+  endDate?: string | null;
+  rentAmount?: number;
+  securityDeposit?: number | null;
+  status?: 'Active' | 'Expired' | 'Terminated';
+  terms?: string | null;
+}
+
+export interface LeaseFilters {
+  property_id?: string;
+  tenant_id?: string;
+  status?: 'Active' | 'Expired' | 'Terminated';
+}
+
+export interface LeasesResponse {
+  success: true;
+  leases: Lease[];
+}
+
+export interface LeaseResponse {
+  success: true;
+  lease: Lease;
+}
+
+// Transactions Types
+export interface Transaction {
+  id: string;
+  propertyId: string;
+  leaseId?: string | null;
+  type: 'Income' | 'Expense';
+  category: string;
+  amount: number;
+  transactionDate: string;
+  description?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  property?: Property;
+  lease?: Lease;
+}
+
+export interface CreateTransactionRequest {
+  propertyId: string;
+  leaseId?: string | null;
+  type: 'Income' | 'Expense';
+  category: string;
+  amount: number;
+  transactionDate: string;
+  description?: string | null;
+}
+
+export interface UpdateTransactionRequest {
+  propertyId?: string;
+  leaseId?: string | null;
+  type?: 'Income' | 'Expense';
+  category?: string;
+  amount?: number;
+  transactionDate?: string;
+  description?: string | null;
+}
+
+export interface TransactionFilters {
+  property_id?: string;
+  type?: 'Income' | 'Expense';
+  category?: string;
+  from_date?: string;
+  to_date?: string;
+}
+
+export interface TransactionSummary {
+  total_income: number;
+  total_expense: number;
+  net: number;
+  transaction_count: number;
+}
+
+export interface TransactionsResponse {
+  success: true;
+  transactions: Transaction[];
+}
+
+export interface TransactionResponse {
+  success: true;
+  transaction: Transaction;
+}
+
+export interface TransactionSummaryResponse {
+  success: true;
+  summary: TransactionSummary;
+}
+
+// Events Types
+export interface Event {
+  id: string;
+  propertyId: string;
+  eventType: 'Maintenance' | 'Inspection' | 'Showing' | 'Meeting' | 'Other';
+  scheduledDate: string;
+  completed: boolean;
+  completedDate?: string | null;
+  description?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateEventRequest {
+  propertyId: string;
+  eventType: 'Maintenance' | 'Inspection' | 'Showing' | 'Meeting' | 'Other';
+  scheduledDate: string;
+  completed?: boolean;
+  completedDate?: string | null;
+  description?: string | null;
+}
+
+export interface UpdateEventRequest {
+  propertyId?: string;
+  eventType?: 'Maintenance' | 'Inspection' | 'Showing' | 'Meeting' | 'Other';
+  scheduledDate?: string;
+  completed?: boolean;
+  completedDate?: string | null;
+  description?: string | null;
+}
+
+export interface EventFilters {
+  propertyId?: string;
+  eventType?: 'Maintenance' | 'Inspection' | 'Showing' | 'Meeting' | 'Other';
+  completed?: boolean;
+  fromDate?: string;
+  toDate?: string;
+}
+
+export interface EventsResponse {
+  success: true;
+  events: Event[];
+}
+
+export interface EventResponse {
+  success: true;
+  event: Event;
+}
+
+// Documents Types
+export interface Document {
+  id: string;
+  entityType: 'Property' | 'Tenant' | 'Lease' | 'Transaction';
+  entityId: string;
+  fileName: string;
+  filePath: string;
+  fileType: string;
+  fileSize: number;
+  uploadedAt: string;
+}
+
+export interface DocumentsResponse {
+  success: true;
+  documents: Document[];
+}
+
+export interface DocumentResponse {
+  success: true;
+  document: Document;
+}
