@@ -81,8 +81,16 @@ export const LeaseSchema = z
     }
   );
 
+// Query Params Schema for filtering leases
+export const LeaseQueryParamsSchema = z.object({
+  property_id: z.string().uuid('Invalid property ID').optional(),
+  tenant_id: z.string().uuid('Invalid tenant ID').optional(),
+  status: LeaseStatusSchema.optional(),
+});
+
 // Inferred TypeScript types
 export type LeaseStatus = z.infer<typeof LeaseStatusSchema>;
 export type CreateLease = z.infer<typeof CreateLeaseSchema>;
 export type UpdateLease = z.infer<typeof UpdateLeaseSchema>;
 export type Lease = z.infer<typeof LeaseSchema>;
+export type LeaseQueryParams = z.infer<typeof LeaseQueryParamsSchema>;
