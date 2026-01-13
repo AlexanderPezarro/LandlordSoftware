@@ -18,7 +18,8 @@ const fileFilter = (
   cb: multer.FileFilterCallback
 ) => {
   // Check if MIME type is allowed
-  if (storageConfig.allowedMimeTypes.includes(file.mimetype as any)) {
+  // Cast to readonly string array for includes() method compatibility
+  if ((storageConfig.allowedMimeTypes as readonly string[]).includes(file.mimetype)) {
     cb(null, true);
   } else {
     cb(

@@ -4,8 +4,10 @@ import { upload, handleUploadError } from '../middleware/upload.js';
 import prisma from '../db/client.js';
 import { LocalStorageService } from '../services/storage/LocalStorageService.js';
 import { EntityTypeSchema } from '../../../shared/validation/document.validation.js';
+import { storageConfig } from '../config/storage.js';
 import { z } from 'zod';
 import fs from 'fs/promises';
+import fsSyncStream from 'fs';
 import path from 'path';
 
 const router = Router();
@@ -243,8 +245,7 @@ router.get('/:id/download', requireAuth, async (req, res) => {
     }
 
     // Construct full file path
-    const uploadDir = process.env.UPLOAD_DIR || 'uploads';
-    const fullFilePath = path.join(process.cwd(), uploadDir, document.filePath);
+    const fullFilePath = path.join(process.cwd(), storageConfig.uploadDir, document.filePath);
 
     // Check if file exists
     try {
@@ -262,8 +263,8 @@ router.get('/:id/download', requireAuth, async (req, res) => {
     res.setHeader('Content-Length', document.fileSize);
 
     // Stream the file
-    const fileStream = await fs.readFile(fullFilePath);
-    return res.send(fileStream);
+    const fileStream = fsSyncStream.createReadStream(fullFilePath);
+    return fileStream.pipe(res);
   } catch (error) {
     console.error('Download document error:', error);
     return res.status(500).json({
