@@ -1,5 +1,6 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Property, Tenant, Lease } from '@prisma/client';
 import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
+import bcrypt from 'bcrypt';
 import 'dotenv/config';
 
 const databaseUrl = process.env.DATABASE_URL || 'file:./data/landlord.db';
@@ -27,17 +28,20 @@ async function clearDatabase() {
 async function seedUsers() {
   console.log('👤 Seeding users...');
 
+  // Generate bcrypt hash for test password "password123"
+  const hashedPassword = await bcrypt.hash('password123', 10);
+
   const users = await Promise.all([
     prisma.user.create({
       data: {
         email: 'admin@landlord.com',
-        password: '$2b$10$YourHashedPasswordHere', // In production, this would be properly hashed
+        password: hashedPassword,
       },
     }),
     prisma.user.create({
       data: {
         email: 'manager@landlord.com',
-        password: '$2b$10$YourHashedPasswordHere',
+        password: hashedPassword,
       },
     }),
   ]);
@@ -280,7 +284,7 @@ async function seedTenants() {
   return tenants;
 }
 
-async function seedLeases(properties: any[], tenants: any[]) {
+async function seedLeases(properties: Property[], tenants: Tenant[]) {
   console.log('📋 Seeding leases...');
 
   const leases = await Promise.all([
@@ -392,15 +396,13 @@ async function seedLeases(properties: any[], tenants: any[]) {
   return leases;
 }
 
-async function seedTransactions(properties: any[], leases: any[]) {
+async function seedTransactions(properties: Property[], leases: Lease[]) {
   console.log('💰 Seeding transactions...');
 
-  const transactions = [];
-
-  // Rent income transactions for active leases
-  transactions.push(
+  const transactions = await Promise.all([
+    // Rent income transactions for active leases
     // Sunset Apartments - monthly rent
-    await prisma.transaction.create({
+    prisma.transaction.create({
       data: {
         propertyId: properties[0].id,
         leaseId: leases[0].id,
@@ -411,7 +413,7 @@ async function seedTransactions(properties: any[], leases: any[]) {
         description: 'Monthly rent - December 2023',
       },
     }),
-    await prisma.transaction.create({
+    prisma.transaction.create({
       data: {
         propertyId: properties[0].id,
         leaseId: leases[0].id,
@@ -424,7 +426,7 @@ async function seedTransactions(properties: any[], leases: any[]) {
     }),
 
     // Oak Street House - monthly rent
-    await prisma.transaction.create({
+    prisma.transaction.create({
       data: {
         propertyId: properties[1].id,
         leaseId: leases[1].id,
@@ -435,7 +437,7 @@ async function seedTransactions(properties: any[], leases: any[]) {
         description: 'Monthly rent - December 2023',
       },
     }),
-    await prisma.transaction.create({
+    prisma.transaction.create({
       data: {
         propertyId: properties[1].id,
         leaseId: leases[1].id,
@@ -448,7 +450,7 @@ async function seedTransactions(properties: any[], leases: any[]) {
     }),
 
     // River View Flat - monthly rent
-    await prisma.transaction.create({
+    prisma.transaction.create({
       data: {
         propertyId: properties[2].id,
         leaseId: leases[2].id,
@@ -459,7 +461,7 @@ async function seedTransactions(properties: any[], leases: any[]) {
         description: 'Monthly rent - December 2023',
       },
     }),
-    await prisma.transaction.create({
+    prisma.transaction.create({
       data: {
         propertyId: properties[2].id,
         leaseId: leases[2].id,
@@ -472,7 +474,7 @@ async function seedTransactions(properties: any[], leases: any[]) {
     }),
 
     // Security deposit income
-    await prisma.transaction.create({
+    prisma.transaction.create({
       data: {
         propertyId: properties[0].id,
         leaseId: leases[0].id,
@@ -483,12 +485,10 @@ async function seedTransactions(properties: any[], leases: any[]) {
         description: 'Security deposit received',
       },
     }),
-  );
 
-  // Expense transactions
-  transactions.push(
+    // Expense transactions
     // Maintenance expenses
-    await prisma.transaction.create({
+    prisma.transaction.create({
       data: {
         propertyId: properties[1].id,
         type: 'Expense',
@@ -498,7 +498,7 @@ async function seedTransactions(properties: any[], leases: any[]) {
         description: 'Plumber - fixed leaking tap in bathroom',
       },
     }),
-    await prisma.transaction.create({
+    prisma.transaction.create({
       data: {
         propertyId: properties[0].id,
         type: 'Expense',
@@ -508,7 +508,7 @@ async function seedTransactions(properties: any[], leases: any[]) {
         description: 'Annual boiler service',
       },
     }),
-    await prisma.transaction.create({
+    prisma.transaction.create({
       data: {
         propertyId: properties[6].id,
         type: 'Expense',
@@ -520,7 +520,7 @@ async function seedTransactions(properties: any[], leases: any[]) {
     }),
 
     // Utility expenses
-    await prisma.transaction.create({
+    prisma.transaction.create({
       data: {
         propertyId: properties[3].id,
         type: 'Expense',
@@ -532,7 +532,7 @@ async function seedTransactions(properties: any[], leases: any[]) {
     }),
 
     // Insurance expenses
-    await prisma.transaction.create({
+    prisma.transaction.create({
       data: {
         propertyId: properties[0].id,
         type: 'Expense',
@@ -542,7 +542,7 @@ async function seedTransactions(properties: any[], leases: any[]) {
         description: 'Annual building insurance premium',
       },
     }),
-    await prisma.transaction.create({
+    prisma.transaction.create({
       data: {
         propertyId: properties[1].id,
         type: 'Expense',
@@ -554,7 +554,7 @@ async function seedTransactions(properties: any[], leases: any[]) {
     }),
 
     // Property tax
-    await prisma.transaction.create({
+    prisma.transaction.create({
       data: {
         propertyId: properties[2].id,
         type: 'Expense',
@@ -566,7 +566,7 @@ async function seedTransactions(properties: any[], leases: any[]) {
     }),
 
     // Management fees
-    await prisma.transaction.create({
+    prisma.transaction.create({
       data: {
         propertyId: properties[5].id,
         type: 'Expense',
@@ -578,7 +578,7 @@ async function seedTransactions(properties: any[], leases: any[]) {
     }),
 
     // Cleaning and gardening
-    await prisma.transaction.create({
+    prisma.transaction.create({
       data: {
         propertyId: properties[3].id,
         type: 'Expense',
@@ -588,7 +588,7 @@ async function seedTransactions(properties: any[], leases: any[]) {
         description: 'Deep clean after tenant move-out',
       },
     }),
-    await prisma.transaction.create({
+    prisma.transaction.create({
       data: {
         propertyId: properties[1].id,
         type: 'Expense',
@@ -600,7 +600,7 @@ async function seedTransactions(properties: any[], leases: any[]) {
     }),
 
     // More rent payments
-    await prisma.transaction.create({
+    prisma.transaction.create({
       data: {
         propertyId: properties[4].id,
         leaseId: leases[4].id,
@@ -611,7 +611,7 @@ async function seedTransactions(properties: any[], leases: any[]) {
         description: 'Monthly rent - January 2024',
       },
     }),
-    await prisma.transaction.create({
+    prisma.transaction.create({
       data: {
         propertyId: properties[5].id,
         leaseId: leases[5].id,
@@ -622,13 +622,13 @@ async function seedTransactions(properties: any[], leases: any[]) {
         description: 'Monthly rent - January 2024',
       },
     }),
-  );
+  ]);
 
   console.log(`✅ Created ${transactions.length} transactions`);
   return transactions;
 }
 
-async function seedEvents(properties: any[]) {
+async function seedEvents(properties: Property[]) {
   console.log('📅 Seeding events...');
 
   const events = await Promise.all([
@@ -801,32 +801,37 @@ async function main() {
     await clearDatabase();
     console.log();
 
-    const users = await seedUsers();
-    console.log();
+    // Wrap all seeding operations in a transaction for atomicity
+    const result = await prisma.$transaction(async () => {
+      const users = await seedUsers();
+      console.log();
 
-    const properties = await seedProperties();
-    console.log();
+      const properties = await seedProperties();
+      console.log();
 
-    const tenants = await seedTenants();
-    console.log();
+      const tenants = await seedTenants();
+      console.log();
 
-    const leases = await seedLeases(properties, tenants);
-    console.log();
+      const leases = await seedLeases(properties, tenants);
+      console.log();
 
-    const transactions = await seedTransactions(properties, leases);
-    console.log();
+      const transactions = await seedTransactions(properties, leases);
+      console.log();
 
-    const events = await seedEvents(properties);
-    console.log();
+      const events = await seedEvents(properties);
+      console.log();
+
+      return { users, properties, tenants, leases, transactions, events };
+    });
 
     console.log('🎉 Database seeded successfully!');
     console.log('\n📊 Summary:');
-    console.log(`   - ${users.length} users`);
-    console.log(`   - ${properties.length} properties`);
-    console.log(`   - ${tenants.length} tenants`);
-    console.log(`   - ${leases.length} leases`);
-    console.log(`   - ${transactions.length} transactions`);
-    console.log(`   - ${events.length} events`);
+    console.log(`   - ${result.users.length} users`);
+    console.log(`   - ${result.properties.length} properties`);
+    console.log(`   - ${result.tenants.length} tenants`);
+    console.log(`   - ${result.leases.length} leases`);
+    console.log(`   - ${result.transactions.length} transactions`);
+    console.log(`   - ${result.events.length} events`);
   } catch (error) {
     console.error('❌ Error seeding database:', error);
     throw error;
