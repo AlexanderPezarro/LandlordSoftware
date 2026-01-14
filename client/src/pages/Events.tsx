@@ -34,6 +34,7 @@ import EventDialog from '../components/events/EventDialog';
 import PropertySelector from '../components/shared/PropertySelector';
 import DateRangePicker from '../components/shared/DateRangePicker';
 import ConfirmDialog from '../components/shared/ConfirmDialog';
+import EventBadge from '../components/shared/EventBadge';
 
 const locales = {
   'en-GB': enGB,
@@ -55,7 +56,20 @@ interface CalendarEvent {
   resource: Event;
 }
 
-const EVENT_TYPES = ['Maintenance', 'Inspection', 'Showing', 'Meeting', 'Other'] as const;
+const EVENT_TYPES = ['Inspection', 'Maintenance', 'Repair', 'Meeting', 'Rent Due Date', 'Lease Renewal', 'Viewing'] as const;
+
+interface EventComponentProps {
+  event: CalendarEvent;
+}
+
+const EventComponent: React.FC<EventComponentProps> = ({ event }) => {
+  return (
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, overflow: 'hidden' }}>
+      <EventBadge event={event.resource} />
+      {event.resource.completed && <Typography variant="caption" sx={{ ml: 0.5 }}>✓</Typography>}
+    </Box>
+  );
+};
 
 export const Events: React.FC = () => {
   const theme = useTheme();
@@ -223,14 +237,20 @@ export const Events: React.FC = () => {
       case 'Inspection':
         backgroundColor = theme.palette.warning.light;
         break;
-      case 'Showing':
+      case 'Repair':
+        backgroundColor = theme.palette.error.main;
+        break;
+      case 'Viewing':
         backgroundColor = theme.palette.info.main;
         break;
       case 'Meeting':
         backgroundColor = theme.palette.secondary.main;
         break;
-      case 'Other':
-        backgroundColor = theme.palette.grey[500];
+      case 'Rent Due Date':
+        backgroundColor = theme.palette.success.main;
+        break;
+      case 'Lease Renewal':
+        backgroundColor = theme.palette.primary.main;
         break;
     }
 
@@ -417,6 +437,9 @@ export const Events: React.FC = () => {
               onView={setCalendarView}
               onSelectEvent={handleSelectEvent}
               eventPropGetter={eventStyleGetter}
+              components={{
+                event: EventComponent,
+              }}
               popup
               tooltipAccessor={(event) => event.resource.description || event.title}
             />

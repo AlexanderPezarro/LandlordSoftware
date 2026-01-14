@@ -298,7 +298,7 @@ export interface TransactionSummaryResponse {
 export interface Event {
   id: string;
   propertyId: string;
-  eventType: 'Maintenance' | 'Inspection' | 'Showing' | 'Meeting' | 'Other';
+  eventType: 'Inspection' | 'Maintenance' | 'Repair' | 'Meeting' | 'Rent Due Date' | 'Lease Renewal' | 'Viewing';
   scheduledDate: string;
   completed: boolean;
   completedDate?: string | null;
@@ -309,7 +309,7 @@ export interface Event {
 
 export interface CreateEventRequest {
   propertyId: string;
-  eventType: 'Maintenance' | 'Inspection' | 'Showing' | 'Meeting' | 'Other';
+  eventType: 'Inspection' | 'Maintenance' | 'Repair' | 'Meeting' | 'Rent Due Date' | 'Lease Renewal' | 'Viewing';
   scheduledDate: string;
   completed?: boolean;
   completedDate?: string | null;
@@ -318,7 +318,7 @@ export interface CreateEventRequest {
 
 export interface UpdateEventRequest {
   propertyId?: string;
-  eventType?: 'Maintenance' | 'Inspection' | 'Showing' | 'Meeting' | 'Other';
+  eventType?: 'Inspection' | 'Maintenance' | 'Repair' | 'Meeting' | 'Rent Due Date' | 'Lease Renewal' | 'Viewing';
   scheduledDate?: string;
   completed?: boolean;
   completedDate?: string | null;
@@ -327,7 +327,7 @@ export interface UpdateEventRequest {
 
 export interface EventFilters {
   propertyId?: string;
-  eventType?: 'Maintenance' | 'Inspection' | 'Showing' | 'Meeting' | 'Other';
+  eventType?: 'Inspection' | 'Maintenance' | 'Repair' | 'Meeting' | 'Rent Due Date' | 'Lease Renewal' | 'Viewing';
   completed?: boolean;
   fromDate?: string;
   toDate?: string;

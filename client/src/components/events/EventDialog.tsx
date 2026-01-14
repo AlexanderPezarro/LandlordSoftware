@@ -38,7 +38,7 @@ interface EventDialogProps {
   onEdit?: () => void;
 }
 
-const EVENT_TYPES = ['Maintenance', 'Inspection', 'Showing', 'Meeting', 'Other'] as const;
+const EVENT_TYPES = ['Inspection', 'Maintenance', 'Repair', 'Meeting', 'Rent Due Date', 'Lease Renewal', 'Viewing'] as const;
 
 const EventDialog: React.FC<EventDialogProps> = ({
   open,
@@ -51,7 +51,7 @@ const EventDialog: React.FC<EventDialogProps> = ({
   onEdit,
 }) => {
   const [propertyId, setPropertyId] = useState('');
-  const [eventType, setEventType] = useState<typeof EVENT_TYPES[number]>('Maintenance');
+  const [eventType, setEventType] = useState<typeof EVENT_TYPES[number]>('Inspection');
   const [scheduledDate, setScheduledDate] = useState<Date | null>(new Date());
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
@@ -65,7 +65,7 @@ const EventDialog: React.FC<EventDialogProps> = ({
       setDescription(event.description || '');
     } else if (open && mode === 'create') {
       setPropertyId('');
-      setEventType('Maintenance');
+      setEventType('Inspection');
       setScheduledDate(new Date());
       setDescription('');
     }

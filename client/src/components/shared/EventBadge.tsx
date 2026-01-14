@@ -11,12 +11,16 @@ const EventBadge: React.FC<EventBadgeProps> = ({ event, onClick }) => {
         return 'warning';
       case 'Inspection':
         return 'warning';
-      case 'Showing':
+      case 'Repair':
+        return 'error';
+      case 'Viewing':
         return 'info';
       case 'Meeting':
         return 'secondary';
-      case 'Other':
-        return 'default';
+      case 'Rent Due Date':
+        return 'success';
+      case 'Lease Renewal':
+        return 'primary';
       default:
         return 'default';
     }
