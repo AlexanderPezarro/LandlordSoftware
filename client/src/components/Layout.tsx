@@ -24,6 +24,7 @@ import {
   People as PeopleIcon,
   Description as DescriptionIcon,
   AttachMoney as MoneyIcon,
+  Assessment as AssessmentIcon,
   Event as EventIcon,
   Folder as FolderIcon,
   Logout as LogoutIcon,
@@ -44,6 +45,7 @@ const navigationItems: NavItem[] = [
   { text: 'Tenants', icon: <PeopleIcon />, path: '/tenants' },
   { text: 'Leases', icon: <DescriptionIcon />, path: '/leases' },
   { text: 'Transactions', icon: <MoneyIcon />, path: '/transactions' },
+  { text: 'Reports', icon: <AssessmentIcon />, path: '/reports' },
   { text: 'Events', icon: <EventIcon />, path: '/events' },
   { text: 'Documents', icon: <FolderIcon />, path: '/documents' },
 ];

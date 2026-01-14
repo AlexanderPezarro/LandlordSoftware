@@ -61,6 +61,7 @@
     "express-session": "^1.18.0",
     "helmet": "^7.1.0",
     "multer": "^2.0.2",
+    "recharts": "^3.6.0",
     "zod": "^4.3.5"
   },
   "prisma": {

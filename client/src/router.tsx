@@ -9,6 +9,7 @@ import { PropertyDetail } from './pages/PropertyDetail';
 import { Tenants } from './pages/Tenants';
 import { Leases } from './pages/Leases';
 import { Transactions } from './pages/Transactions';
+import { Reports } from './pages/Reports';
 import { Events } from './pages/Events';
 import { Documents } from './pages/Documents';
 import { NotFound } from './pages/NotFound';
@@ -60,6 +61,10 @@ export const router = createBrowserRouter([
       {
         path: 'transactions',
         element: <Transactions />,
+      },
+      {
+        path: 'reports',
+        element: <Reports />,
       },
       {
         path: 'events',

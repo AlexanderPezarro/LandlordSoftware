@@ -367,3 +367,39 @@ export interface DocumentResponse {
   success: true;
   document: Document;
 }
+
+// Reports Types
+export interface MonthlyPLData {
+  [monthKey: string]: {
+    income: Record<string, number>;
+    expense: Record<string, number>;
+  };
+}
+
+export interface CategoryBreakdown {
+  income: Record<string, number>;
+  expense: Record<string, number>;
+}
+
+export interface PropertyPerformance {
+  propertyId: string;
+  propertyName: string;
+  totalRevenue: number;
+  totalExpenses: number;
+  netIncome: number;
+}
+
+export interface PLReportResponse {
+  success: true;
+  data: MonthlyPLData;
+}
+
+export interface CategoryBreakdownResponse {
+  success: true;
+  data: CategoryBreakdown;
+}
+
+export interface PropertyPerformanceResponse {
+  success: true;
+  data: PropertyPerformance[];
+}

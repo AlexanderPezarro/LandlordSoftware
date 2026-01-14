@@ -181,6 +181,218 @@ router.get('/summary', async (req, res) => {
   }
 });
 
+// GET /api/transactions/reports/profit-loss - P&L Report with monthly breakdown
+router.get('/reports/profit-loss', async (req, res) => {
+  try {
+    const validationResult = TransactionQueryParamsSchema.safeParse(req.query);
+
+    if (!validationResult.success) {
+      return res.status(400).json({
+        success: false,
+        error: validationResult.error.issues[0].message,
+      });
+    }
+
+    const { property_id, from_date, to_date } = validationResult.data;
+
+    // Build filter object
+    const where: any = {};
+
+    if (property_id) {
+      where.propertyId = property_id;
+    }
+
+    if (from_date || to_date) {
+      where.transactionDate = {};
+      if (from_date) {
+        where.transactionDate.gte = from_date;
+      }
+      if (to_date) {
+        where.transactionDate.lte = to_date;
+      }
+    }
+
+    // Get all transactions in the date range
+    const transactions = await prisma.transaction.findMany({
+      where,
+      orderBy: { transactionDate: 'asc' },
+    });
+
+    // Group by month and category
+    const monthlyData: any = {};
+
+    transactions.forEach(t => {
+      const date = new Date(t.transactionDate);
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+
+      if (!monthlyData[monthKey]) {
+        monthlyData[monthKey] = {
+          income: {},
+          expense: {},
+        };
+      }
+
+      const categoryGroup = t.type === 'Income' ? 'income' : 'expense';
+
+      if (!monthlyData[monthKey][categoryGroup][t.category]) {
+        monthlyData[monthKey][categoryGroup][t.category] = 0;
+      }
+
+      monthlyData[monthKey][categoryGroup][t.category] += Number(t.amount);
+    });
+
+    return res.json({
+      success: true,
+      data: monthlyData,
+    });
+  } catch (error) {
+    console.error('Get P&L report error:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'An error occurred while fetching P&L report',
+    });
+  }
+});
+
+// GET /api/transactions/reports/category-breakdown - Category breakdown for charts
+router.get('/reports/category-breakdown', async (req, res) => {
+  try {
+    const validationResult = TransactionQueryParamsSchema.safeParse(req.query);
+
+    if (!validationResult.success) {
+      return res.status(400).json({
+        success: false,
+        error: validationResult.error.issues[0].message,
+      });
+    }
+
+    const { property_id, from_date, to_date } = validationResult.data;
+
+    // Build filter object
+    const where: any = {};
+
+    if (property_id) {
+      where.propertyId = property_id;
+    }
+
+    if (from_date || to_date) {
+      where.transactionDate = {};
+      if (from_date) {
+        where.transactionDate.gte = from_date;
+      }
+      if (to_date) {
+        where.transactionDate.lte = to_date;
+      }
+    }
+
+    // Get all transactions and group by type and category
+    const transactions = await prisma.transaction.findMany({
+      where,
+    });
+
+    const incomeByCategory: Record<string, number> = {};
+    const expenseByCategory: Record<string, number> = {};
+
+    transactions.forEach(t => {
+      const amount = Number(t.amount);
+      if (t.type === 'Income') {
+        incomeByCategory[t.category] = (incomeByCategory[t.category] || 0) + amount;
+      } else {
+        expenseByCategory[t.category] = (expenseByCategory[t.category] || 0) + amount;
+      }
+    });
+
+    return res.json({
+      success: true,
+      data: {
+        income: incomeByCategory,
+        expense: expenseByCategory,
+      },
+    });
+  } catch (error) {
+    console.error('Get category breakdown error:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'An error occurred while fetching category breakdown',
+    });
+  }
+});
+
+// GET /api/transactions/reports/property-performance - Property performance metrics
+router.get('/reports/property-performance', async (req, res) => {
+  try {
+    const validationResult = TransactionQueryParamsSchema.safeParse(req.query);
+
+    if (!validationResult.success) {
+      return res.status(400).json({
+        success: false,
+        error: validationResult.error.issues[0].message,
+      });
+    }
+
+    const { from_date, to_date } = validationResult.data;
+
+    // Build filter object
+    const where: any = {};
+
+    if (from_date || to_date) {
+      where.transactionDate = {};
+      if (from_date) {
+        where.transactionDate.gte = from_date;
+      }
+      if (to_date) {
+        where.transactionDate.lte = to_date;
+      }
+    }
+
+    // Get all transactions with property info
+    const transactions = await prisma.transaction.findMany({
+      where,
+      include: {
+        property: true,
+      },
+    });
+
+    // Group by property
+    const propertyData: Record<string, any> = {};
+
+    transactions.forEach(t => {
+      if (!propertyData[t.propertyId]) {
+        propertyData[t.propertyId] = {
+          propertyId: t.propertyId,
+          propertyName: t.property.name,
+          totalRevenue: 0,
+          totalExpenses: 0,
+        };
+      }
+
+      const amount = Number(t.amount);
+      if (t.type === 'Income') {
+        propertyData[t.propertyId].totalRevenue += amount;
+      } else {
+        propertyData[t.propertyId].totalExpenses += amount;
+      }
+    });
+
+    // Calculate net income for each property
+    const result = Object.values(propertyData).map((p: any) => ({
+      ...p,
+      netIncome: p.totalRevenue - p.totalExpenses,
+    }));
+
+    return res.json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    console.error('Get property performance error:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'An error occurred while fetching property performance',
+    });
+  }
+});
+
 // GET /api/transactions/:id - Get single transaction
 router.get('/:id', async (req, res) => {
   try {
