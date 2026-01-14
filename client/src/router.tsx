@@ -63,7 +63,7 @@ export const router = createBrowserRouter([
         element: <Transactions />,
       },
       {
-        path: 'reports',
+        path: 'finances/reports',
         element: <Reports />,
       },
       {
