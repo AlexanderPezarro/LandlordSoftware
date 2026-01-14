@@ -64,6 +64,8 @@ git clone <repository-url> LandlordSoftware
 cd LandlordSoftware
 ```
 
+**Note**: Replace `<repository-url>` with the actual Git repository URL provided to you. If you don't have a repository URL, you likely received the software as a zip file instead.
+
 If you received the software as a zip file, extract it instead:
 ```bash
 unzip LandlordSoftware.zip
@@ -158,11 +160,16 @@ pwd
 
 The application uses SQLite, which requires no separate database server installation.
 
-### 1. Create Data Directory
+### 1. Create Required Directories
 
 ```bash
+# Create data directory for database files
 mkdir -p data
 chmod 755 data
+
+# Create uploads directory for user-uploaded files
+mkdir -p uploads
+chmod 755 uploads
 ```
 
 ### 2. Initialize the Database
@@ -322,8 +329,8 @@ Type=simple
 User=yourusername
 WorkingDirectory=/home/yourusername/LandlordSoftware
 Environment="NODE_ENV=production"
-Environment="PATH=/home/yourusername/.nvm/versions/node/v20.11.0/bin:/usr/local/bin:/usr/bin:/bin"
-ExecStart=/home/yourusername/.nvm/versions/node/v20.11.0/bin/node dist/server/server/src/server.js
+Environment="PATH=/usr/local/bin:/usr/bin:/bin"
+ExecStart=/usr/bin/node dist/server/server/src/server.js
 Restart=on-failure
 RestartSec=10
 StandardOutput=journal
@@ -337,7 +344,27 @@ WantedBy=multi-user.target
 **IMPORTANT**: Replace the following placeholders:
 - `yourusername` - Your Linux username (find with `whoami`)
 - `/home/yourusername/LandlordSoftware` - Full path to your installation (find with `pwd` in project directory)
-- Node.js path - Find your Node.js path with `which node`
+
+**Finding your Node.js path**:
+
+The `ExecStart` and `Environment PATH` values in the service file need to point to your Node.js binary. The location depends on how you installed Node.js:
+
+```bash
+# Find your Node.js binary path
+which node
+```
+
+Common paths based on installation method:
+- **nvm**: `/home/yourusername/.nvm/versions/node/vX.X.X/bin/node`
+- **apt/system package manager**: `/usr/bin/node`
+- **manual installation**: `/usr/local/bin/node`
+
+Update both the `ExecStart` line and the `Environment PATH` line with your actual Node.js path. For example, if you installed with nvm:
+
+```ini
+Environment="PATH=/home/yourusername/.nvm/versions/node/v20.11.0/bin:/usr/local/bin:/usr/bin:/bin"
+ExecStart=/home/yourusername/.nvm/versions/node/v20.11.0/bin/node dist/server/server/src/server.js
+```
 
 ### 3. Configuration Explanation
 
@@ -846,30 +873,74 @@ df -h
 
 ### Forgot Admin Password
 
-Reset via database:
+**Production-Safe Password Reset** (preserves all data):
 
 ```bash
 # Stop service
 sudo systemctl stop landlord-software
 
-# Access database
-sqlite3 ~/LandlordSoftware/data/landlord.db
-
-# View users
-SELECT id, email FROM users;
-
-# Note: You'll need to generate a new bcrypt hash for the password
-# This requires running Node.js code or using the seed script
-
-# Easier solution: Re-run seed (WARNING: resets all data)
+# Create a password reset script
 cd ~/LandlordSoftware
-npm run db:seed
+cat > reset-password.js << 'EOF'
+const bcrypt = require('bcryptjs');
+const sqlite3 = require('sqlite3').verbose();
+const path = require('path');
+
+const dbPath = path.join(__dirname, 'data/landlord.db');
+const db = new sqlite3.Database(dbPath);
+
+const email = process.argv[2];
+const newPassword = process.argv[3];
+
+if (!email || !newPassword) {
+  console.error('Usage: node reset-password.js <email> <new-password>');
+  process.exit(1);
+}
+
+bcrypt.hash(newPassword, 10, (err, hash) => {
+  if (err) {
+    console.error('Error hashing password:', err);
+    process.exit(1);
+  }
+
+  db.run(
+    'UPDATE users SET password = ? WHERE email = ?',
+    [hash, email],
+    function(err) {
+      if (err) {
+        console.error('Error updating password:', err);
+        process.exit(1);
+      }
+      if (this.changes === 0) {
+        console.error(`No user found with email: ${email}`);
+        process.exit(1);
+      }
+      console.log(`Password updated successfully for ${email}`);
+      db.close();
+    }
+  );
+});
+EOF
+
+# Reset password for admin user
+node reset-password.js admin@example.com newSecurePassword123
+
+# Clean up script
+rm reset-password.js
 
 # Restart service
 sudo systemctl start landlord-software
 ```
 
-For production systems with important data, it's better to add a password reset feature or manually insert a new admin user.
+**Alternative: Re-run seed script** (WARNING: This will delete ALL data including properties, tenants, leases, and transactions):
+
+```bash
+# Only use this on development/testing systems or if you have a backup
+sudo systemctl stop landlord-software
+cd ~/LandlordSoftware
+npm run db:seed
+sudo systemctl start landlord-software
+```
 
 ### Check Application Health
 
@@ -888,7 +959,6 @@ curl http://localhost:3000/api/health
 
 ### Documentation
 
-- **Application Documentation**: See `docs/` directory for API documentation
 - **Node.js**: https://nodejs.org/docs/
 - **Express.js**: https://expressjs.com/
 - **Prisma**: https://www.prisma.io/docs/
