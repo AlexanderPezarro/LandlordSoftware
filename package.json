@@ -15,7 +15,9 @@
     "test:watch": "NODE_OPTIONS=--experimental-vm-modules jest --watch",
     "test:coverage": "NODE_OPTIONS=--experimental-vm-modules jest --coverage",
     "lint": "eslint . --ext .ts,.tsx",
-    "format": "prettier --write \"**/*.{ts,tsx,json,md}\""
+    "format": "prettier --write \"**/*.{ts,tsx,json,md}\"",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:reset": "npm run db:seed"
   },
   "keywords": [
     "landlord",
@@ -60,5 +62,8 @@
     "helmet": "^7.1.0",
     "multer": "^2.0.2",
     "zod": "^4.3.5"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   }
 }
