@@ -75,4 +75,5 @@ export interface PropertySelectorProps {
   value: string; // propertyId or 'all'
   onChange: (value: string) => void;
   includeAllOption?: boolean;
+  disabled?: boolean;
 }

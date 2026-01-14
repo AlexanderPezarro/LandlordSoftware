@@ -146,7 +146,7 @@ export const Events: React.FC = () => {
 
       return {
         id: event.id,
-        title: `${event.eventType}${event.completed ? ' ✓' : ''}`,
+        title: `${event.title}${event.completed ? ' ✓' : ''}`,
         start,
         end,
         resource: event,

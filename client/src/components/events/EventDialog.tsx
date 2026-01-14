@@ -13,6 +13,9 @@ import {
   IconButton,
   Stack,
   Chip,
+  FormControl,
+  FormHelperText,
+  Alert,
 } from '@mui/material';
 import {
   Close as CloseIcon,
@@ -52,24 +55,29 @@ const EventDialog: React.FC<EventDialogProps> = ({
 }) => {
   const [propertyId, setPropertyId] = useState('');
   const [eventType, setEventType] = useState<typeof EVENT_TYPES[number]>('Inspection');
+  const [title, setTitle] = useState('');
   const [scheduledDate, setScheduledDate] = useState<Date | null>(new Date());
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [saveError, setSaveError] = useState<string>('');
 
   useEffect(() => {
     if (open && event && (mode === 'edit' || mode === 'view')) {
       setPropertyId(event.propertyId);
       setEventType(event.eventType);
+      setTitle(event.title || '');
       setScheduledDate(new Date(event.scheduledDate));
       setDescription(event.description || '');
     } else if (open && mode === 'create') {
       setPropertyId('');
       setEventType('Inspection');
+      setTitle('');
       setScheduledDate(new Date());
       setDescription('');
     }
     setErrors({});
+    setSaveError('');
   }, [open, event, mode]);
 
   const validate = () => {
@@ -81,6 +89,10 @@ const EventDialog: React.FC<EventDialogProps> = ({
 
     if (!eventType) {
       newErrors.eventType = 'Please select an event type';
+    }
+
+    if (!title.trim()) {
+      newErrors.title = 'Title is required';
     }
 
     if (!scheduledDate) {
@@ -96,10 +108,12 @@ const EventDialog: React.FC<EventDialogProps> = ({
 
     try {
       setLoading(true);
+      setSaveError('');
 
       const data: CreateEventRequest | UpdateEventRequest = {
         propertyId,
         eventType,
+        title: title.trim(),
         scheduledDate: scheduledDate!.toISOString(),
         description: description.trim() || null,
       };
@@ -108,6 +122,8 @@ const EventDialog: React.FC<EventDialogProps> = ({
       onClose();
     } catch (error) {
       console.error('Error saving event:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to save event. Please try again.';
+      setSaveError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -143,6 +159,12 @@ const EventDialog: React.FC<EventDialogProps> = ({
         </DialogTitle>
 
         <DialogContent dividers>
+          {saveError && (
+            <Alert severity="error" sx={{ mb: 2 }} onClose={() => setSaveError('')}>
+              {saveError}
+            </Alert>
+          )}
+
           {event && mode === 'view' && (
             <Box sx={{ mb: 2 }}>
               <Stack direction="row" spacing={1} alignItems="center">
@@ -162,16 +184,17 @@ const EventDialog: React.FC<EventDialogProps> = ({
           )}
 
           <Stack spacing={3}>
-            <PropertySelector
-              value={propertyId}
-              onChange={setPropertyId}
-              includeAllOption={false}
-            />
-            {errors.propertyId && (
-              <Typography variant="caption" color="error">
-                {errors.propertyId}
-              </Typography>
-            )}
+            <FormControl fullWidth error={!!errors.propertyId}>
+              <PropertySelector
+                value={propertyId}
+                onChange={setPropertyId}
+                includeAllOption={false}
+                disabled={isViewMode}
+              />
+              {errors.propertyId && (
+                <FormHelperText>{errors.propertyId}</FormHelperText>
+              )}
+            </FormControl>
 
             <TextField
               select
@@ -189,6 +212,18 @@ const EventDialog: React.FC<EventDialogProps> = ({
                 </MenuItem>
               ))}
             </TextField>
+
+            <TextField
+              fullWidth
+              label="Title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              disabled={isViewMode}
+              error={!!errors.title}
+              helperText={errors.title}
+              placeholder="Enter a title for this event"
+              required
+            />
 
             <DateTimePicker
               label="Scheduled Date & Time"

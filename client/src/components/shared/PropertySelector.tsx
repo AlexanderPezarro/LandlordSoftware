@@ -15,6 +15,7 @@ const PropertySelector: React.FC<PropertySelectorProps> = ({
   value,
   onChange,
   includeAllOption = true,
+  disabled = false,
 }) => {
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,7 +58,7 @@ const PropertySelector: React.FC<PropertySelectorProps> = ({
         value={value}
         label="Property"
         onChange={handleChange}
-        disabled={loading || !!error}
+        disabled={disabled || loading || !!error}
       >
         {loading ? (
           <MenuItem disabled>

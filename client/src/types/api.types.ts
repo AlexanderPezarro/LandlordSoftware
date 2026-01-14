@@ -299,6 +299,7 @@ export interface Event {
   id: string;
   propertyId: string;
   eventType: 'Inspection' | 'Maintenance' | 'Repair' | 'Meeting' | 'Rent Due Date' | 'Lease Renewal' | 'Viewing';
+  title: string;
   scheduledDate: string;
   completed: boolean;
   completedDate?: string | null;
@@ -310,6 +311,7 @@ export interface Event {
 export interface CreateEventRequest {
   propertyId: string;
   eventType: 'Inspection' | 'Maintenance' | 'Repair' | 'Meeting' | 'Rent Due Date' | 'Lease Renewal' | 'Viewing';
+  title: string;
   scheduledDate: string;
   completed?: boolean;
   completedDate?: string | null;
@@ -319,6 +321,7 @@ export interface CreateEventRequest {
 export interface UpdateEventRequest {
   propertyId?: string;
   eventType?: 'Inspection' | 'Maintenance' | 'Repair' | 'Meeting' | 'Rent Due Date' | 'Lease Renewal' | 'Viewing';
+  title?: string;
   scheduledDate?: string;
   completed?: boolean;
   completedDate?: string | null;
