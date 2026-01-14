@@ -5,6 +5,7 @@ import { Layout } from './components/Layout';
 import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
 import { Properties } from './pages/Properties';
+import { PropertyDetail } from './pages/PropertyDetail';
 import { Tenants } from './pages/Tenants';
 import { Leases } from './pages/Leases';
 import { Transactions } from './pages/Transactions';
@@ -43,6 +44,10 @@ export const router = createBrowserRouter([
       {
         path: 'properties',
         element: <Properties />,
+      },
+      {
+        path: 'properties/:id',
+        element: <PropertyDetail />,
       },
       {
         path: 'tenants',
