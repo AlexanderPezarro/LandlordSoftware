@@ -15,6 +15,7 @@ import {
   ListItemText,
   Divider,
   Chip,
+  Pagination,
 } from '@mui/material';
 import {
   Home as HomeIcon,
@@ -58,6 +59,8 @@ export const Dashboard: React.FC = () => {
     recentTransactions: [],
     upcomingEvents: [],
   });
+  const [transactionPage, setTransactionPage] = useState(1);
+  const transactionsPerPage = 10;
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -94,8 +97,8 @@ export const Dashboard: React.FC = () => {
           .sort((a, b) => new Date(a.scheduledDate).getTime() - new Date(b.scheduledDate).getTime())
           .slice(0, 5);
 
-        // Take first 10 recent transactions (already sorted by date desc in API)
-        const recentTransactions = transactionsRes.data.transactions.slice(0, 10);
+        // Store all transactions for pagination (already sorted by date desc in API)
+        const recentTransactions = transactionsRes.data.transactions;
 
         setData({
           propertiesCount: propertiesRes.data.properties.length,
@@ -132,6 +135,17 @@ export const Dashboard: React.FC = () => {
     });
   };
 
+  // Calculate paginated transactions
+  const totalTransactionPages = Math.ceil(data.recentTransactions.length / transactionsPerPage);
+  const paginatedTransactions = data.recentTransactions.slice(
+    (transactionPage - 1) * transactionsPerPage,
+    transactionPage * transactionsPerPage
+  );
+
+  const handleTransactionPageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
+    setTransactionPage(value);
+  };
+
   if (loading) {
     return (
       <Container maxWidth="lg">
@@ -163,6 +177,7 @@ export const Dashboard: React.FC = () => {
         </Typography>
 
         {/* Overview Cards */}
+        {/* Note: Using CSS Grid instead of MUI Grid for MUI v7 compatibility (Grid component deprecated in v7) */}
         <Box
           sx={{
             display: 'grid',
@@ -357,59 +372,71 @@ export const Dashboard: React.FC = () => {
                 No recent transactions
               </Typography>
             ) : (
-              <List>
-                {data.recentTransactions.map((transaction, index) => (
-                  <React.Fragment key={transaction.id}>
-                    {index > 0 && <Divider />}
-                    <ListItem sx={{ px: 0 }}>
-                      <ListItemText
-                        primary={
-                          <Box
-                            sx={{
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              alignItems: 'center',
-                            }}
-                          >
-                            <Box>
-                              <Chip
-                                label={transaction.type}
-                                size="small"
-                                color={transaction.type === 'Income' ? 'success' : 'error'}
-                                sx={{ mr: 1 }}
-                              />
-                              <Typography variant="body2" component="span">
-                                {transaction.category}
-                              </Typography>
-                            </Box>
-                            <Typography
-                              variant="body1"
-                              fontWeight="bold"
+              <>
+                <List>
+                  {paginatedTransactions.map((transaction, index) => (
+                    <React.Fragment key={transaction.id}>
+                      {index > 0 && <Divider />}
+                      <ListItem sx={{ px: 0 }}>
+                        <ListItemText
+                          primary={
+                            <Box
                               sx={{
-                                color:
-                                  transaction.type === 'Income' ? 'success.main' : 'error.main',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
                               }}
                             >
-                              {transaction.type === 'Income' ? '+' : '-'}
-                              {formatCurrency(transaction.amount)}
-                            </Typography>
-                          </Box>
-                        }
-                        secondary={
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5 }}>
-                            <Typography variant="caption">
-                              {transaction.description || 'No description'}
-                            </Typography>
-                            <Typography variant="caption">
-                              {formatDate(transaction.transactionDate)}
-                            </Typography>
-                          </Box>
-                        }
-                      />
-                    </ListItem>
-                  </React.Fragment>
-                ))}
-              </List>
+                              <Box>
+                                <Chip
+                                  label={transaction.type}
+                                  size="small"
+                                  color={transaction.type === 'Income' ? 'success' : 'error'}
+                                  sx={{ mr: 1 }}
+                                />
+                                <Typography variant="body2" component="span">
+                                  {transaction.category}
+                                </Typography>
+                              </Box>
+                              <Typography
+                                variant="body1"
+                                fontWeight="bold"
+                                sx={{
+                                  color:
+                                    transaction.type === 'Income' ? 'success.main' : 'error.main',
+                                }}
+                              >
+                                {transaction.type === 'Income' ? '+' : '-'}
+                                {formatCurrency(transaction.amount)}
+                              </Typography>
+                            </Box>
+                          }
+                          secondary={
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5 }}>
+                              <Typography variant="caption">
+                                {transaction.description || 'No description'}
+                              </Typography>
+                              <Typography variant="caption">
+                                {formatDate(transaction.transactionDate)}
+                              </Typography>
+                            </Box>
+                          }
+                        />
+                      </ListItem>
+                    </React.Fragment>
+                  ))}
+                </List>
+                {totalTransactionPages > 1 && (
+                  <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+                    <Pagination
+                      count={totalTransactionPages}
+                      page={transactionPage}
+                      onChange={handleTransactionPageChange}
+                      color="primary"
+                    />
+                  </Box>
+                )}
+              </>
             )}
           </Paper>
         </Box>
