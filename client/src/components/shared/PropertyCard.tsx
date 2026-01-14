@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, Typography, Chip, Box } from '@mui/material';
 import { PropertyCardProps } from '../../types/component.types';
 
-const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
+const PropertyCard: React.FC<PropertyCardProps> = ({ property, onClick }) => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Vacant':
@@ -23,7 +23,19 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
   const address = `${property.street}, ${property.city}, ${property.state} ${property.zipCode}`;
 
   return (
-    <Card sx={{ height: '100%' }}>
+    <Card
+      elevation={2}
+      onClick={onClick}
+      sx={{
+        height: '100%',
+        cursor: onClick ? 'pointer' : 'default',
+        transition: 'elevation 0.2s',
+        '&:hover': onClick ? {
+          elevation: 4,
+          boxShadow: 4,
+        } : {},
+      }}
+    >
       <CardContent>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
           <Typography variant="h6" component="div" sx={{ fontWeight: 600 }}>
@@ -36,8 +48,12 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
           />
         </Box>
 
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
           {address}
+        </Typography>
+
+        <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
+          {property.propertyType}
         </Typography>
 
         <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>

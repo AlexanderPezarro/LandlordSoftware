@@ -7,12 +7,14 @@ export interface PropertyWithLease extends Property {
 
 export interface PropertyCardProps {
   property: PropertyWithLease;
+  onClick?: () => void;
 }
 
 // TenantCard Types
 export interface TenantCardProps {
   tenant: Tenant;
   currentProperty?: Property;
+  onClick?: () => void;
 }
 
 // TransactionRow Types
@@ -25,6 +27,7 @@ export interface TransactionRowProps {
 // EventBadge Types
 export interface EventBadgeProps {
   event: Event;
+  onClick?: () => void;
 }
 
 // FileUpload Types

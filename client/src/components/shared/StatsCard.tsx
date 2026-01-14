@@ -5,7 +5,7 @@ import { StatsCardProps } from '../../types/component.types';
 
 const StatsCard: React.FC<StatsCardProps> = ({ title, value, icon, color, trend }) => {
   return (
-    <Card sx={{ height: '100%' }}>
+    <Card sx={{ height: '100%', minHeight: 120 }}>
       <CardContent>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <Box sx={{ flex: 1 }}>

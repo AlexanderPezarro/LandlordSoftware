@@ -1,5 +1,6 @@
 import React from 'react';
-import { Box, Button, Stack, useMediaQuery, useTheme } from '@mui/material';
+import { Box, IconButton, Stack, useMediaQuery, useTheme } from '@mui/material';
+import { Clear as ClearIcon } from '@mui/icons-material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -65,14 +66,14 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
             }}
           />
           {(startDate || endDate) && (
-            <Button
+            <IconButton
               onClick={handleClear}
-              variant="outlined"
               size="small"
-              sx={{ minWidth: 'fit-content' }}
+              aria-label="Clear dates"
+              sx={{ alignSelf: isMobile ? 'flex-end' : 'center' }}
             >
-              Clear
-            </Button>
+              <ClearIcon />
+            </IconButton>
           )}
         </Stack>
       </Box>

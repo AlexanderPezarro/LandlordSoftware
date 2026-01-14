@@ -3,11 +3,11 @@ import { Card, CardContent, Typography, Chip, Box } from '@mui/material';
 import { ContactEmergency as EmergencyIcon } from '@mui/icons-material';
 import { TenantCardProps } from '../../types/component.types';
 
-const TenantCard: React.FC<TenantCardProps> = ({ tenant, currentProperty }) => {
+const TenantCard: React.FC<TenantCardProps> = ({ tenant, currentProperty, onClick }) => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Prospective':
-        return 'default';
+        return 'info';
       case 'Active':
         return 'success';
       case 'Former':
@@ -20,7 +20,19 @@ const TenantCard: React.FC<TenantCardProps> = ({ tenant, currentProperty }) => {
   const fullName = `${tenant.firstName} ${tenant.lastName}`;
 
   return (
-    <Card sx={{ height: '100%' }}>
+    <Card
+      elevation={2}
+      onClick={onClick}
+      sx={{
+        height: '100%',
+        cursor: onClick ? 'pointer' : 'default',
+        transition: 'elevation 0.2s',
+        '&:hover': onClick ? {
+          elevation: 4,
+          boxShadow: 4,
+        } : {},
+      }}
+    >
       <CardContent>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
           <Typography variant="h6" component="div" sx={{ fontWeight: 600 }}>

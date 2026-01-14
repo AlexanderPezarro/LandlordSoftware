@@ -66,6 +66,8 @@ const PropertySelector: React.FC<PropertySelectorProps> = ({
           </MenuItem>
         ) : error ? (
           <MenuItem disabled>{error}</MenuItem>
+        ) : properties.length === 0 ? (
+          <MenuItem disabled>No properties available</MenuItem>
         ) : (
           <>
             {includeAllOption && (
@@ -73,7 +75,7 @@ const PropertySelector: React.FC<PropertySelectorProps> = ({
             )}
             {properties.map((property) => (
               <MenuItem key={property.id} value={property.id}>
-                {property.name} - {property.street}, {property.city}
+                {property.name} - {property.street}, {property.zipCode}
               </MenuItem>
             ))}
           </>

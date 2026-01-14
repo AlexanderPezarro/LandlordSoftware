@@ -4,7 +4,7 @@ import { CheckCircle as CheckIcon } from '@mui/icons-material';
 import { format } from 'date-fns';
 import { EventBadgeProps } from '../../types/component.types';
 
-const EventBadge: React.FC<EventBadgeProps> = ({ event }) => {
+const EventBadge: React.FC<EventBadgeProps> = ({ event, onClick }) => {
   const getEventColor = (eventType: string) => {
     switch (eventType) {
       case 'Maintenance':
@@ -41,6 +41,7 @@ const EventBadge: React.FC<EventBadgeProps> = ({ event }) => {
         color={getEventColor(event.eventType)}
         size="small"
         icon={event.completed ? <CheckIcon /> : undefined}
+        onClick={onClick}
       />
     </Tooltip>
   );
