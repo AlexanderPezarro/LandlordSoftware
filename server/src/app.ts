@@ -1,5 +1,6 @@
 import express from 'express';
 import helmet from 'helmet';
+import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import session from 'express-session';
 import SqliteStore from 'better-sqlite3-session-store';
@@ -18,8 +19,18 @@ import transactionsRouter from './routes/transactions.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Determine project root (works in both dev and production)
+// In dev: server/src -> ../..
+// In production: dist/server/server/src -> ../../../..
+const projectRoot = process.env.NODE_ENV === 'production'
+  ? path.join(__dirname, '../../../..')
+  : path.join(__dirname, '../..');
+
 export function createApp() {
   const app = express();
+
+  // Compression middleware for production
+  app.use(compression());
 
   // Security middleware
   app.use(helmet());
@@ -34,7 +45,7 @@ export function createApp() {
 
   // Session middleware with SQLite store
   const SessionStore = SqliteStore(session);
-  const sessionDb = new Database(path.join(__dirname, '../../data/sessions.db'));
+  const sessionDb = new Database(path.join(projectRoot, 'data/sessions.db'));
 
   app.use(
     session({
@@ -61,7 +72,7 @@ export function createApp() {
   app.use(express.urlencoded({ extended: true }));
 
   // Static file serving for uploads
-  app.use('/uploads', express.static(path.join(__dirname, '../../uploads')));
+  app.use('/uploads', express.static(path.join(projectRoot, 'uploads')));
 
   // Health check endpoint
   app.get('/api/health', (_req, res) => {
@@ -88,6 +99,19 @@ export function createApp() {
 
   // Transactions routes
   app.use('/api/transactions', transactionsRouter);
+
+  // Serve static files from React build in production
+  if (process.env.NODE_ENV === 'production') {
+    const clientBuildPath = path.join(projectRoot, 'client/dist');
+
+    // Serve static files
+    app.use(express.static(clientBuildPath));
+
+    // SPA fallback: serve index.html for all non-API routes
+    app.get('*', (_req, res) => {
+      res.sendFile(path.join(clientBuildPath, 'index.html'));
+    });
+  }
 
   return app;
 }

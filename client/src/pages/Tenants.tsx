@@ -18,7 +18,7 @@ import {
 import { Add as AddIcon } from '@mui/icons-material';
 import { tenantsService } from '../services/api/tenants.service';
 import { leasesService } from '../services/api/leases.service';
-import type { Tenant, CreateTenantRequest, UpdateTenantRequest, Lease, Property } from '../types/api.types';
+import type { Tenant, CreateTenantRequest, UpdateTenantRequest, Property } from '../types/api.types';
 import { ApiError } from '../types/api.types';
 import TenantCard from '../components/shared/TenantCard';
 import ConfirmDialog from '../components/shared/ConfirmDialog';
@@ -209,10 +209,10 @@ export const Tenants: React.FC = () => {
       // Prepare data, converting empty strings to null for optional fields
       const dataToSubmit = {
         ...formData,
-        phone: formData.phone.trim() || null,
-        emergencyContactName: formData.emergencyContactName.trim() || null,
-        emergencyContactPhone: formData.emergencyContactPhone.trim() || null,
-        notes: formData.notes.trim() || null,
+        phone: formData.phone?.trim() || null,
+        emergencyContactName: formData.emergencyContactName?.trim() || null,
+        emergencyContactPhone: formData.emergencyContactPhone?.trim() || null,
+        notes: formData.notes?.trim() || null,
       };
 
       if (dialogMode === 'create') {

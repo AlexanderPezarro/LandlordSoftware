@@ -10,6 +10,7 @@
     "outDir": "./dist",
     "rootDir": ".",
     "removeComments": true,
+    "sourceMap": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
