@@ -504,6 +504,7 @@ export const Leases: React.FC = () => {
                       color="primary"
                       onClick={(e) => handleEditClick(lease, e)}
                       sx={{ minWidth: 'auto', p: 1 }}
+                      aria-label="Edit lease"
                     >
                       <EditIcon fontSize="small" />
                     </Button>
@@ -513,6 +514,7 @@ export const Leases: React.FC = () => {
                       color="error"
                       onClick={(e) => handleDeleteClick(lease, e)}
                       sx={{ minWidth: 'auto', p: 1 }}
+                      aria-label="Delete lease"
                     >
                       <DeleteIcon fontSize="small" />
                     </Button>
