@@ -78,11 +78,11 @@ function a11yProps(index: number) {
   };
 }
 
-type PropertyStatus = 'Vacant' | 'Occupied' | 'For Sale';
-type PropertyType = 'Single Family' | 'Multi-Family' | 'Condo' | 'Townhouse' | 'Apartment';
+type PropertyStatus = 'Available' | 'Occupied' | 'Under Maintenance' | 'For Sale';
+type PropertyType = 'House' | 'Flat' | 'Studio' | 'Bungalow' | 'Terraced' | 'Semi-Detached' | 'Detached' | 'Maisonette' | 'Commercial';
 
-const PROPERTY_STATUSES: PropertyStatus[] = ['Vacant', 'Occupied', 'For Sale'];
-const PROPERTY_TYPES: PropertyType[] = ['Single Family', 'Multi-Family', 'Condo', 'Townhouse', 'Apartment'];
+const PROPERTY_STATUSES: PropertyStatus[] = ['Available', 'Occupied', 'Under Maintenance', 'For Sale'];
+const PROPERTY_TYPES: PropertyType[] = ['House', 'Flat', 'Studio', 'Bungalow', 'Terraced', 'Semi-Detached', 'Detached', 'Maisonette', 'Commercial'];
 
 export const PropertyDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -152,17 +152,12 @@ export const PropertyDetail: React.FC = () => {
       name: property.name,
       street: property.street,
       city: property.city,
-      state: property.state,
-      zipCode: property.zipCode,
+      county: property.county,
+      postcode: property.postcode,
       propertyType: property.propertyType,
-      numberOfUnits: property.numberOfUnits,
-      numberOfBedrooms: property.numberOfBedrooms,
-      numberOfBathrooms: property.numberOfBathrooms,
-      squareFootage: property.squareFootage,
-      yearBuilt: property.yearBuilt,
       status: property.status,
+      purchaseDate: property.purchaseDate,
       purchasePrice: property.purchasePrice,
-      currentValue: property.currentValue,
       notes: property.notes,
     });
     setFormErrors({});
@@ -180,18 +175,6 @@ export const PropertyDetail: React.FC = () => {
 
     if (formData.name !== undefined && !formData.name.trim()) {
       errors.name = 'Property name is required';
-    }
-
-    if (formData.numberOfUnits !== undefined && formData.numberOfUnits < 1) {
-      errors.numberOfUnits = 'Number of units must be at least 1';
-    }
-
-    if (formData.numberOfBedrooms !== undefined && formData.numberOfBedrooms < 0) {
-      errors.numberOfBedrooms = 'Number of bedrooms must be 0 or greater';
-    }
-
-    if (formData.numberOfBathrooms !== undefined && formData.numberOfBathrooms < 0) {
-      errors.numberOfBathrooms = 'Number of bathrooms must be 0 or greater';
     }
 
     setFormErrors(errors);
@@ -215,7 +198,7 @@ export const PropertyDetail: React.FC = () => {
 
   const formatCurrency = (amount: number | null | undefined) => {
     if (amount === null || amount === undefined) return 'N/A';
-    return `$${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    return `£${amount.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
   const formatDate = (dateString: string) => {
@@ -228,14 +211,18 @@ export const PropertyDetail: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Vacant':
+      case 'Available':
         return 'warning';
       case 'Occupied':
         return 'success';
       case 'For Sale':
         return 'info';
+      case 'Under Maintenance':
+        return 'error';
       case 'Active':
         return 'success';
+      case 'Draft':
+        return 'default';
       case 'Expired':
         return 'warning';
       case 'Terminated':
@@ -282,7 +269,7 @@ export const PropertyDetail: React.FC = () => {
                 {property.name}
               </Typography>
               <Typography variant="body1" color="text.secondary" gutterBottom>
-                {property.street}, {property.city}, {property.state} {property.zipCode}
+                {property.street}, {property.city}, {property.county} {property.postcode}
               </Typography>
               <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
                 <Chip label={property.status} color={getStatusColor(property.status) as any} size="small" />
@@ -324,47 +311,15 @@ export const PropertyDetail: React.FC = () => {
               </Box>
               <Box>
                 <Typography variant="body2" color="text.secondary">
-                  Number of Units
+                  Purchase Date
                 </Typography>
-                <Typography variant="body1">{property.numberOfUnits}</Typography>
-              </Box>
-              <Box>
-                <Typography variant="body2" color="text.secondary">
-                  Bedrooms
-                </Typography>
-                <Typography variant="body1">{property.numberOfBedrooms}</Typography>
-              </Box>
-              <Box>
-                <Typography variant="body2" color="text.secondary">
-                  Bathrooms
-                </Typography>
-                <Typography variant="body1">{property.numberOfBathrooms}</Typography>
-              </Box>
-              <Box>
-                <Typography variant="body2" color="text.secondary">
-                  Square Footage
-                </Typography>
-                <Typography variant="body1">
-                  {property.squareFootage ? `${property.squareFootage.toLocaleString()} sq ft` : 'N/A'}
-                </Typography>
-              </Box>
-              <Box>
-                <Typography variant="body2" color="text.secondary">
-                  Year Built
-                </Typography>
-                <Typography variant="body1">{property.yearBuilt || 'N/A'}</Typography>
+                <Typography variant="body1">{property.purchaseDate ? formatDate(property.purchaseDate) : 'N/A'}</Typography>
               </Box>
               <Box>
                 <Typography variant="body2" color="text.secondary">
                   Purchase Price
                 </Typography>
                 <Typography variant="body1">{formatCurrency(property.purchasePrice)}</Typography>
-              </Box>
-              <Box>
-                <Typography variant="body2" color="text.secondary">
-                  Current Value
-                </Typography>
-                <Typography variant="body1">{formatCurrency(property.currentValue)}</Typography>
               </Box>
             </Box>
 
@@ -409,8 +364,8 @@ export const PropertyDetail: React.FC = () => {
                       </TableCell>
                       <TableCell>{formatDate(lease.startDate)}</TableCell>
                       <TableCell>{lease.endDate ? formatDate(lease.endDate) : 'N/A'}</TableCell>
-                      <TableCell>{formatCurrency(lease.rentAmount)}</TableCell>
-                      <TableCell>{formatCurrency(lease.securityDeposit)}</TableCell>
+                      <TableCell>{formatCurrency(lease.monthlyRent)}</TableCell>
+                      <TableCell>{formatCurrency(lease.securityDepositAmount)}</TableCell>
                       <TableCell>
                         <Chip label={lease.status} color={getStatusColor(lease.status) as any} size="small" />
                       </TableCell>
@@ -544,15 +499,15 @@ export const PropertyDetail: React.FC = () => {
                 onChange={(e) => setFormData({ ...formData, city: e.target.value })}
               />
               <TextField
-                label="State"
-                value={formData.state || ''}
-                onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                label="County"
+                value={formData.county || ''}
+                onChange={(e) => setFormData({ ...formData, county: e.target.value })}
               />
             </Box>
             <TextField
-              label="Zip Code"
-              value={formData.zipCode || ''}
-              onChange={(e) => setFormData({ ...formData, zipCode: e.target.value })}
+              label="Postcode"
+              value={formData.postcode || ''}
+              onChange={(e) => setFormData({ ...formData, postcode: e.target.value })}
               fullWidth
             />
             <TextField
@@ -583,6 +538,15 @@ export const PropertyDetail: React.FC = () => {
             </TextField>
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
               <TextField
+                label="Purchase Date"
+                type="date"
+                value={formData.purchaseDate ?? property.purchaseDate ?? ''}
+                onChange={(e) =>
+                  setFormData({ ...formData, purchaseDate: e.target.value || null })
+                }
+                InputLabelProps={{ shrink: true }}
+              />
+              <TextField
                 label="Purchase Price"
                 type="number"
                 value={formData.purchasePrice ?? property.purchasePrice ?? ''}
@@ -590,18 +554,7 @@ export const PropertyDetail: React.FC = () => {
                   setFormData({ ...formData, purchasePrice: e.target.value ? parseFloat(e.target.value) : null })
                 }
                 InputProps={{
-                  startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                }}
-              />
-              <TextField
-                label="Current Value"
-                type="number"
-                value={formData.currentValue ?? property.currentValue ?? ''}
-                onChange={(e) =>
-                  setFormData({ ...formData, currentValue: e.target.value ? parseFloat(e.target.value) : null })
-                }
-                InputProps={{
-                  startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                  startAdornment: <InputAdornment position="start">£</InputAdornment>,
                 }}
               />
             </Box>

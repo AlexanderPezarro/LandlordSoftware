@@ -5,12 +5,14 @@ import { PropertyCardProps } from '../../types/component.types';
 const PropertyCard: React.FC<PropertyCardProps> = ({ property, onClick }) => {
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Vacant':
+      case 'Available':
         return 'warning';
       case 'For Sale':
         return 'info';
       case 'Occupied':
         return 'success';
+      case 'Under Maintenance':
+        return 'error';
       default:
         return 'default';
     }
@@ -20,7 +22,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onClick }) => {
     return `£${amount.toLocaleString('en-GB')}/month`;
   };
 
-  const address = `${property.street}, ${property.city}, ${property.state} ${property.zipCode}`;
+  const address = `${property.street}, ${property.city}, ${property.county} ${property.postcode}`;
 
   return (
     <Card
@@ -59,7 +61,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onClick }) => {
         <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>
           {property.activeLease ? (
             <Typography variant="body2" sx={{ fontWeight: 500, color: 'success.main' }}>
-              {formatRent(property.activeLease.rentAmount)}
+              {formatRent(property.activeLease.monthlyRent)}
             </Typography>
           ) : (
             <Typography variant="body2" color="text.secondary">

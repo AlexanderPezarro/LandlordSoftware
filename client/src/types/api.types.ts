@@ -48,17 +48,12 @@ export interface Property {
   name: string;
   street: string;
   city: string;
-  state: string;
-  zipCode: string;
-  propertyType: 'Single Family' | 'Multi-Family' | 'Condo' | 'Townhouse' | 'Apartment';
-  numberOfUnits: number;
-  numberOfBedrooms: number;
-  numberOfBathrooms: number;
-  squareFootage?: number | null;
-  yearBuilt?: number | null;
-  status: 'Vacant' | 'Occupied' | 'For Sale';
+  county: string;
+  postcode: string;
+  propertyType: 'House' | 'Flat' | 'Studio' | 'Bungalow' | 'Terraced' | 'Semi-Detached' | 'Detached' | 'Maisonette' | 'Commercial';
+  purchaseDate?: string | null;
   purchasePrice?: number | null;
-  currentValue?: number | null;
+  status: 'Available' | 'Occupied' | 'Under Maintenance' | 'For Sale';
   notes?: string | null;
   createdAt: string;
   updatedAt: string;
@@ -68,17 +63,12 @@ export interface CreatePropertyRequest {
   name: string;
   street: string;
   city: string;
-  state: string;
-  zipCode: string;
-  propertyType: 'Single Family' | 'Multi-Family' | 'Condo' | 'Townhouse' | 'Apartment';
-  numberOfUnits: number;
-  numberOfBedrooms: number;
-  numberOfBathrooms: number;
-  squareFootage?: number | null;
-  yearBuilt?: number | null;
-  status: 'Vacant' | 'Occupied' | 'For Sale';
+  county: string;
+  postcode: string;
+  propertyType: 'House' | 'Flat' | 'Studio' | 'Bungalow' | 'Terraced' | 'Semi-Detached' | 'Detached' | 'Maisonette' | 'Commercial';
+  purchaseDate?: string | null;
   purchasePrice?: number | null;
-  currentValue?: number | null;
+  status: 'Available' | 'Occupied' | 'Under Maintenance' | 'For Sale';
   notes?: string | null;
 }
 
@@ -86,23 +76,18 @@ export interface UpdatePropertyRequest {
   name?: string;
   street?: string;
   city?: string;
-  state?: string;
-  zipCode?: string;
-  propertyType?: 'Single Family' | 'Multi-Family' | 'Condo' | 'Townhouse' | 'Apartment';
-  numberOfUnits?: number;
-  numberOfBedrooms?: number;
-  numberOfBathrooms?: number;
-  squareFootage?: number | null;
-  yearBuilt?: number | null;
-  status?: 'Vacant' | 'Occupied' | 'For Sale';
+  county?: string;
+  postcode?: string;
+  propertyType?: 'House' | 'Flat' | 'Studio' | 'Bungalow' | 'Terraced' | 'Semi-Detached' | 'Detached' | 'Maisonette' | 'Commercial';
+  purchaseDate?: string | null;
   purchasePrice?: number | null;
-  currentValue?: number | null;
+  status?: 'Available' | 'Occupied' | 'Under Maintenance' | 'For Sale';
   notes?: string | null;
 }
 
 export interface PropertyFilters {
-  status?: 'Vacant' | 'Occupied' | 'For Sale';
-  propertyType?: 'Single Family' | 'Multi-Family' | 'Condo' | 'Townhouse' | 'Apartment';
+  status?: 'Available' | 'Occupied' | 'Under Maintenance' | 'For Sale';
+  propertyType?: 'House' | 'Flat' | 'Studio' | 'Bungalow' | 'Terraced' | 'Semi-Detached' | 'Detached' | 'Maisonette' | 'Commercial';
   search?: string;
 }
 
@@ -180,10 +165,10 @@ export interface Lease {
   tenantId: string;
   startDate: string;
   endDate?: string | null;
-  rentAmount: number;
-  securityDeposit?: number | null;
-  status: 'Active' | 'Expired' | 'Terminated';
-  terms?: string | null;
+  monthlyRent: number;
+  securityDepositAmount: number;
+  securityDepositPaidDate?: string | null;
+  status: 'Draft' | 'Active' | 'Expired' | 'Terminated';
   createdAt: string;
   updatedAt: string;
   property?: Property;
@@ -195,10 +180,10 @@ export interface CreateLeaseRequest {
   tenantId: string;
   startDate: string;
   endDate?: string | null;
-  rentAmount: number;
-  securityDeposit?: number | null;
-  status: 'Active' | 'Expired' | 'Terminated';
-  terms?: string | null;
+  monthlyRent: number;
+  securityDepositAmount: number;
+  securityDepositPaidDate?: string | null;
+  status: 'Draft' | 'Active' | 'Expired' | 'Terminated';
 }
 
 export interface UpdateLeaseRequest {
@@ -206,16 +191,16 @@ export interface UpdateLeaseRequest {
   tenantId?: string;
   startDate?: string;
   endDate?: string | null;
-  rentAmount?: number;
-  securityDeposit?: number | null;
-  status?: 'Active' | 'Expired' | 'Terminated';
-  terms?: string | null;
+  monthlyRent?: number;
+  securityDepositAmount?: number;
+  securityDepositPaidDate?: string | null;
+  status?: 'Draft' | 'Active' | 'Expired' | 'Terminated';
 }
 
 export interface LeaseFilters {
   propertyId?: string;
   tenantId?: string;
-  status?: 'Active' | 'Expired' | 'Terminated';
+  status?: 'Draft' | 'Active' | 'Expired' | 'Terminated';
 }
 
 export interface LeasesResponse {

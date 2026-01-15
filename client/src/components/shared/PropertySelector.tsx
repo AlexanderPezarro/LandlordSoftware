@@ -76,7 +76,7 @@ const PropertySelector: React.FC<PropertySelectorProps> = ({
             )}
             {properties.map((property) => (
               <MenuItem key={property.id} value={property.id}>
-                {property.name} - {property.street}, {property.zipCode}
+                {property.name} - {property.street}, {property.postcode}
               </MenuItem>
             ))}
           </>

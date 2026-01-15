@@ -37,27 +37,22 @@ import ConfirmDialog from '../components/shared/ConfirmDialog';
 import { useToast } from '../contexts/ToastContext';
 import type { PropertyWithLease } from '../types/component.types';
 
-type PropertyStatus = 'Vacant' | 'Occupied' | 'For Sale';
-type PropertyType = 'Single Family' | 'Multi-Family' | 'Condo' | 'Townhouse' | 'Apartment';
+type PropertyStatus = 'Available' | 'Occupied' | 'Under Maintenance' | 'For Sale';
+type PropertyType = 'House' | 'Flat' | 'Studio' | 'Bungalow' | 'Terraced' | 'Semi-Detached' | 'Detached' | 'Maisonette' | 'Commercial';
 
-const PROPERTY_STATUSES: PropertyStatus[] = ['Vacant', 'Occupied', 'For Sale'];
-const PROPERTY_TYPES: PropertyType[] = ['Single Family', 'Multi-Family', 'Condo', 'Townhouse', 'Apartment'];
+const PROPERTY_STATUSES: PropertyStatus[] = ['Available', 'Occupied', 'Under Maintenance', 'For Sale'];
+const PROPERTY_TYPES: PropertyType[] = ['House', 'Flat', 'Studio', 'Bungalow', 'Terraced', 'Semi-Detached', 'Detached', 'Maisonette', 'Commercial'];
 
 interface PropertyFormData {
   name: string;
   street: string;
   city: string;
-  state: string;
-  zipCode: string;
+  county: string;
+  postcode: string;
   propertyType: PropertyType;
-  numberOfUnits: string;
-  numberOfBedrooms: string;
-  numberOfBathrooms: string;
-  squareFootage: string;
-  yearBuilt: string;
   status: PropertyStatus;
+  purchaseDate: string;
   purchasePrice: string;
-  currentValue: string;
   notes: string;
 }
 
@@ -65,17 +60,12 @@ const initialFormData: PropertyFormData = {
   name: '',
   street: '',
   city: '',
-  state: '',
-  zipCode: '',
-  propertyType: 'Single Family',
-  numberOfUnits: '1',
-  numberOfBedrooms: '0',
-  numberOfBathrooms: '0',
-  squareFootage: '',
-  yearBuilt: '',
-  status: 'Vacant',
+  county: '',
+  postcode: '',
+  propertyType: 'House',
+  status: 'Available',
+  purchaseDate: '',
   purchasePrice: '',
-  currentValue: '',
   notes: '',
 };
 
@@ -159,17 +149,12 @@ export const Properties: React.FC = () => {
         name: property.name,
         street: property.street,
         city: property.city,
-        state: property.state,
-        zipCode: property.zipCode,
+        county: property.county,
+        postcode: property.postcode,
         propertyType: property.propertyType,
-        numberOfUnits: property.numberOfUnits.toString(),
-        numberOfBedrooms: property.numberOfBedrooms.toString(),
-        numberOfBathrooms: property.numberOfBathrooms.toString(),
-        squareFootage: property.squareFootage?.toString() || '',
-        yearBuilt: property.yearBuilt?.toString() || '',
         status: property.status,
+        purchaseDate: property.purchaseDate || '',
         purchasePrice: property.purchasePrice?.toString() || '',
-        currentValue: property.currentValue?.toString() || '',
         notes: property.notes || '',
       });
     } else {
@@ -202,43 +187,16 @@ export const Properties: React.FC = () => {
       errors.city = 'City is required';
     }
 
-    if (!formData.state.trim()) {
-      errors.state = 'State is required';
+    if (!formData.county.trim()) {
+      errors.county = 'County is required';
     }
 
-    if (!formData.zipCode.trim()) {
-      errors.zipCode = 'Zip code is required';
-    }
-
-    const units = parseInt(formData.numberOfUnits);
-    if (isNaN(units) || units < 1) {
-      errors.numberOfUnits = 'Number of units must be at least 1';
-    }
-
-    const bedrooms = parseInt(formData.numberOfBedrooms);
-    if (isNaN(bedrooms) || bedrooms < 0) {
-      errors.numberOfBedrooms = 'Number of bedrooms must be 0 or greater';
-    }
-
-    const bathrooms = parseInt(formData.numberOfBathrooms);
-    if (isNaN(bathrooms) || bathrooms < 0) {
-      errors.numberOfBathrooms = 'Number of bathrooms must be 0 or greater';
-    }
-
-    if (formData.squareFootage && parseInt(formData.squareFootage) <= 0) {
-      errors.squareFootage = 'Square footage must be greater than 0';
-    }
-
-    if (formData.yearBuilt && parseInt(formData.yearBuilt) < 1800) {
-      errors.yearBuilt = 'Year built must be 1800 or later';
+    if (!formData.postcode.trim()) {
+      errors.postcode = 'Postcode is required';
     }
 
     if (formData.purchasePrice && parseFloat(formData.purchasePrice) < 0) {
       errors.purchasePrice = 'Purchase price must be 0 or greater';
-    }
-
-    if (formData.currentValue && parseFloat(formData.currentValue) < 0) {
-      errors.currentValue = 'Current value must be 0 or greater';
     }
 
     setFormErrors(errors);
@@ -255,17 +213,12 @@ export const Properties: React.FC = () => {
         name: formData.name.trim(),
         street: formData.street.trim(),
         city: formData.city.trim(),
-        state: formData.state.trim(),
-        zipCode: formData.zipCode.trim(),
+        county: formData.county.trim(),
+        postcode: formData.postcode.trim(),
         propertyType: formData.propertyType,
-        numberOfUnits: parseInt(formData.numberOfUnits),
-        numberOfBedrooms: parseInt(formData.numberOfBedrooms),
-        numberOfBathrooms: parseInt(formData.numberOfBathrooms),
-        squareFootage: formData.squareFootage ? parseInt(formData.squareFootage) : null,
-        yearBuilt: formData.yearBuilt ? parseInt(formData.yearBuilt) : null,
         status: formData.status,
+        purchaseDate: formData.purchaseDate || null,
         purchasePrice: formData.purchasePrice ? parseFloat(formData.purchasePrice) : null,
-        currentValue: formData.currentValue ? parseFloat(formData.currentValue) : null,
         notes: formData.notes.trim() || null,
       };
 
@@ -353,7 +306,7 @@ export const Properties: React.FC = () => {
           property.name.toLowerCase().includes(query) ||
           property.street.toLowerCase().includes(query) ||
           property.city.toLowerCase().includes(query) ||
-          property.zipCode.toLowerCase().includes(query)
+          property.postcode.toLowerCase().includes(query)
       );
     }
 
@@ -585,20 +538,20 @@ export const Properties: React.FC = () => {
                 required
               />
               <TextField
-                label="State"
-                value={formData.state}
-                onChange={(e) => handleFormChange('state', e.target.value)}
-                error={!!formErrors.state}
-                helperText={formErrors.state}
+                label="County"
+                value={formData.county}
+                onChange={(e) => handleFormChange('county', e.target.value)}
+                error={!!formErrors.county}
+                helperText={formErrors.county}
                 required
               />
             </Box>
             <TextField
-              label="Zip Code"
-              value={formData.zipCode}
-              onChange={(e) => handleFormChange('zipCode', e.target.value)}
-              error={!!formErrors.zipCode}
-              helperText={formErrors.zipCode}
+              label="Postcode"
+              value={formData.postcode}
+              onChange={(e) => handleFormChange('postcode', e.target.value)}
+              error={!!formErrors.postcode}
+              helperText={formErrors.postcode}
               required
               fullWidth
             />
@@ -616,58 +569,6 @@ export const Properties: React.FC = () => {
                 </MenuItem>
               ))}
             </TextField>
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 2 }}>
-              <TextField
-                label="Number of Units"
-                type="number"
-                value={formData.numberOfUnits}
-                onChange={(e) => handleFormChange('numberOfUnits', e.target.value)}
-                error={!!formErrors.numberOfUnits}
-                helperText={formErrors.numberOfUnits}
-                required
-                inputProps={{ min: 1 }}
-              />
-              <TextField
-                label="Bedrooms"
-                type="number"
-                value={formData.numberOfBedrooms}
-                onChange={(e) => handleFormChange('numberOfBedrooms', e.target.value)}
-                error={!!formErrors.numberOfBedrooms}
-                helperText={formErrors.numberOfBedrooms}
-                required
-                inputProps={{ min: 0 }}
-              />
-              <TextField
-                label="Bathrooms"
-                type="number"
-                value={formData.numberOfBathrooms}
-                onChange={(e) => handleFormChange('numberOfBathrooms', e.target.value)}
-                error={!!formErrors.numberOfBathrooms}
-                helperText={formErrors.numberOfBathrooms}
-                required
-                inputProps={{ min: 0 }}
-              />
-            </Box>
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-              <TextField
-                label="Square Footage"
-                type="number"
-                value={formData.squareFootage}
-                onChange={(e) => handleFormChange('squareFootage', e.target.value)}
-                error={!!formErrors.squareFootage}
-                helperText={formErrors.squareFootage}
-                inputProps={{ min: 0 }}
-              />
-              <TextField
-                label="Year Built"
-                type="number"
-                value={formData.yearBuilt}
-                onChange={(e) => handleFormChange('yearBuilt', e.target.value)}
-                error={!!formErrors.yearBuilt}
-                helperText={formErrors.yearBuilt}
-                inputProps={{ min: 1800, max: new Date().getFullYear() }}
-              />
-            </Box>
             <TextField
               label="Status"
               select
@@ -684,6 +585,13 @@ export const Properties: React.FC = () => {
             </TextField>
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
               <TextField
+                label="Purchase Date"
+                type="date"
+                value={formData.purchaseDate}
+                onChange={(e) => handleFormChange('purchaseDate', e.target.value)}
+                InputLabelProps={{ shrink: true }}
+              />
+              <TextField
                 label="Purchase Price"
                 type="number"
                 value={formData.purchasePrice}
@@ -692,19 +600,7 @@ export const Properties: React.FC = () => {
                 helperText={formErrors.purchasePrice}
                 inputProps={{ min: 0, step: 0.01 }}
                 InputProps={{
-                  startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                }}
-              />
-              <TextField
-                label="Current Value"
-                type="number"
-                value={formData.currentValue}
-                onChange={(e) => handleFormChange('currentValue', e.target.value)}
-                error={!!formErrors.currentValue}
-                helperText={formErrors.currentValue}
-                inputProps={{ min: 0, step: 0.01 }}
-                InputProps={{
-                  startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                  startAdornment: <InputAdornment position="start">£</InputAdornment>,
                 }}
               />
             </Box>
