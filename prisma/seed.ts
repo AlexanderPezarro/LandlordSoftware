@@ -3,6 +3,22 @@ import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
 import bcrypt from 'bcrypt';
 import 'dotenv/config';
 
+// Helper functions for relative dates
+function getRelativeDate(monthsAgo: number, day: number = 1): Date {
+  const date = new Date();
+  date.setMonth(date.getMonth() - monthsAgo);
+  date.setDate(day);
+  date.setHours(0, 0, 0, 0);
+  return date;
+}
+
+function getFutureDate(daysAhead: number): Date {
+  const date = new Date();
+  date.setDate(date.getDate() + daysAhead);
+  date.setHours(0, 0, 0, 0);
+  return date;
+}
+
 const databaseUrl = process.env.DATABASE_URL || 'file:./data/landlord.db';
 const adapter = new PrismaBetterSqlite3({ url: databaseUrl });
 
@@ -288,103 +304,103 @@ async function seedLeases(properties: Property[], tenants: Tenant[]) {
   console.log('📋 Seeding leases...');
 
   const leases = await Promise.all([
-    // Active lease - Sunset Apartments Unit 1A
+    // Active lease - Sunset Apartments Unit 1A (started 6 months ago, ends in 6 months)
     prisma.lease.create({
       data: {
         propertyId: properties[0].id,
         tenantId: tenants[0].id,
-        startDate: new Date('2023-06-01'),
-        endDate: new Date('2024-05-31'),
+        startDate: getRelativeDate(6, 1),
+        endDate: getFutureDate(180),
         monthlyRent: 850,
         securityDepositAmount: 850,
-        securityDepositPaidDate: new Date('2023-05-15'),
+        securityDepositPaidDate: getRelativeDate(6, 15),
         status: 'Active',
       },
     }),
-    // Active lease - Oak Street House
+    // Active lease - Oak Street House (started 9 months ago, ends in 3 months)
     prisma.lease.create({
       data: {
         propertyId: properties[1].id,
         tenantId: tenants[1].id,
-        startDate: new Date('2023-09-01'),
-        endDate: new Date('2024-08-31'),
+        startDate: getRelativeDate(9, 1),
+        endDate: getFutureDate(90),
         monthlyRent: 1200,
         securityDepositAmount: 1200,
-        securityDepositPaidDate: new Date('2023-08-20'),
+        securityDepositPaidDate: getRelativeDate(9, 20),
         status: 'Active',
       },
     }),
-    // Active lease - River View Flat
+    // Active lease - River View Flat (started 8 months ago, ends in 4 months)
     prisma.lease.create({
       data: {
         propertyId: properties[2].id,
         tenantId: tenants[2].id,
-        startDate: new Date('2023-03-15'),
-        endDate: new Date('2024-03-14'),
+        startDate: getRelativeDate(8, 15),
+        endDate: getFutureDate(120),
         monthlyRent: 750,
         securityDepositAmount: 750,
-        securityDepositPaidDate: new Date('2023-03-01'),
+        securityDepositPaidDate: getRelativeDate(8, 1),
         status: 'Active',
       },
     }),
-    // Expired lease - Garden Cottage (property now vacant)
+    // Expired lease - Garden Cottage (property now vacant, ended 2 months ago)
     prisma.lease.create({
       data: {
         propertyId: properties[3].id,
         tenantId: tenants[5].id, // Michael Davies - Inactive
-        startDate: new Date('2022-04-01'),
-        endDate: new Date('2023-12-31'),
+        startDate: getRelativeDate(18, 1),
+        endDate: getRelativeDate(2, 28),
         monthlyRent: 950,
         securityDepositAmount: 950,
-        securityDepositPaidDate: new Date('2022-03-15'),
+        securityDepositPaidDate: getRelativeDate(18, 15),
         status: 'Expired',
       },
     }),
-    // Active lease - City Centre Studio
+    // Active lease - City Centre Studio (started 7 months ago, ends in 5 months)
     prisma.lease.create({
       data: {
         propertyId: properties[4].id,
         tenantId: tenants[3].id,
-        startDate: new Date('2023-07-01'),
-        endDate: new Date('2024-06-30'),
+        startDate: getRelativeDate(7, 1),
+        endDate: getFutureDate(150),
         monthlyRent: 650,
         securityDepositAmount: 650,
-        securityDepositPaidDate: new Date('2023-06-20'),
+        securityDepositPaidDate: getRelativeDate(7, 20),
         status: 'Active',
       },
     }),
-    // Active lease - Parkside Terrace Unit 3
+    // Active lease - Parkside Terrace Unit 3 (started 10 months ago, ends in 2 months)
     prisma.lease.create({
       data: {
         propertyId: properties[5].id,
         tenantId: tenants[4].id,
-        startDate: new Date('2023-10-01'),
-        endDate: new Date('2024-09-30'),
+        startDate: getRelativeDate(10, 1),
+        endDate: getFutureDate(60),
         monthlyRent: 800,
         securityDepositAmount: 1600, // Extra deposit for pet
-        securityDepositPaidDate: new Date('2023-09-25'),
+        securityDepositPaidDate: getRelativeDate(10, 25),
         status: 'Active',
       },
     }),
-    // Active lease - Hillside Bungalow
+    // Active lease - Hillside Bungalow (started 8 months ago, rolling periodic)
     prisma.lease.create({
       data: {
         propertyId: properties[6].id,
         tenantId: tenants[6].id,
-        startDate: new Date('2023-05-01'),
+        startDate: getRelativeDate(8, 1),
         monthlyRent: 1050,
         securityDepositAmount: 1050,
-        securityDepositPaidDate: new Date('2023-04-20'),
+        securityDepositPaidDate: getRelativeDate(8, 20),
         status: 'Active',
       },
     }),
-    // Pending lease - for Jessica Moore
+    // Pending lease - for Jessica Moore (starts in 1 month)
     prisma.lease.create({
       data: {
         propertyId: properties[3].id, // Garden Cottage
         tenantId: tenants[8].id,
-        startDate: new Date('2024-02-01'),
-        endDate: new Date('2025-01-31'),
+        startDate: getFutureDate(30),
+        endDate: getFutureDate(395),
         monthlyRent: 975,
         securityDepositAmount: 975,
         status: 'Pending',
@@ -401,7 +417,7 @@ async function seedTransactions(properties: Property[], leases: Lease[]) {
 
   const transactions = await Promise.all([
     // Rent income transactions for active leases
-    // Sunset Apartments - monthly rent
+    // Sunset Apartments - monthly rent (current month, last month, 2 months ago)
     prisma.transaction.create({
       data: {
         propertyId: properties[0].id,
@@ -409,8 +425,8 @@ async function seedTransactions(properties: Property[], leases: Lease[]) {
         type: 'Income',
         category: 'Rent',
         amount: 850,
-        transactionDate: new Date('2023-12-01'),
-        description: 'Monthly rent - December 2023',
+        transactionDate: getRelativeDate(0, 1),
+        description: 'Monthly rent - current month',
       },
     }),
     prisma.transaction.create({
@@ -420,12 +436,23 @@ async function seedTransactions(properties: Property[], leases: Lease[]) {
         type: 'Income',
         category: 'Rent',
         amount: 850,
-        transactionDate: new Date('2024-01-01'),
-        description: 'Monthly rent - January 2024',
+        transactionDate: getRelativeDate(1, 1),
+        description: 'Monthly rent - last month',
+      },
+    }),
+    prisma.transaction.create({
+      data: {
+        propertyId: properties[0].id,
+        leaseId: leases[0].id,
+        type: 'Income',
+        category: 'Rent',
+        amount: 850,
+        transactionDate: getRelativeDate(2, 1),
+        description: 'Monthly rent - 2 months ago',
       },
     }),
 
-    // Oak Street House - monthly rent
+    // Oak Street House - monthly rent (current month, last month, 2 months ago)
     prisma.transaction.create({
       data: {
         propertyId: properties[1].id,
@@ -433,8 +460,8 @@ async function seedTransactions(properties: Property[], leases: Lease[]) {
         type: 'Income',
         category: 'Rent',
         amount: 1200,
-        transactionDate: new Date('2023-12-01'),
-        description: 'Monthly rent - December 2023',
+        transactionDate: getRelativeDate(0, 1),
+        description: 'Monthly rent - current month',
       },
     }),
     prisma.transaction.create({
@@ -444,12 +471,23 @@ async function seedTransactions(properties: Property[], leases: Lease[]) {
         type: 'Income',
         category: 'Rent',
         amount: 1200,
-        transactionDate: new Date('2024-01-01'),
-        description: 'Monthly rent - January 2024',
+        transactionDate: getRelativeDate(1, 1),
+        description: 'Monthly rent - last month',
+      },
+    }),
+    prisma.transaction.create({
+      data: {
+        propertyId: properties[1].id,
+        leaseId: leases[1].id,
+        type: 'Income',
+        category: 'Rent',
+        amount: 1200,
+        transactionDate: getRelativeDate(2, 1),
+        description: 'Monthly rent - 2 months ago',
       },
     }),
 
-    // River View Flat - monthly rent
+    // River View Flat - monthly rent (current month, last month)
     prisma.transaction.create({
       data: {
         propertyId: properties[2].id,
@@ -457,8 +495,8 @@ async function seedTransactions(properties: Property[], leases: Lease[]) {
         type: 'Income',
         category: 'Rent',
         amount: 750,
-        transactionDate: new Date('2023-12-15'),
-        description: 'Monthly rent - December 2023',
+        transactionDate: getRelativeDate(0, 15),
+        description: 'Monthly rent - current month',
       },
     }),
     prisma.transaction.create({
@@ -468,12 +506,12 @@ async function seedTransactions(properties: Property[], leases: Lease[]) {
         type: 'Income',
         category: 'Rent',
         amount: 750,
-        transactionDate: new Date('2024-01-15'),
-        description: 'Monthly rent - January 2024',
+        transactionDate: getRelativeDate(1, 15),
+        description: 'Monthly rent - last month',
       },
     }),
 
-    // Security deposit income
+    // Security deposit income (from lease start)
     prisma.transaction.create({
       data: {
         propertyId: properties[0].id,
@@ -481,20 +519,20 @@ async function seedTransactions(properties: Property[], leases: Lease[]) {
         type: 'Income',
         category: 'Deposit',
         amount: 850,
-        transactionDate: new Date('2023-05-15'),
+        transactionDate: getRelativeDate(6, 15),
         description: 'Security deposit received',
       },
     }),
 
     // Expense transactions
-    // Maintenance expenses
+    // Maintenance expenses (spread across last 3 months)
     prisma.transaction.create({
       data: {
         propertyId: properties[1].id,
         type: 'Expense',
         category: 'Maintenance',
         amount: 175.50,
-        transactionDate: new Date('2023-11-15'),
+        transactionDate: getRelativeDate(2, 15),
         description: 'Plumber - fixed leaking tap in bathroom',
       },
     }),
@@ -504,7 +542,7 @@ async function seedTransactions(properties: Property[], leases: Lease[]) {
         type: 'Expense',
         category: 'Maintenance',
         amount: 89.99,
-        transactionDate: new Date('2023-12-05'),
+        transactionDate: getRelativeDate(1, 5),
         description: 'Annual boiler service',
       },
     }),
@@ -514,31 +552,31 @@ async function seedTransactions(properties: Property[], leases: Lease[]) {
         type: 'Expense',
         category: 'Renovation',
         amount: 2450.00,
-        transactionDate: new Date('2024-01-10'),
+        transactionDate: getRelativeDate(0, 10),
         description: 'Bathroom renovation - new fixtures and tiling',
       },
     }),
 
-    // Utility expenses
+    // Utility expenses (last month)
     prisma.transaction.create({
       data: {
         propertyId: properties[3].id,
         type: 'Expense',
         category: 'Utilities',
         amount: 125.50,
-        transactionDate: new Date('2023-12-20'),
+        transactionDate: getRelativeDate(1, 20),
         description: 'Water bill - vacant period',
       },
     }),
 
-    // Insurance expenses
+    // Insurance expenses (2 months ago)
     prisma.transaction.create({
       data: {
         propertyId: properties[0].id,
         type: 'Expense',
         category: 'Insurance',
         amount: 385.00,
-        transactionDate: new Date('2023-11-01'),
+        transactionDate: getRelativeDate(2, 1),
         description: 'Annual building insurance premium',
       },
     }),
@@ -548,43 +586,43 @@ async function seedTransactions(properties: Property[], leases: Lease[]) {
         type: 'Expense',
         category: 'Insurance',
         amount: 425.00,
-        transactionDate: new Date('2023-11-01'),
+        transactionDate: getRelativeDate(2, 1),
         description: 'Annual building and contents insurance',
       },
     }),
 
-    // Property tax
+    // Property tax (last month)
     prisma.transaction.create({
       data: {
         propertyId: properties[2].id,
         type: 'Expense',
         category: 'Tax',
         amount: 1560.00,
-        transactionDate: new Date('2023-12-01'),
+        transactionDate: getRelativeDate(1, 1),
         description: 'Council tax - annual payment',
       },
     }),
 
-    // Management fees
+    // Management fees (current month)
     prisma.transaction.create({
       data: {
         propertyId: properties[5].id,
         type: 'Expense',
         category: 'Management Fee',
         amount: 75.00,
-        transactionDate: new Date('2023-12-01'),
-        description: 'Property management fee - December',
+        transactionDate: getRelativeDate(0, 1),
+        description: 'Property management fee - current month',
       },
     }),
 
-    // Cleaning and gardening
+    // Cleaning and gardening (last month and 2 months ago)
     prisma.transaction.create({
       data: {
         propertyId: properties[3].id,
         type: 'Expense',
         category: 'Cleaning',
         amount: 150.00,
-        transactionDate: new Date('2024-01-05'),
+        transactionDate: getRelativeDate(1, 5),
         description: 'Deep clean after tenant move-out',
       },
     }),
@@ -594,12 +632,12 @@ async function seedTransactions(properties: Property[], leases: Lease[]) {
         type: 'Expense',
         category: 'Gardening',
         amount: 65.00,
-        transactionDate: new Date('2023-11-20'),
+        transactionDate: getRelativeDate(2, 20),
         description: 'Garden maintenance - autumn cleanup',
       },
     }),
 
-    // More rent payments
+    // More rent payments (current month)
     prisma.transaction.create({
       data: {
         propertyId: properties[4].id,
@@ -607,8 +645,8 @@ async function seedTransactions(properties: Property[], leases: Lease[]) {
         type: 'Income',
         category: 'Rent',
         amount: 650,
-        transactionDate: new Date('2024-01-01'),
-        description: 'Monthly rent - January 2024',
+        transactionDate: getRelativeDate(0, 1),
+        description: 'Monthly rent - current month',
       },
     }),
     prisma.transaction.create({
@@ -618,8 +656,8 @@ async function seedTransactions(properties: Property[], leases: Lease[]) {
         type: 'Income',
         category: 'Rent',
         amount: 800,
-        transactionDate: new Date('2024-01-01'),
-        description: 'Monthly rent - January 2024',
+        transactionDate: getRelativeDate(0, 1),
+        description: 'Monthly rent - current month',
       },
     }),
   ]);
@@ -632,16 +670,16 @@ async function seedEvents(properties: Property[]) {
   console.log('📅 Seeding events...');
 
   const events = await Promise.all([
-    // Completed events
+    // Completed events (1-2 months ago)
     prisma.event.create({
       data: {
         propertyId: properties[0].id,
         eventType: 'Inspection',
         title: 'Routine Property Inspection',
         description: 'Quarterly inspection of property condition',
-        scheduledDate: new Date('2023-12-15'),
+        scheduledDate: getRelativeDate(1, 15),
         completed: true,
-        completedDate: new Date('2023-12-15'),
+        completedDate: getRelativeDate(1, 15),
       },
     }),
     prisma.event.create({
@@ -650,9 +688,9 @@ async function seedEvents(properties: Property[]) {
         eventType: 'Maintenance',
         title: 'Boiler Service',
         description: 'Annual boiler maintenance and safety check',
-        scheduledDate: new Date('2023-12-05'),
+        scheduledDate: getRelativeDate(2, 5),
         completed: true,
-        completedDate: new Date('2023-12-05'),
+        completedDate: getRelativeDate(2, 5),
       },
     }),
     prisma.event.create({
@@ -661,20 +699,20 @@ async function seedEvents(properties: Property[]) {
         eventType: 'Showing',
         title: 'Property Viewing',
         description: 'Showing to prospective tenant Jessica Moore',
-        scheduledDate: new Date('2024-01-08'),
+        scheduledDate: getRelativeDate(1, 8),
         completed: true,
-        completedDate: new Date('2024-01-08'),
+        completedDate: getRelativeDate(1, 8),
       },
     }),
 
-    // Upcoming/pending events
+    // Upcoming/pending events (7, 14, 30, 45, 60 days in future)
     prisma.event.create({
       data: {
         propertyId: properties[2].id,
         eventType: 'Inspection',
         title: 'Mid-Lease Inspection',
         description: 'Check-in inspection before lease renewal',
-        scheduledDate: new Date('2024-02-15'),
+        scheduledDate: getFutureDate(14),
         completed: false,
       },
     }),
@@ -684,7 +722,7 @@ async function seedEvents(properties: Property[]) {
         eventType: 'Maintenance',
         title: 'Bathroom Renovation Completion',
         description: 'Final inspection of bathroom renovation work',
-        scheduledDate: new Date('2024-01-25'),
+        scheduledDate: getFutureDate(7),
         completed: false,
       },
     }),
@@ -694,7 +732,7 @@ async function seedEvents(properties: Property[]) {
         eventType: 'Maintenance',
         title: 'Gutter Cleaning',
         description: 'Annual gutter cleaning and downpipe check',
-        scheduledDate: new Date('2024-02-10'),
+        scheduledDate: getFutureDate(30),
         completed: false,
       },
     }),
@@ -704,7 +742,7 @@ async function seedEvents(properties: Property[]) {
         eventType: 'Inspection',
         title: 'Pet Damage Assessment',
         description: 'Check for any wear and tear from tenant\'s dog',
-        scheduledDate: new Date('2024-03-01'),
+        scheduledDate: getFutureDate(45),
         completed: false,
       },
     }),
@@ -714,7 +752,7 @@ async function seedEvents(properties: Property[]) {
         eventType: 'Maintenance',
         title: 'Garden Spring Preparation',
         description: 'Spring garden tidy-up and lawn treatment',
-        scheduledDate: new Date('2024-03-15'),
+        scheduledDate: getFutureDate(60),
         completed: false,
       },
     }),
@@ -724,7 +762,7 @@ async function seedEvents(properties: Property[]) {
         eventType: 'Other',
         title: 'Fire Safety Certificate Renewal',
         description: 'Renew fire safety certification for building',
-        scheduledDate: new Date('2024-02-28'),
+        scheduledDate: getFutureDate(45),
         completed: false,
       },
     }),
@@ -734,7 +772,7 @@ async function seedEvents(properties: Property[]) {
         eventType: 'Showing',
         title: 'New Tenant Move-In',
         description: 'Jessica Moore moving in, keys handover and inventory check',
-        scheduledDate: new Date('2024-02-01'),
+        scheduledDate: getFutureDate(30),
         completed: false,
       },
     }),
@@ -744,7 +782,7 @@ async function seedEvents(properties: Property[]) {
         eventType: 'Other',
         title: 'Lease Renewal Discussion',
         description: 'Meet with Emily Williams to discuss lease renewal terms',
-        scheduledDate: new Date('2024-02-20'),
+        scheduledDate: getFutureDate(21),
         completed: false,
       },
     }),
@@ -754,7 +792,7 @@ async function seedEvents(properties: Property[]) {
         eventType: 'Inspection',
         title: 'Safety Equipment Check',
         description: 'Test smoke alarms and carbon monoxide detectors',
-        scheduledDate: new Date('2024-01-30'),
+        scheduledDate: getFutureDate(7),
         completed: false,
       },
     }),
@@ -764,7 +802,7 @@ async function seedEvents(properties: Property[]) {
         eventType: 'Maintenance',
         title: 'Window Cleaning',
         description: 'Professional window cleaning service',
-        scheduledDate: new Date('2024-02-05'),
+        scheduledDate: getFutureDate(14),
         completed: false,
       },
     }),
@@ -774,7 +812,7 @@ async function seedEvents(properties: Property[]) {
         eventType: 'Other',
         title: 'Building Management Meeting',
         description: 'Annual meeting with building management company',
-        scheduledDate: new Date('2024-03-10'),
+        scheduledDate: getFutureDate(60),
         completed: false,
       },
     }),
@@ -784,7 +822,7 @@ async function seedEvents(properties: Property[]) {
         eventType: 'Maintenance',
         title: 'Appliance Service',
         description: 'Service washing machine and check kitchen appliances',
-        scheduledDate: new Date('2024-02-25'),
+        scheduledDate: getFutureDate(30),
         completed: false,
       },
     }),
