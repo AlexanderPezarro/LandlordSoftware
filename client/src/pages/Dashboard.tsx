@@ -421,6 +421,7 @@ export const Dashboard: React.FC = () => {
                               </Typography>
                             </Box>
                           }
+                          slotProps={{ secondary: { component: 'div' } }}
                         />
                       </ListItem>
                     </React.Fragment>
