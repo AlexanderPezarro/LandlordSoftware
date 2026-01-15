@@ -5,9 +5,66 @@ import { requireAuth } from '../middleware/auth.js';
 import prisma from '../db/client.js';
 import bcrypt from 'bcrypt';
 import { SALT_ROUNDS } from '../config/constants.js';
-import { ChangePasswordSchema } from '../../../shared/validation/index.js';
+import { ChangePasswordSchema, CreateUserSchema } from '../../../shared/validation/index.js';
 
 const router = Router();
+
+router.get('/setup-required', async (_req, res) => {
+  try {
+    const required = await authService.isSetupRequired();
+    return res.json({
+      success: true,
+      setupRequired: required,
+    });
+  } catch (error) {
+    console.error('Setup check error:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Could not check setup status',
+    });
+  }
+});
+
+router.post('/setup', async (req, res) => {
+  try {
+    // Security check: Only allow if no users exist
+    const setupRequired = await authService.isSetupRequired();
+    if (!setupRequired) {
+      return res.status(403).json({
+        success: false,
+        error: 'Setup has already been completed',
+      });
+    }
+
+    // Validate input using existing CreateUserSchema
+    const result = CreateUserSchema.safeParse(req.body);
+    if (!result.success) {
+      return res.status(400).json({
+        success: false,
+        error: result.error.issues[0].message,
+      });
+    }
+
+    const { email, password } = result.data;
+
+    // Create the admin user
+    const user = await authService.createUser(email, password);
+
+    // Automatically log in the user by creating a session
+    req.session.userId = user.id;
+
+    return res.status(201).json({
+      success: true,
+      user,
+    });
+  } catch (error) {
+    console.error('Setup error:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'An error occurred during setup',
+    });
+  }
+});
 
 router.post('/login', async (req, res) => {
   try {

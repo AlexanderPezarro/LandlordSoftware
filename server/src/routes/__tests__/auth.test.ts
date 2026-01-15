@@ -252,4 +252,120 @@ describe('Auth Routes', () => {
       expect(afterLogout.status).toBe(401);
     });
   });
+
+  describe('GET /api/auth/setup-required', () => {
+    it('should return true when no users exist', async () => {
+      // Database is already cleaned in beforeEach
+      const response = await request(app).get('/api/auth/setup-required');
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.setupRequired).toBe(true);
+    });
+
+    it('should return false when users exist', async () => {
+      // Create a user first
+      await authService.createUser(testUser.email, testUser.password);
+
+      const response = await request(app).get('/api/auth/setup-required');
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.setupRequired).toBe(false);
+    });
+  });
+
+  describe('POST /api/auth/setup', () => {
+    it('should successfully create first user with valid data', async () => {
+      const response = await request(app).post('/api/auth/setup').send({
+        email: testUser.email,
+        password: testUser.password,
+      });
+
+      expect(response.status).toBe(201);
+      expect(response.body.success).toBe(true);
+      expect(response.body.user).toBeDefined();
+      expect(response.body.user.email).toBe(testUser.email);
+      expect(response.body.user.id).toBeDefined();
+
+      // Verify user was created in database
+      const userCount = await prisma.user.count();
+      expect(userCount).toBe(1);
+    });
+
+    it('should automatically log in user after setup', async () => {
+      const response = await request(app).post('/api/auth/setup').send({
+        email: testUser.email,
+        password: testUser.password,
+      });
+
+      expect(response.status).toBe(201);
+      expect(response.headers['set-cookie']).toBeDefined();
+      expect(response.headers['set-cookie'][0]).toContain('connect.sid');
+
+      // Verify session works by accessing protected route
+      const cookies = response.headers['set-cookie'];
+      const meResponse = await request(app)
+        .get('/api/auth/me')
+        .set('Cookie', cookies);
+
+      expect(meResponse.status).toBe(200);
+      expect(meResponse.body.user.email).toBe(testUser.email);
+    });
+
+    it('should return 400 for invalid email format', async () => {
+      const response = await request(app).post('/api/auth/setup').send({
+        email: 'invalid-email',
+        password: testUser.password,
+      });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBeDefined();
+    });
+
+    it('should return 400 for password too short', async () => {
+      const response = await request(app).post('/api/auth/setup').send({
+        email: testUser.email,
+        password: 'short',
+      });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBeDefined();
+    });
+
+    it('should return 403 if users already exist', async () => {
+      // Create a user first
+      await authService.createUser(testUser.email, testUser.password);
+
+      // Try to setup again with different email
+      const response = await request(app).post('/api/auth/setup').send({
+        email: 'another@example.com',
+        password: 'anotherPassword123',
+      });
+
+      expect(response.status).toBe(403);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBe('Setup has already been completed');
+    });
+
+    it('should return 400 if email is missing', async () => {
+      const response = await request(app).post('/api/auth/setup').send({
+        password: testUser.password,
+      });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+    });
+
+    it('should return 400 if password is missing', async () => {
+      const response = await request(app).post('/api/auth/setup').send({
+        email: testUser.email,
+      });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+    });
+  });
 });

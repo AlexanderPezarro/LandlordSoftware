@@ -34,4 +34,27 @@ export const authService = {
     }
     throw new Error('User not authenticated');
   },
+
+  /**
+   * Check if initial setup is required
+   * @returns true if no users exist and setup is needed
+   */
+  async isSetupRequired(): Promise<boolean> {
+    const response = await api.get<{ success: boolean; setupRequired: boolean }>('/auth/setup-required');
+    return response.data.setupRequired;
+  },
+
+  /**
+   * Create first admin user
+   * @param email - Admin email
+   * @param password - Admin password
+   * @returns AuthResponse with user data on success
+   */
+  async setupAdmin(email: string, password: string): Promise<AuthResponse> {
+    const response = await api.post<AuthResponse>('/auth/setup', {
+      email,
+      password,
+    });
+    return response.data;
+  },
 };

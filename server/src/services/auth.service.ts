@@ -54,6 +54,11 @@ export class AuthService {
       email: user.email,
     };
   }
+
+  async isSetupRequired(): Promise<boolean> {
+    const userCount = await prisma.user.count();
+    return userCount === 0;
+  }
 }
 
 export default new AuthService();
