@@ -20,8 +20,6 @@ import {
 import {
   Add as AddIcon,
   Search as SearchIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { propertiesService } from '../services/api/properties.service';
@@ -464,40 +462,13 @@ export const Properties: React.FC = () => {
             }}
           >
             {filteredAndSortedProperties.map((property) => (
-              <Box key={property.id} sx={{ position: 'relative' }}>
-                <PropertyCard
-                  property={property}
-                  onClick={() => handlePropertyClick(property)}
-                />
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    top: 8,
-                    right: 8,
-                    display: 'flex',
-                    gap: 0.5,
-                  }}
-                >
-                  <Button
-                    size="small"
-                    variant="contained"
-                    color="primary"
-                    onClick={(e) => handleEditClick(property, e)}
-                    sx={{ minWidth: 'auto', p: 1 }}
-                  >
-                    <EditIcon fontSize="small" />
-                  </Button>
-                  <Button
-                    size="small"
-                    variant="contained"
-                    color="error"
-                    onClick={(e) => handleDeleteClick(property, e)}
-                    sx={{ minWidth: 'auto', p: 1 }}
-                  >
-                    <DeleteIcon fontSize="small" />
-                  </Button>
-                </Box>
-              </Box>
+              <PropertyCard
+                key={property.id}
+                property={property}
+                onClick={() => handlePropertyClick(property)}
+                onEdit={(e) => handleEditClick(property, e)}
+                onDelete={(e) => handleDeleteClick(property, e)}
+              />
             ))}
           </Box>
         )}

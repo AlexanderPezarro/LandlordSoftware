@@ -8,6 +8,8 @@ export interface PropertyWithLease extends Property {
 export interface PropertyCardProps {
   property: PropertyWithLease;
   onClick?: () => void;
+  onEdit?: (event: React.MouseEvent) => void;
+  onDelete?: (event: React.MouseEvent) => void;
 }
 
 // TenantCard Types

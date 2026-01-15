@@ -1,8 +1,9 @@
 import React from 'react';
-import { Card, CardContent, Typography, Chip, Box } from '@mui/material';
+import { Card, CardContent, Typography, Chip, Box, CardActions, IconButton } from '@mui/material';
+import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { PropertyCardProps } from '../../types/component.types';
 
-const PropertyCard: React.FC<PropertyCardProps> = ({ property, onClick }) => {
+const PropertyCard: React.FC<PropertyCardProps> = ({ property, onClick, onEdit, onDelete }) => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Available':
@@ -70,6 +71,30 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onClick }) => {
           )}
         </Box>
       </CardContent>
+      {(onEdit || onDelete) && (
+        <CardActions sx={{ justifyContent: 'flex-end', pt: 0 }}>
+          {onEdit && (
+            <IconButton
+              size="small"
+              color="primary"
+              onClick={onEdit}
+              aria-label="Edit property"
+            >
+              <EditIcon fontSize="small" />
+            </IconButton>
+          )}
+          {onDelete && (
+            <IconButton
+              size="small"
+              color="error"
+              onClick={onDelete}
+              aria-label="Delete property"
+            >
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          )}
+        </CardActions>
+      )}
     </Card>
   );
 };

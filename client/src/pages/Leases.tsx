@@ -18,7 +18,9 @@ import {
   InputAdornment,
   Card,
   CardContent,
+  CardActions,
   Chip,
+  IconButton,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -467,7 +469,6 @@ export const Leases: React.FC = () => {
               <Card
                 key={lease.id}
                 sx={{
-                  position: 'relative',
                   cursor: 'pointer',
                   '&:hover': {
                     boxShadow: 4,
@@ -497,29 +498,25 @@ export const Leases: React.FC = () => {
                   <Typography variant="body2" color="text.secondary">
                     {formatDate(lease.startDate)} - {lease.endDate ? formatDate(lease.endDate) : 'Ongoing'}
                   </Typography>
-                  <Box sx={{ position: 'absolute', top: 8, right: 8, display: 'flex', gap: 0.5 }}>
-                    <Button
-                      size="small"
-                      variant="contained"
-                      color="primary"
-                      onClick={(e) => handleEditClick(lease, e)}
-                      sx={{ minWidth: 'auto', p: 1 }}
-                      aria-label="Edit lease"
-                    >
-                      <EditIcon fontSize="small" />
-                    </Button>
-                    <Button
-                      size="small"
-                      variant="contained"
-                      color="error"
-                      onClick={(e) => handleDeleteClick(lease, e)}
-                      sx={{ minWidth: 'auto', p: 1 }}
-                      aria-label="Delete lease"
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </Button>
-                  </Box>
                 </CardContent>
+                <CardActions sx={{ justifyContent: 'flex-end', pt: 0 }}>
+                  <IconButton
+                    size="small"
+                    color="primary"
+                    onClick={(e) => handleEditClick(lease, e)}
+                    aria-label="Edit lease"
+                  >
+                    <EditIcon fontSize="small" />
+                  </IconButton>
+                  <IconButton
+                    size="small"
+                    color="error"
+                    onClick={(e) => handleDeleteClick(lease, e)}
+                    aria-label="Delete lease"
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </CardActions>
               </Card>
             ))}
           </Box>
