@@ -193,7 +193,7 @@ npm run db:seed
 ```
 
 This creates:
-- Default admin user: `admin@example.com` / `admin123`
+- Default admin user: `admin@landlord.com` / `password123`
 - Sample properties, tenants, and leases for testing
 
 **IMPORTANT**: Change the admin password immediately after first login!
