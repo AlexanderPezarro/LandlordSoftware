@@ -27,6 +27,7 @@ import {
   Assessment as AssessmentIcon,
   Event as EventIcon,
   Folder as FolderIcon,
+  Settings as SettingsIcon,
   Logout as LogoutIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
@@ -48,6 +49,7 @@ const navigationItems: NavItem[] = [
   { text: 'Reports', icon: <AssessmentIcon />, path: '/finances/reports' },
   { text: 'Events', icon: <EventIcon />, path: '/events' },
   { text: 'Documents', icon: <FolderIcon />, path: '/documents' },
+  { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
 ];
 
 interface LayoutProps {

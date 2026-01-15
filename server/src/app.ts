@@ -14,6 +14,7 @@ import tenantsRouter from './routes/tenants.js';
 import documentsRouter from './routes/documents.js';
 import leasesRouter from './routes/leases.js';
 import transactionsRouter from './routes/transactions.js';
+import usersRouter from './routes/users.js';
 
 // ES module __dirname equivalent
 const __filename = fileURLToPath(import.meta.url);
@@ -115,6 +116,9 @@ export function createApp() {
 
   // Transactions routes
   app.use('/api/transactions', transactionsRouter);
+
+  // Users routes
+  app.use('/api/users', usersRouter);
 
   // Serve static files from React build in production
   if (process.env.NODE_ENV === 'production') {

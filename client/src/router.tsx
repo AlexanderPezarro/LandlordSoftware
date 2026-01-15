@@ -12,6 +12,7 @@ import { Transactions } from './pages/Transactions';
 import { Reports } from './pages/Reports';
 import { Events } from './pages/Events';
 import { Documents } from './pages/Documents';
+import { Settings } from './pages/Settings';
 import { NotFound } from './pages/NotFound';
 
 // Wrapper component for protected routes with layout
@@ -73,6 +74,10 @@ export const router = createBrowserRouter([
       {
         path: 'documents',
         element: <Documents />,
+      },
+      {
+        path: 'settings',
+        element: <Settings />,
       },
     ],
   },

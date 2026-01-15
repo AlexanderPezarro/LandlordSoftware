@@ -1,8 +1,14 @@
 import { Router } from 'express';
 import authService from '../services/auth.service.js';
 import { LoginRequest } from '../../../shared/types/auth.types.js';
+import { requireAuth } from '../middleware/auth.js';
+import prisma from '../db/client.js';
+import bcrypt from 'bcrypt';
+import { z } from 'zod';
 
 const router = Router();
+
+const SALT_ROUNDS = 10;
 
 router.post('/login', async (req, res) => {
   try {
@@ -78,6 +84,45 @@ router.get('/me', async (req, res) => {
     return res.status(500).json({
       success: false,
       error: 'Could not retrieve user',
+    });
+  }
+});
+
+// PUT /api/auth/password - Change password
+router.put('/password', requireAuth, async (req, res) => {
+  try {
+    const schema = z.object({
+      currentPassword: z.string().min(1, 'Current password is required'),
+      newPassword: z.string().min(8, 'New password must be at least 8 characters'),
+    });
+    const result = schema.safeParse(req.body);
+    if (!result.success) {
+      return res.status(400).json({ success: false, error: result.error.issues[0].message });
+    }
+    const { currentPassword, newPassword } = result.data;
+
+    const user = await prisma.user.findUnique({ where: { id: req.session.userId } });
+    if (!user) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+
+    const valid = await bcrypt.compare(currentPassword, user.password);
+    if (!valid) {
+      return res.status(400).json({ success: false, error: 'Current password is incorrect' });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
+    await prisma.user.update({
+      where: { id: req.session.userId },
+      data: { password: hashedPassword },
+    });
+
+    return res.json({ success: true, message: 'Password updated' });
+  } catch (error) {
+    console.error('Change password error:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'An error occurred while changing password',
     });
   }
 });
