@@ -15,6 +15,7 @@ export const ExpenseCategorySchema = z.enum([
   'Property Tax',
   'Management Fee',
   'Legal Fee',
+  'Transport',
   'Other',
 ]);
 
@@ -49,6 +50,7 @@ export const CreateTransactionSchema = z
           'Property Tax',
           'Management Fee',
           'Legal Fee',
+          'Transport',
           'Other',
         ].includes(data.category);
       }
@@ -87,6 +89,7 @@ export const UpdateTransactionSchema = z
             'Property Tax',
             'Management Fee',
             'Legal Fee',
+            'Transport',
             'Other',
           ].includes(data.category);
         }
@@ -121,6 +124,7 @@ export const TransactionSchema = z
           'Property Tax',
           'Management Fee',
           'Legal Fee',
+          'Transport',
           'Other',
         ].includes(data.category);
       }

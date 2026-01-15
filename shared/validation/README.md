@@ -66,7 +66,7 @@ Lenient validation accepting:
 #### Transaction Types & Categories
 - **Types**: `Income`, `Expense`
 - **Income Categories**: `Rent`, `Security Deposit`, `Late Fee`, `Lease Fee`
-- **Expense Categories**: `Maintenance`, `Repair`, `Utilities`, `Insurance`, `Property Tax`, `Management Fee`, `Legal Fee`, `Other`
+- **Expense Categories**: `Maintenance`, `Repair`, `Utilities`, `Insurance`, `Property Tax`, `Management Fee`, `Legal Fee`, `Transport`, `Other`
 - Note: Category validation ensures income categories are only used with Income type and expense categories with Expense type
 
 #### Event Types

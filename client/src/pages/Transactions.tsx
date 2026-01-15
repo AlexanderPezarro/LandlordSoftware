@@ -64,6 +64,7 @@ const EXPENSE_CATEGORIES = [
   'Property Tax',
   'Management Fee',
   'Legal Fee',
+  'Transport',
   'Other',
 ] as const;
 
