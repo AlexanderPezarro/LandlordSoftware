@@ -60,6 +60,14 @@ const PropertySelector: React.FC<PropertySelectorProps> = ({
         onChange={handleChange}
         disabled={disabled || loading || !!error}
       >
+        {includeAllOption && (
+          <MenuItem value="all">All Properties</MenuItem>
+        )}
+        {!includeAllOption && value === '' && (
+          <MenuItem value="" disabled>
+            Select a property
+          </MenuItem>
+        )}
         {loading ? (
           <MenuItem disabled>
             <CircularProgress size={20} sx={{ mr: 1 }} />
@@ -70,16 +78,11 @@ const PropertySelector: React.FC<PropertySelectorProps> = ({
         ) : properties.length === 0 ? (
           <MenuItem disabled>No properties available</MenuItem>
         ) : (
-          <>
-            {includeAllOption && (
-              <MenuItem value="all">All Properties</MenuItem>
-            )}
-            {properties.map((property) => (
-              <MenuItem key={property.id} value={property.id}>
-                {property.name} - {property.street}, {property.postcode}
-              </MenuItem>
-            ))}
-          </>
+          properties.map((property) => (
+            <MenuItem key={property.id} value={property.id}>
+              {property.name} - {property.street}, {property.postcode}
+            </MenuItem>
+          ))
         )}
       </Select>
     </FormControl>
