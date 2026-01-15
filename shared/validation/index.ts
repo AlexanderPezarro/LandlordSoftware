@@ -89,3 +89,11 @@ export {
   LoginFormSchema,
   type LoginFormData,
 } from './auth.validation.js';
+
+// User Validation
+export {
+  CreateUserSchema,
+  ChangePasswordSchema,
+  type CreateUser,
+  type ChangePassword,
+} from './user.validation.js';

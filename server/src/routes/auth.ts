@@ -4,11 +4,10 @@ import { LoginRequest } from '../../../shared/types/auth.types.js';
 import { requireAuth } from '../middleware/auth.js';
 import prisma from '../db/client.js';
 import bcrypt from 'bcrypt';
-import { z } from 'zod';
+import { SALT_ROUNDS } from '../config/constants.js';
+import { ChangePasswordSchema } from '../../../shared/validation/index.js';
 
 const router = Router();
-
-const SALT_ROUNDS = 10;
 
 router.post('/login', async (req, res) => {
   try {
@@ -91,11 +90,7 @@ router.get('/me', async (req, res) => {
 // PUT /api/auth/password - Change password
 router.put('/password', requireAuth, async (req, res) => {
   try {
-    const schema = z.object({
-      currentPassword: z.string().min(1, 'Current password is required'),
-      newPassword: z.string().min(8, 'New password must be at least 8 characters'),
-    });
-    const result = schema.safeParse(req.body);
+    const result = ChangePasswordSchema.safeParse(req.body);
     if (!result.success) {
       return res.status(400).json({ success: false, error: result.error.issues[0].message });
     }

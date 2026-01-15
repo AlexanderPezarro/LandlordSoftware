@@ -3,10 +3,10 @@ import { requireAuth } from '../middleware/auth.js';
 import prisma from '../db/client.js';
 import bcrypt from 'bcrypt';
 import { z } from 'zod';
+import { SALT_ROUNDS } from '../config/constants.js';
+import { CreateUserSchema } from '../../../shared/validation/index.js';
 
 const router = Router();
-
-const SALT_ROUNDS = 10;
 
 // GET /api/users - List all users
 router.get('/', requireAuth, async (_req, res) => {
@@ -28,11 +28,7 @@ router.get('/', requireAuth, async (_req, res) => {
 // POST /api/users - Create new user
 router.post('/', requireAuth, async (req, res) => {
   try {
-    const schema = z.object({
-      email: z.string().email('Invalid email format'),
-      password: z.string().min(8, 'Password must be at least 8 characters'),
-    });
-    const result = schema.safeParse(req.body);
+    const result = CreateUserSchema.safeParse(req.body);
     if (!result.success) {
       return res.status(400).json({ success: false, error: result.error.issues[0].message });
     }

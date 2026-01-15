@@ -1,8 +1,7 @@
 import bcrypt from 'bcrypt';
 import prisma from '../db/client.js';
 import { User } from '../../../shared/types/auth.types.js';
-
-const SALT_ROUNDS = 10;
+import { SALT_ROUNDS } from '../config/constants.js';
 
 export class AuthService {
   async createUser(email: string, password: string): Promise<User> {
