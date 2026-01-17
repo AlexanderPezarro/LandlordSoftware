@@ -1,19 +1,43 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom';
+import { CircularProgress, Box } from '@mui/material';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Layout } from './components/Layout';
+
+// Eagerly load Login page (needed for initial render)
 import { Login } from './pages/Login';
-import { Dashboard } from './pages/Dashboard';
-import { Properties } from './pages/Properties';
-import { PropertyDetail } from './pages/PropertyDetail';
-import { Tenants } from './pages/Tenants';
-import { Leases } from './pages/Leases';
-import { Transactions } from './pages/Transactions';
-import { Reports } from './pages/Reports';
-import { Events } from './pages/Events';
-import { Documents } from './pages/Documents';
-import { Settings } from './pages/Settings';
-import { NotFound } from './pages/NotFound';
+
+// Lazy load all other pages (handling named exports)
+const Dashboard = lazy(() => import('./pages/Dashboard').then(m => ({ default: m.Dashboard })));
+const Properties = lazy(() => import('./pages/Properties').then(m => ({ default: m.Properties })));
+const PropertyDetail = lazy(() => import('./pages/PropertyDetail').then(m => ({ default: m.PropertyDetail })));
+const Tenants = lazy(() => import('./pages/Tenants').then(m => ({ default: m.Tenants })));
+const Leases = lazy(() => import('./pages/Leases').then(m => ({ default: m.Leases })));
+const Transactions = lazy(() => import('./pages/Transactions').then(m => ({ default: m.Transactions })));
+const Reports = lazy(() => import('./pages/Reports').then(m => ({ default: m.Reports })));
+const Events = lazy(() => import('./pages/Events').then(m => ({ default: m.Events })));
+const Documents = lazy(() => import('./pages/Documents').then(m => ({ default: m.Documents })));
+const Settings = lazy(() => import('./pages/Settings').then(m => ({ default: m.Settings })));
+const NotFound = lazy(() => import('./pages/NotFound').then(m => ({ default: m.NotFound })));
+
+// Loading fallback component
+const PageLoader: React.FC = () => (
+  <Box
+    display="flex"
+    justifyContent="center"
+    alignItems="center"
+    minHeight="400px"
+  >
+    <CircularProgress />
+  </Box>
+);
+
+// Wrapper for lazy-loaded components
+const LazyPage: React.FC<{ Component: React.LazyExoticComponent<React.ComponentType<any>> }> = ({ Component }) => (
+  <Suspense fallback={<PageLoader />}>
+    <Component />
+  </Suspense>
+);
 
 // Wrapper component for protected routes with layout
 const ProtectedLayout: React.FC = () => {
@@ -41,48 +65,48 @@ export const router = createBrowserRouter([
       },
       {
         path: 'dashboard',
-        element: <Dashboard />,
+        element: <LazyPage Component={Dashboard} />,
       },
       {
         path: 'properties',
-        element: <Properties />,
+        element: <LazyPage Component={Properties} />,
       },
       {
         path: 'properties/:id',
-        element: <PropertyDetail />,
+        element: <LazyPage Component={PropertyDetail} />,
       },
       {
         path: 'tenants',
-        element: <Tenants />,
+        element: <LazyPage Component={Tenants} />,
       },
       {
         path: 'leases',
-        element: <Leases />,
+        element: <LazyPage Component={Leases} />,
       },
       {
         path: 'transactions',
-        element: <Transactions />,
+        element: <LazyPage Component={Transactions} />,
       },
       {
         path: 'finances/reports',
-        element: <Reports />,
+        element: <LazyPage Component={Reports} />,
       },
       {
         path: 'events',
-        element: <Events />,
+        element: <LazyPage Component={Events} />,
       },
       {
         path: 'documents',
-        element: <Documents />,
+        element: <LazyPage Component={Documents} />,
       },
       {
         path: 'settings',
-        element: <Settings />,
+        element: <LazyPage Component={Settings} />,
       },
     ],
   },
   {
     path: '*',
-    element: <NotFound />,
+    element: <LazyPage Component={NotFound} />,
   },
 ]);

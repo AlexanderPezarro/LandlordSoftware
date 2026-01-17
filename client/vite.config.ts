@@ -13,4 +13,22 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Core React libraries
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          // Material-UI core
+          'mui-core': ['@mui/material', '@mui/system'],
+          // Material-UI icons (large package)
+          'mui-icons': ['@mui/icons-material'],
+          // Other vendors (axios, etc.)
+          'vendor': ['axios'],
+        },
+      },
+    },
+    // Optional: Increase chunk size warning limit if needed
+    // chunkSizeWarningLimit: 600,
+  },
 });
