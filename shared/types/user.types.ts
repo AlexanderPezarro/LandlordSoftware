@@ -9,23 +9,21 @@
 export type Role = 'ADMIN' | 'LANDLORD' | 'VIEWER';
 
 /**
- * User entity interface
+ * User entity interface with role-based access control
  */
-export interface User {
+export interface UserWithRole {
   id: string;
   email: string;
-  name: string;
   role: Role;
   createdAt: Date;
   updatedAt: Date;
 }
 
 /**
- * User without sensitive data (for API responses)
+ * User data safe for API responses (excludes password and internal fields)
  */
 export interface PublicUser {
   id: string;
   email: string;
-  name: string;
   role: Role;
 }
