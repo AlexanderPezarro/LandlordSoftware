@@ -24,6 +24,10 @@ RUN apt-get update -qq && \
 COPY package-lock.json package.json ./
 RUN npm ci --include=dev
 
+# Install client dependencies
+COPY client/package-lock.json client/package.json ./client/
+RUN cd client && npm ci
+
 # Generate Prisma Client
 COPY prisma .
 RUN npx prisma generate
