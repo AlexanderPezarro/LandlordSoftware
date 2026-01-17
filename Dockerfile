@@ -26,7 +26,7 @@ RUN npm ci --include=dev
 
 # Install client dependencies
 COPY client/package-lock.json client/package.json ./client/
-RUN cd client && npm ci
+RUN cd client && npm ci --include=dev
 
 # Generate Prisma Client
 COPY prisma .
