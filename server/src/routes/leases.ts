@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { Prisma } from '@prisma/client';
 import { requireAuth } from '../middleware/auth.js';
 import prisma from '../db/client.js';
 import { CreateLeaseSchema, UpdateLeaseSchema, LeaseQueryParamsSchema } from '../../../shared/validation/lease.validation.js';
@@ -22,12 +23,14 @@ router.get('/', async (req, res) => {
     const { property_id, tenant_id, status } = validationResult.data;
 
     // Build filter object
-    const where: any = {};
+    const where: Prisma.LeaseWhereInput = {};
 
     if (property_id) {
       // Normalize to array - works for both single and multiple IDs
       const propertyIds = Array.isArray(property_id) ? property_id : [property_id];
-      where.propertyId = { in: propertyIds };
+      if (propertyIds.length > 0) {
+        where.propertyId = { in: propertyIds };
+      }
     }
 
     if (tenant_id) {
