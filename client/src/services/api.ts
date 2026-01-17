@@ -3,7 +3,7 @@ import { ApiError, ApiErrorResponse } from '../types/api.types';
 
 // Axios instance configuration
 const apiClient: AxiosInstance = axios.create({
-  baseURL: '/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
   timeout: 10000,
   withCredentials: true, // Important for session cookies
   headers: {
