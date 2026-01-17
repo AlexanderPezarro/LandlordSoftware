@@ -30,6 +30,10 @@ const projectRoot = process.env.NODE_ENV === 'production'
 export function createApp() {
   const app = express();
 
+  // Trust proxy - required for Fly.io and other reverse proxies
+  // This allows Express to correctly read X-Forwarded-* headers
+  app.set('trust proxy', true);
+
   // Compression middleware for production
   app.use(compression());
 
