@@ -1,16 +1,18 @@
 import bcrypt from 'bcrypt';
 import prisma from '../db/client.js';
 import { User } from '../../../shared/types/auth.types.js';
+import { Role } from '../../../shared/types/user.types.js';
 import { SALT_ROUNDS } from '../config/constants.js';
 
 export class AuthService {
-  async createUser(email: string, password: string): Promise<User> {
+  async createUser(email: string, password: string, role: Role = 'LANDLORD'): Promise<User> {
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
 
     const user = await prisma.user.create({
       data: {
         email,
         password: hashedPassword,
+        role,
       },
     });
 

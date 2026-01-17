@@ -45,10 +45,10 @@ router.post('/setup', async (req, res) => {
       });
     }
 
-    const { email, password } = result.data;
+    const { email, password, role } = result.data;
 
     // Create the admin user
-    const user = await authService.createUser(email, password);
+    const user = await authService.createUser(email, password, role);
 
     // Automatically log in the user by creating a session
     req.session.userId = user.id;
