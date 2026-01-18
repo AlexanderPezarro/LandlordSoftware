@@ -29,7 +29,10 @@ describe('Permissions Middleware', () => {
         middleware(mockReq as Request, mockRes as Response, mockNext);
 
         expect(statusMock).toHaveBeenCalledWith(401);
-        expect(jsonMock).toHaveBeenCalledWith({ error: 'Not authenticated' });
+        expect(jsonMock).toHaveBeenCalledWith({
+          success: false,
+          error: 'Not authenticated'
+        });
         expect(mockNext).not.toHaveBeenCalled();
       });
     });
@@ -75,6 +78,7 @@ describe('Permissions Middleware', () => {
 
         expect(statusMock).toHaveBeenCalledWith(403);
         expect(jsonMock).toHaveBeenCalledWith({
+          success: false,
           error: 'Insufficient permissions. Required role: ADMIN'
         });
         expect(mockNext).not.toHaveBeenCalled();
@@ -108,6 +112,7 @@ describe('Permissions Middleware', () => {
 
         expect(statusMock).toHaveBeenCalledWith(403);
         expect(jsonMock).toHaveBeenCalledWith({
+          success: false,
           error: 'Insufficient permissions. Required role: ADMIN'
         });
         expect(mockNext).not.toHaveBeenCalled();
@@ -119,6 +124,7 @@ describe('Permissions Middleware', () => {
 
         expect(statusMock).toHaveBeenCalledWith(403);
         expect(jsonMock).toHaveBeenCalledWith({
+          success: false,
           error: 'Insufficient permissions. Required role: LANDLORD'
         });
         expect(mockNext).not.toHaveBeenCalled();
@@ -160,6 +166,7 @@ describe('Permissions Middleware', () => {
 
       expect(statusMock).toHaveBeenCalledWith(403);
       expect(jsonMock).toHaveBeenCalledWith({
+        success: false,
         error: 'Insufficient permissions. Required role: LANDLORD'
       });
       expect(mockNext).not.toHaveBeenCalled();
@@ -170,7 +177,10 @@ describe('Permissions Middleware', () => {
       middleware(mockReq as Request, mockRes as Response, mockNext);
 
       expect(statusMock).toHaveBeenCalledWith(401);
-      expect(jsonMock).toHaveBeenCalledWith({ error: 'Not authenticated' });
+      expect(jsonMock).toHaveBeenCalledWith({
+        success: false,
+        error: 'Not authenticated'
+      });
       expect(mockNext).not.toHaveBeenCalled();
     });
   });
@@ -192,6 +202,7 @@ describe('Permissions Middleware', () => {
 
       expect(statusMock).toHaveBeenCalledWith(403);
       expect(jsonMock).toHaveBeenCalledWith({
+        success: false,
         error: 'Insufficient permissions. Required role: ADMIN'
       });
       expect(mockNext).not.toHaveBeenCalled();
@@ -204,6 +215,7 @@ describe('Permissions Middleware', () => {
 
       expect(statusMock).toHaveBeenCalledWith(403);
       expect(jsonMock).toHaveBeenCalledWith({
+        success: false,
         error: 'Insufficient permissions. Required role: ADMIN'
       });
       expect(mockNext).not.toHaveBeenCalled();
@@ -214,7 +226,10 @@ describe('Permissions Middleware', () => {
       middleware(mockReq as Request, mockRes as Response, mockNext);
 
       expect(statusMock).toHaveBeenCalledWith(401);
-      expect(jsonMock).toHaveBeenCalledWith({ error: 'Not authenticated' });
+      expect(jsonMock).toHaveBeenCalledWith({
+        success: false,
+        error: 'Not authenticated'
+      });
       expect(mockNext).not.toHaveBeenCalled();
     });
   });
