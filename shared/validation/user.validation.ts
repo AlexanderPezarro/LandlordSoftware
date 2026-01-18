@@ -63,5 +63,4 @@ export type CreateUser = z.infer<typeof CreateUserSchema>;
 export type UpdateUser = z.infer<typeof UpdateUserSchema>;
 export type UpdateUserRole = z.infer<typeof UpdateUserRoleSchema>;
 export type Login = z.infer<typeof LoginSchema>;
-export type Role = z.infer<typeof RoleSchema>;
 export type ChangePassword = z.infer<typeof ChangePasswordSchema>;

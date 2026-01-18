@@ -102,6 +102,8 @@ export {
   type UpdateUser,
   type UpdateUserRole,
   type Login,
-  type Role,
   type ChangePassword,
 } from './user.validation.js';
+
+// User Types
+export { type Role } from '../types/user.types.js';
