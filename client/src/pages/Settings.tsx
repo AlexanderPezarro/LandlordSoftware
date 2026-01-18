@@ -166,7 +166,7 @@ export const Settings: React.FC = () => {
 
     try {
       setCreateUserLoading(true);
-      await usersService.createUser(newUserEmail, newUserPassword);
+      await usersService.createUser(newUserEmail, newUserPassword, 'LANDLORD');
       toast.success('User created successfully');
       handleCloseCreateDialog();
       await fetchUsers();

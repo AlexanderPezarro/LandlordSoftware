@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   Container,
   Typography,
@@ -70,17 +70,7 @@ export const Users: React.FC = () => {
   // Role update loading states
   const [roleUpdateLoading, setRoleUpdateLoading] = useState<Record<string, boolean>>({});
 
-  useEffect(() => {
-    // Check if user is admin, if not redirect
-    if (!isAdmin()) {
-      toast.error('Access denied. Admin privileges required.');
-      navigate('/');
-      return;
-    }
-    fetchUsers();
-  }, [isAdmin, navigate, toast]);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -94,7 +84,17 @@ export const Users: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    // Check if user is admin, if not redirect
+    if (!isAdmin()) {
+      toast.error('Access denied. Admin privileges required.');
+      navigate('/');
+      return;
+    }
+    fetchUsers();
+  }, [isAdmin, navigate, toast, fetchUsers]);
 
   const handleOpenDialog = () => {
     setFormData(initialFormData);

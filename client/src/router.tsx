@@ -18,6 +18,7 @@ const Reports = lazy(() => import('./pages/Reports').then(m => ({ default: m.Rep
 const Events = lazy(() => import('./pages/Events').then(m => ({ default: m.Events })));
 const Documents = lazy(() => import('./pages/Documents').then(m => ({ default: m.Documents })));
 const Settings = lazy(() => import('./pages/Settings').then(m => ({ default: m.Settings })));
+const Users = lazy(() => import('./pages/Users').then(m => ({ default: m.Users })));
 const NotFound = lazy(() => import('./pages/NotFound').then(m => ({ default: m.NotFound })));
 
 // Loading fallback component
@@ -102,6 +103,10 @@ export const router = createBrowserRouter([
       {
         path: 'settings',
         element: <LazyPage Component={Settings} />,
+      },
+      {
+        path: 'users',
+        element: <LazyPage Component={Users} />,
       },
     ],
   },
