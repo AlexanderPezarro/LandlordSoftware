@@ -64,6 +64,25 @@ export class AuthService {
     const userCount = await prisma.user.count();
     return userCount === 0;
   }
+
+  async createUserWithAutoRole(email: string, password: string): Promise<User> {
+    return await prisma.$transaction(async (tx) => {
+      const userCount = await tx.user.count();
+      const role: Role = userCount === 0 ? 'ADMIN' : 'VIEWER';
+
+      const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+      const user = await tx.user.create({
+        data: { email, password: hashedPassword, role },
+        select: { id: true, email: true, role: true },
+      });
+
+      return {
+        id: user.id,
+        email: user.email,
+        role: user.role as Role,
+      };
+    });
+  }
 }
 
 export default new AuthService();

@@ -38,19 +38,17 @@ router.post('/register', async (req, res) => {
 
     const { email, password } = result.data;
 
-    // Check user count to determine role
-    const userCount = await prisma.user.count();
-    const role = userCount === 0 ? 'ADMIN' : 'VIEWER';
+    // Check if email already exists
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        error: 'Email address already registered',
+      });
+    }
 
-    // Create the user with appropriate role
-    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
-    const user = await prisma.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-        role,
-      },
-    });
+    // Create user with auto-assigned role (ADMIN for first user, VIEWER otherwise)
+    const user = await authService.createUserWithAutoRole(email, password);
 
     // Automatically log in the user by creating a session
     req.session.userId = user.id;
