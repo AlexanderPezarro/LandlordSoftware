@@ -198,7 +198,8 @@ describe('Users Routes', () => {
         .send({ role: 'LANDLORD' });
 
       expect(response.status).toBe(200);
-      expect(response.body.role).toBe('LANDLORD');
+      expect(response.body.success).toBe(true);
+      expect(response.body.user.role).toBe('LANDLORD');
     });
 
     it('should prevent changing own role', async () => {
@@ -208,6 +209,7 @@ describe('Users Routes', () => {
         .send({ role: 'VIEWER' });
 
       expect(response.status).toBe(403);
+      expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Cannot change your own role');
     });
 
@@ -243,6 +245,7 @@ describe('Users Routes', () => {
         .send({ role: 'LANDLORD' });
 
       expect(selfDemoteResponse.status).toBe(403);
+      expect(selfDemoteResponse.body.success).toBe(false);
       expect(selfDemoteResponse.body.error).toBe('Cannot change your own role');
 
       // The combination of admin count check (adminCount <= 1) and self-change
@@ -261,7 +264,8 @@ describe('Users Routes', () => {
         .send({ role: 'LANDLORD' });
 
       expect(response.status).toBe(200);
-      expect(response.body.role).toBe('LANDLORD');
+      expect(response.body.success).toBe(true);
+      expect(response.body.user.role).toBe('LANDLORD');
     });
 
     it('should block non-admin from changing roles', async () => {
@@ -284,7 +288,30 @@ describe('Users Routes', () => {
         .send({ role: 'LANDLORD' });
 
       expect(response.status).toBe(404);
+      expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('User not found');
+    });
+
+    it('should validate role value', async () => {
+      const response = await request(app)
+        .put(`/api/users/${viewerUserId}/role`)
+        .set('Cookie', adminCookies)
+        .send({ role: 'INVALID_ROLE' });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toContain('Invalid option');
+    });
+
+    it('should validate UUID format', async () => {
+      const response = await request(app)
+        .put('/api/users/invalid-uuid/role')
+        .set('Cookie', adminCookies)
+        .send({ role: 'LANDLORD' });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBe('Invalid user ID format');
     });
   });
 });

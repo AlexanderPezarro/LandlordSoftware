@@ -5,7 +5,7 @@ import prisma from '../db/client.js';
 import bcrypt from 'bcrypt';
 import { z } from 'zod';
 import { SALT_ROUNDS } from '../config/constants.js';
-import { CreateUserSchema } from '../../../shared/validation/index.js';
+import { CreateUserSchema, UpdateUserRoleSchema } from '../../../shared/validation/index.js';
 
 const router = Router();
 
@@ -94,19 +94,47 @@ router.delete('/:id', requireAuth, requireAdmin(), async (req, res) => {
 router.put('/:id/role', requireAuth, requireAdmin(), async (req, res) => {
   try {
     const { id } = req.params;
-    const { role } = req.body;
+
+    // Validate UUID format
+    if (!z.string().uuid().safeParse(id).success) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid user ID format',
+      });
+    }
+
+    // Validate role
+    const result = UpdateUserRoleSchema.safeParse(req.body);
+    if (!result.success) {
+      return res.status(400).json({
+        success: false,
+        error: result.error.issues[0].message,
+      });
+    }
+    const { role } = result.data;
 
     if (req.session.userId === id) {
-      return res.status(403).json({ error: 'Cannot change your own role' });
+      return res.status(403).json({
+        success: false,
+        error: 'Cannot change your own role',
+      });
     }
 
     const currentUser = await prisma.user.findUnique({ where: { id } });
-    if (!currentUser) return res.status(404).json({ error: 'User not found' });
+    if (!currentUser) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found',
+      });
+    }
 
     if (currentUser.role === 'ADMIN' && role !== 'ADMIN') {
       const adminCount = await prisma.user.count({ where: { role: 'ADMIN' } });
       if (adminCount <= 1) {
-        return res.status(400).json({ error: 'Cannot remove last admin' });
+        return res.status(400).json({
+          success: false,
+          error: 'Cannot remove last admin',
+        });
       }
     }
 
@@ -115,10 +143,14 @@ router.put('/:id/role', requireAuth, requireAdmin(), async (req, res) => {
       data: { role },
     });
 
-    return res.json(user);
+    return res.json({
+      success: true,
+      user,
+    });
   } catch (error) {
     console.error('Change user role error:', error);
     return res.status(500).json({
+      success: false,
       error: 'An error occurred while changing user role',
     });
   }
