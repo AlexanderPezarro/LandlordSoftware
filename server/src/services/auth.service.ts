@@ -17,6 +17,7 @@ export class AuthService {
     return {
       id: user.id,
       email: user.email,
+      role: user.role as 'ADMIN' | 'LANDLORD' | 'VIEWER',
     };
   }
 
@@ -37,6 +38,7 @@ export class AuthService {
     return {
       id: user.id,
       email: user.email,
+      role: user.role as 'ADMIN' | 'LANDLORD' | 'VIEWER',
     };
   }
 
@@ -52,6 +54,7 @@ export class AuthService {
     return {
       id: user.id,
       email: user.email,
+      role: user.role as 'ADMIN' | 'LANDLORD' | 'VIEWER',
     };
   }
 
