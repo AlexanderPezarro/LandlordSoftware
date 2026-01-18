@@ -10,6 +10,9 @@ interface AuthContextType {
   login: (credentials: LoginRequest) => Promise<AuthResponse>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
+  isAdmin: () => boolean;
+  isLandlord: () => boolean;
+  canWrite: () => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -97,6 +100,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     checkAuth();
   }, [checkAuth]);
 
+  // Permission helper functions
+  const isAdmin = useCallback(() => {
+    return user?.role === 'ADMIN';
+  }, [user]);
+
+  const isLandlord = useCallback(() => {
+    return user?.role === 'LANDLORD' || user?.role === 'ADMIN';
+  }, [user]);
+
+  const canWrite = useCallback(() => {
+    return user?.role === 'ADMIN' || user?.role === 'LANDLORD';
+  }, [user]);
+
   const value: AuthContextType = {
     user,
     isAuthenticated: user !== null,
@@ -104,6 +120,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     login,
     logout,
     checkAuth,
+    isAdmin,
+    isLandlord,
+    canWrite,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

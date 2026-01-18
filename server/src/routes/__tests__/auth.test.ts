@@ -91,6 +91,7 @@ describe('Auth Routes', () => {
       expect(response.body.user).toEqual({
         id: createdUser.id,
         email: createdUser.email,
+        role: 'VIEWER',
       });
     });
 
@@ -166,6 +167,7 @@ describe('Auth Routes', () => {
       expect(response.body.user).toEqual({
         id: createdUser.id,
         email: createdUser.email,
+        role: 'VIEWER',
       });
     });
 
