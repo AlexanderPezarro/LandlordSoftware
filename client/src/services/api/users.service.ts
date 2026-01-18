@@ -3,6 +3,7 @@ import { api } from '../api';
 export interface UserListItem {
   id: string;
   email: string;
+  role: 'ADMIN' | 'LANDLORD' | 'VIEWER';
   createdAt: string;
 }
 
@@ -35,10 +36,22 @@ export const usersService = {
    * Create a new user
    * @param email - User email
    * @param password - User password
+   * @param role - User role (ADMIN, LANDLORD, or VIEWER)
    * @returns Created user
    */
-  async createUser(email: string, password: string): Promise<UserListItem> {
-    const response = await api.post<UserResponse>('/users', { email, password });
+  async createUser(email: string, password: string, role: 'ADMIN' | 'LANDLORD' | 'VIEWER'): Promise<UserListItem> {
+    const response = await api.post<UserResponse>('/users', { email, password, role });
+    return response.data.user;
+  },
+
+  /**
+   * Update a user's role
+   * @param id - User ID
+   * @param role - New role (ADMIN, LANDLORD, or VIEWER)
+   * @returns Updated user
+   */
+  async updateUserRole(id: string, role: 'ADMIN' | 'LANDLORD' | 'VIEWER'): Promise<UserListItem> {
+    const response = await api.put<UserResponse>(`/users/${id}/role`, { role });
     return response.data.user;
   },
 
