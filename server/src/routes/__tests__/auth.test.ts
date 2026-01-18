@@ -379,6 +379,51 @@ describe('Auth Routes', () => {
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
     });
+
+    it('should return 400 if email is already registered', async () => {
+      // Create first user
+      await request(app).post('/api/auth/register').send({
+        email: testUser.email,
+        password: testUser.password,
+      });
+
+      // Try to register with same email
+      const response = await request(app).post('/api/auth/register').send({
+        email: testUser.email,
+        password: 'differentPassword123',
+      });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBe('Email address already registered');
+    });
+
+    it('should prevent race condition in role assignment', async () => {
+      // Simulate concurrent registrations by creating two users at the same time
+      const registrations = await Promise.all([
+        request(app).post('/api/auth/register').send({
+          email: 'user1@example.com',
+          password: testUser.password,
+        }),
+        request(app).post('/api/auth/register').send({
+          email: 'user2@example.com',
+          password: testUser.password,
+        }),
+      ]);
+
+      // Both requests should succeed (one might be duplicate check, but we're testing concurrent creation)
+      const successfulRegistrations = registrations.filter(r => r.status === 201);
+      expect(successfulRegistrations.length).toBeGreaterThan(0);
+
+      // Verify only one ADMIN user exists
+      const users = await prisma.user.findMany();
+      const adminUsers = users.filter(u => u.role === 'ADMIN');
+      expect(adminUsers.length).toBe(1);
+
+      // Verify the rest are VIEWER
+      const viewerUsers = users.filter(u => u.role === 'VIEWER');
+      expect(viewerUsers.length).toBe(users.length - 1);
+    });
   });
 
   describe('POST /api/auth/setup', () => {
