@@ -13,7 +13,10 @@ const roleHierarchy: Record<Role, number> = {
 export const requireRole = (requiredRole: Role) => {
   return (req: Request, res: Response, next: NextFunction): void => {
     if (!req.user) {
-      res.status(401).json({ error: 'Not authenticated' });
+      res.status(401).json({
+        success: false,
+        error: 'Not authenticated'
+      });
       return;
     }
 
@@ -24,7 +27,8 @@ export const requireRole = (requiredRole: Role) => {
       next();
     } else {
       res.status(403).json({
-        error: `Insufficient permissions. Required role: ${requiredRole}`,
+        success: false,
+        error: `Insufficient permissions. Required role: ${requiredRole}`
       });
     }
   };
