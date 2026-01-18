@@ -25,6 +25,53 @@ router.get('/setup-required', async (_req, res) => {
   }
 });
 
+router.post('/register', async (req, res) => {
+  try {
+    // Validate input using existing CreateUserSchema
+    const result = CreateUserSchema.safeParse(req.body);
+    if (!result.success) {
+      return res.status(400).json({
+        success: false,
+        error: result.error.issues[0].message,
+      });
+    }
+
+    const { email, password } = result.data;
+
+    // Check user count to determine role
+    const userCount = await prisma.user.count();
+    const role = userCount === 0 ? 'ADMIN' : 'VIEWER';
+
+    // Create the user with appropriate role
+    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+    const user = await prisma.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+        role,
+      },
+    });
+
+    // Automatically log in the user by creating a session
+    req.session.userId = user.id;
+
+    return res.status(201).json({
+      success: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    console.error('Registration error:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'An error occurred during registration',
+    });
+  }
+});
+
 router.post('/setup', async (req, res) => {
   try {
     // Security check: Only allow if no users exist

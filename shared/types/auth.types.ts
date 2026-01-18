@@ -1,3 +1,5 @@
+import { Role } from './user.types.js';
+
 export interface LoginRequest {
   email: string;
   password: string;
@@ -6,7 +8,7 @@ export interface LoginRequest {
 export interface User {
   id: string;
   email: string;
-  role: 'ADMIN' | 'LANDLORD' | 'VIEWER';
+  role: Role;
 }
 
 export interface AuthResponse {
