@@ -13,7 +13,7 @@ const router = Router();
 router.get('/', requireAuth, requireAdmin(), async (_req, res) => {
   try {
     const users = await prisma.user.findMany({
-      select: { id: true, email: true, createdAt: true },
+      select: { id: true, email: true, role: true, createdAt: true },
       orderBy: { createdAt: 'desc' },
     });
     return res.json({ success: true, users });
@@ -33,7 +33,7 @@ router.post('/', requireAuth, requireAdmin(), async (req, res) => {
     if (!result.success) {
       return res.status(400).json({ success: false, error: result.error.issues[0].message });
     }
-    const { email, password } = result.data;
+    const { email, password, role } = result.data;
 
     // Check if email already exists
     const existing = await prisma.user.findUnique({ where: { email } });
@@ -43,8 +43,8 @@ router.post('/', requireAuth, requireAdmin(), async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
     const user = await prisma.user.create({
-      data: { email, password: hashedPassword },
-      select: { id: true, email: true, createdAt: true },
+      data: { email, password: hashedPassword, role },
+      select: { id: true, email: true, role: true, createdAt: true },
     });
     return res.status(201).json({ success: true, user });
   } catch (error) {

@@ -7,6 +7,7 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isAdmin: () => boolean;
   login: (credentials: LoginRequest) => Promise<AuthResponse>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
@@ -97,10 +98,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     checkAuth();
   }, [checkAuth]);
 
+  const isAdmin = useCallback(() => {
+    return user?.role === 'ADMIN';
+  }, [user]);
+
   const value: AuthContextType = {
     user,
     isAuthenticated: user !== null,
     isLoading,
+    isAdmin,
     login,
     logout,
     checkAuth,
