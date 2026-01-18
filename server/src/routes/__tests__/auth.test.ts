@@ -91,6 +91,7 @@ describe('Auth Routes', () => {
       expect(response.body.user).toEqual({
         id: createdUser.id,
         email: createdUser.email,
+        role: createdUser.role,
       });
     });
 
@@ -166,6 +167,31 @@ describe('Auth Routes', () => {
       expect(response.body.user).toEqual({
         id: createdUser.id,
         email: createdUser.email,
+        role: createdUser.role,
+      });
+    });
+
+    it('should return user with role in /me endpoint', async () => {
+      // Create a user with ADMIN role and login
+      const createdUser = await authService.createUser(testUser.email, testUser.password, 'ADMIN');
+
+      const loginResponse = await request(app).post('/api/auth/login').send({
+        email: testUser.email,
+        password: testUser.password,
+      });
+
+      const cookies = loginResponse.headers['set-cookie'];
+
+      const response = await request(app)
+        .get('/api/auth/me')
+        .set('Cookie', cookies);
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.user).toEqual({
+        id: createdUser.id,
+        email: createdUser.email,
+        role: 'ADMIN',
       });
     });
 
@@ -272,6 +298,86 @@ describe('Auth Routes', () => {
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
       expect(response.body.setupRequired).toBe(false);
+    });
+  });
+
+  describe('POST /api/auth/register', () => {
+    it('should assign ADMIN role to first user', async () => {
+      const response = await request(app).post('/api/auth/register').send({
+        email: testUser.email,
+        password: testUser.password,
+      });
+
+      expect(response.status).toBe(201);
+      expect(response.body.success).toBe(true);
+      expect(response.body.user).toBeDefined();
+      expect(response.body.user.email).toBe(testUser.email);
+      expect(response.body.user.role).toBe('ADMIN');
+
+      // Verify user was created with ADMIN role
+      const user = await prisma.user.findUnique({ where: { email: testUser.email } });
+      expect(user?.role).toBe('ADMIN');
+    });
+
+    it('should assign VIEWER role to subsequent users', async () => {
+      // Create first user
+      await authService.createUser('first@example.com', 'password123', 'ADMIN');
+
+      // Register second user
+      const response = await request(app).post('/api/auth/register').send({
+        email: testUser.email,
+        password: testUser.password,
+      });
+
+      expect(response.status).toBe(201);
+      expect(response.body.success).toBe(true);
+      expect(response.body.user).toBeDefined();
+      expect(response.body.user.email).toBe(testUser.email);
+      expect(response.body.user.role).toBe('VIEWER');
+
+      // Verify user was created with VIEWER role
+      const user = await prisma.user.findUnique({ where: { email: testUser.email } });
+      expect(user?.role).toBe('VIEWER');
+    });
+
+    it('should return 400 for invalid email format', async () => {
+      const response = await request(app).post('/api/auth/register').send({
+        email: 'invalid-email',
+        password: testUser.password,
+      });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBeDefined();
+    });
+
+    it('should return 400 for password too short', async () => {
+      const response = await request(app).post('/api/auth/register').send({
+        email: testUser.email,
+        password: 'short',
+      });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBeDefined();
+    });
+
+    it('should return 400 if email is missing', async () => {
+      const response = await request(app).post('/api/auth/register').send({
+        password: testUser.password,
+      });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+    });
+
+    it('should return 400 if password is missing', async () => {
+      const response = await request(app).post('/api/auth/register').send({
+        email: testUser.email,
+      });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
     });
   });
 
