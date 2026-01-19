@@ -2,6 +2,7 @@ import bcrypt from 'bcrypt';
 import prisma from '../db/client.js';
 import { User } from '../../../shared/types/auth.types.js';
 import { SALT_ROUNDS } from '../config/constants.js';
+import { RoleSchema } from '../../../shared/validation/user.validation.js';
 
 export class AuthService {
   async createUser(email: string, password: string): Promise<User> {
@@ -14,10 +15,12 @@ export class AuthService {
       },
     });
 
+    const validatedRole = RoleSchema.parse(user.role);
+
     return {
       id: user.id,
       email: user.email,
-      role: user.role as 'ADMIN' | 'LANDLORD' | 'VIEWER',
+      role: validatedRole,
     };
   }
 
@@ -35,10 +38,12 @@ export class AuthService {
       return null;
     }
 
+    const validatedRole = RoleSchema.parse(user.role);
+
     return {
       id: user.id,
       email: user.email,
-      role: user.role as 'ADMIN' | 'LANDLORD' | 'VIEWER',
+      role: validatedRole,
     };
   }
 
@@ -51,10 +56,12 @@ export class AuthService {
       return null;
     }
 
+    const validatedRole = RoleSchema.parse(user.role);
+
     return {
       id: user.id,
       email: user.email,
-      role: user.role as 'ADMIN' | 'LANDLORD' | 'VIEWER',
+      role: validatedRole,
     };
   }
 
