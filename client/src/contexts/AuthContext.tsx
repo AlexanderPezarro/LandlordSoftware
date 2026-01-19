@@ -106,7 +106,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, [user]);
 
   const isLandlord = useCallback(() => {
-    return user?.role === 'LANDLORD' || user?.role === 'ADMIN';
+    return user?.role === 'LANDLORD';
   }, [user]);
 
   const canWrite = useCallback(() => {

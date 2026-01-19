@@ -34,6 +34,7 @@ export interface LoginRequest {
 export interface User {
   id: string;
   email: string;
+  role: 'ADMIN' | 'LANDLORD' | 'VIEWER';
 }
 
 export interface AuthResponse {
