@@ -1,12 +1,12 @@
 // server/src/middleware/permissions.ts
 import { Request, Response, NextFunction } from 'express';
-import { Role } from '@prisma/client';
+import { Role, Roles } from '../../../shared/types/user.types.js';
 
 // Role hierarchy mapping
 const roleHierarchy: Record<Role, number> = {
-  ADMIN: 3,
-  LANDLORD: 2,
-  VIEWER: 1,
+  [Roles.ADMIN]: 3,
+  [Roles.LANDLORD]: 2,
+  [Roles.VIEWER]: 1,
 };
 
 // Check if user has at least the required role level
@@ -35,7 +35,7 @@ export const requireRole = (requiredRole: Role) => {
 };
 
 // Require LANDLORD or ADMIN (no VIEWER)
-export const requireWrite = () => requireRole(Role.LANDLORD);
+export const requireWrite = () => requireRole(Roles.LANDLORD);
 
 // Require ADMIN only
-export const requireAdmin = () => requireRole(Role.ADMIN);
+export const requireAdmin = () => requireRole(Roles.ADMIN);

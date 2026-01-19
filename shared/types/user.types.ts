@@ -9,6 +9,15 @@
 export type Role = 'ADMIN' | 'LANDLORD' | 'VIEWER';
 
 /**
+ * Role enum values for runtime use
+ */
+export const Roles = {
+  ADMIN: 'ADMIN' as Role,
+  LANDLORD: 'LANDLORD' as Role,
+  VIEWER: 'VIEWER' as Role,
+};
+
+/**
  * User entity interface with role-based access control
  */
 export interface UserWithRole {
