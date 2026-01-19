@@ -1,15 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   FormControl,
   InputLabel,
   Select,
   MenuItem,
-  CircularProgress,
+  FormHelperText,
   SelectChangeEvent,
 } from '@mui/material';
-import { api } from '../../services/api';
-import { PropertiesResponse, Property } from '../../types/api.types';
-import { PropertySelectorProps } from '../../types/component.types';
+import { useProperties } from '../../contexts/PropertiesContext';
+import type { PropertySelectorProps } from '../../types/component.types';
 
 const PropertySelector: React.FC<PropertySelectorProps> = ({
   value,
@@ -17,40 +16,15 @@ const PropertySelector: React.FC<PropertySelectorProps> = ({
   includeAllOption = true,
   disabled = false,
 }) => {
-  const [properties, setProperties] = useState<Property[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchProperties = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const response = await api.get<PropertiesResponse>('/properties');
-
-        // Sort properties alphabetically by name
-        const sortedProperties = response.data.properties.sort((a, b) =>
-          a.name.localeCompare(b.name)
-        );
-
-        setProperties(sortedProperties);
-      } catch (err) {
-        setError('Failed to load properties');
-        console.error('Error fetching properties:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProperties();
-  }, []);
+  // Use context instead of local state and fetch
+  const { properties, loading, error } = useProperties();
 
   const handleChange = (event: SelectChangeEvent) => {
     onChange(event.target.value);
   };
 
   return (
-    <FormControl fullWidth size="small">
+    <FormControl fullWidth size="small" error={!!error}>
       <InputLabel id="property-selector-label">Property</InputLabel>
       <Select
         labelId="property-selector-label"
@@ -63,19 +37,14 @@ const PropertySelector: React.FC<PropertySelectorProps> = ({
         {includeAllOption && (
           <MenuItem value="all">All Properties</MenuItem>
         )}
+        {/* Empty string is a valid value that parent components may pass.
+            Display a placeholder when includeAllOption is false and value is empty. */}
         {!includeAllOption && value === '' && (
           <MenuItem value="" disabled>
             Select a property
           </MenuItem>
         )}
-        {loading ? (
-          <MenuItem disabled>
-            <CircularProgress size={20} sx={{ mr: 1 }} />
-            Loading properties...
-          </MenuItem>
-        ) : error ? (
-          <MenuItem disabled>{error}</MenuItem>
-        ) : properties.length === 0 ? (
+        {properties.length === 0 ? (
           <MenuItem disabled>No properties available</MenuItem>
         ) : (
           properties.map((property) => (
@@ -85,6 +54,7 @@ const PropertySelector: React.FC<PropertySelectorProps> = ({
           ))
         )}
       </Select>
+      {error && <FormHelperText>{error}</FormHelperText>}
     </FormControl>
   );
 };

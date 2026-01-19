@@ -715,6 +715,168 @@ describe('Leases Routes', () => {
       expect(response.body.success).toBe(false);
       expect(response.body.error).toBeDefined();
     });
+
+    it('should filter leases by multiple property IDs', async () => {
+      // Arrange: Create test properties and leases
+      const property1 = await prisma.property.create({
+        data: {
+          name: 'Property 1',
+          street: '111 Test Street',
+          city: 'London',
+          county: 'Greater London',
+          postcode: 'SW1A 1AA',
+          propertyType: 'Flat',
+          status: 'Available',
+        },
+      });
+      const property2 = await prisma.property.create({
+        data: {
+          name: 'Property 2',
+          street: '222 Test Street',
+          city: 'London',
+          county: 'Greater London',
+          postcode: 'SW1A 2BB',
+          propertyType: 'House',
+          status: 'Available',
+        },
+      });
+      const property3 = await prisma.property.create({
+        data: {
+          name: 'Property 3',
+          street: '333 Test Street',
+          city: 'London',
+          county: 'Greater London',
+          postcode: 'SW1A 3CC',
+          propertyType: 'Flat',
+          status: 'Available',
+        },
+      });
+
+      const tenant1 = await prisma.tenant.create({
+        data: {
+          firstName: 'Tenant',
+          lastName: 'One',
+          email: 'tenant1@example.com',
+          phone: '07700900111',
+          status: 'Active',
+        },
+      });
+      const tenant2 = await prisma.tenant.create({
+        data: {
+          firstName: 'Tenant',
+          lastName: 'Two',
+          email: 'tenant2@example.com',
+          phone: '07700900222',
+          status: 'Active',
+        },
+      });
+
+      const lease1 = await prisma.lease.create({
+        data: {
+          propertyId: property1.id,
+          tenantId: tenant1.id,
+          startDate: new Date('2024-01-01'),
+          endDate: new Date('2024-12-31'),
+          monthlyRent: 1000,
+          securityDepositAmount: 1000,
+          status: 'Active',
+        },
+      });
+      const lease2 = await prisma.lease.create({
+        data: {
+          propertyId: property2.id,
+          tenantId: tenant2.id,
+          startDate: new Date('2024-01-01'),
+          endDate: new Date('2024-12-31'),
+          monthlyRent: 1500,
+          securityDepositAmount: 1500,
+          status: 'Active',
+        },
+      });
+      const lease3 = await prisma.lease.create({
+        data: {
+          propertyId: property3.id,
+          tenantId: tenant1.id,
+          startDate: new Date('2024-01-01'),
+          endDate: new Date('2024-12-31'),
+          monthlyRent: 1200,
+          securityDepositAmount: 1200,
+          status: 'Active',
+        },
+      });
+
+      // Act: Query for leases from property1 and property2 only
+      const response = await request(app)
+        .get('/api/leases')
+        .query({ property_id: [property1.id, property2.id] });
+
+      // Assert
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.leases).toHaveLength(2);
+
+      const leaseIds = response.body.leases.map((l: any) => l.id);
+      expect(leaseIds).toContain(lease1.id);
+      expect(leaseIds).toContain(lease2.id);
+      expect(leaseIds).not.toContain(lease3.id);
+
+      // Cleanup
+      await prisma.property.delete({ where: { id: property1.id } });
+      await prisma.property.delete({ where: { id: property2.id } });
+      await prisma.property.delete({ where: { id: property3.id } });
+      await prisma.tenant.delete({ where: { id: tenant1.id } });
+      await prisma.tenant.delete({ where: { id: tenant2.id } });
+    });
+
+    it('should handle single property ID as array', async () => {
+      // Arrange
+      const property = await prisma.property.create({
+        data: {
+          name: 'Single Property',
+          street: '999 Test Street',
+          city: 'London',
+          county: 'Greater London',
+          postcode: 'SW1A 9ZZ',
+          propertyType: 'Flat',
+          status: 'Available',
+        },
+      });
+      const tenant = await prisma.tenant.create({
+        data: {
+          firstName: 'Single',
+          lastName: 'Tenant',
+          email: 'single@example.com',
+          phone: '07700900999',
+          status: 'Active',
+        },
+      });
+      const lease = await prisma.lease.create({
+        data: {
+          propertyId: property.id,
+          tenantId: tenant.id,
+          startDate: new Date('2024-01-01'),
+          endDate: new Date('2024-12-31'),
+          monthlyRent: 1100,
+          securityDepositAmount: 1100,
+          status: 'Active',
+        },
+      });
+
+      // Act: Query with single ID (gets converted to array by route)
+      const response = await request(app)
+        .get('/api/leases')
+        .query({ property_id: property.id });
+
+      // Assert
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.leases).toHaveLength(1);
+      expect(response.body.leases[0].id).toBe(lease.id);
+
+      // Cleanup
+      await prisma.property.delete({ where: { id: property.id } });
+      await prisma.tenant.delete({ where: { id: tenant.id } });
+    });
   });
 
   describe('GET /api/leases/:id', () => {

@@ -83,7 +83,10 @@ export const LeaseSchema = z
 
 // Query Params Schema for filtering leases
 export const LeaseQueryParamsSchema = z.object({
-  property_id: z.string().uuid('Invalid property ID').optional(),
+  property_id: z.union([
+    z.string().uuid('Invalid property ID'),
+    z.array(z.string().uuid('Invalid property ID'))
+  ]).optional(),
   tenant_id: z.string().uuid('Invalid tenant ID').optional(),
   status: LeaseStatusSchema.optional(),
 });
