@@ -25,6 +25,51 @@ router.get('/setup-required', async (_req, res) => {
   }
 });
 
+router.post('/register', async (req, res) => {
+  try {
+    // Validate input using existing CreateUserSchema
+    const result = CreateUserSchema.safeParse(req.body);
+    if (!result.success) {
+      return res.status(400).json({
+        success: false,
+        error: result.error.issues[0].message,
+      });
+    }
+
+    const { email, password } = result.data;
+
+    // Check if email already exists
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        error: 'Email address already registered',
+      });
+    }
+
+    // Create user with auto-assigned role (ADMIN for first user, VIEWER otherwise)
+    const user = await authService.createUserWithAutoRole(email, password);
+
+    // Automatically log in the user by creating a session
+    req.session.userId = user.id;
+
+    return res.status(201).json({
+      success: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    console.error('Registration error:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'An error occurred during registration',
+    });
+  }
+});
+
 router.post('/setup', async (req, res) => {
   try {
     // Security check: Only allow if no users exist
@@ -48,7 +93,7 @@ router.post('/setup', async (req, res) => {
     const { email, password } = result.data;
 
     // Create the admin user
-    const user = await authService.createUser(email, password);
+    const user = await authService.createUser(email, password, 'ADMIN');
 
     // Automatically log in the user by creating a session
     req.session.userId = user.id;

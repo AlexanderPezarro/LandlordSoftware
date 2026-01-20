@@ -44,25 +44,42 @@ async function clearDatabase() {
 async function seedUsers() {
   console.log('👤 Seeding users...');
 
-  // Generate bcrypt hash for test password "password123"
-  const hashedPassword = await bcrypt.hash('password123', 10);
+  // Generate bcrypt hashes for test passwords
+  const adminPassword = await bcrypt.hash('admin123', 10);
+  const landlordPassword = await bcrypt.hash('landlord123', 10);
+  const viewerPassword = await bcrypt.hash('viewer123', 10);
 
-  const users = await Promise.all([
-    prisma.user.create({
-      data: {
-        email: 'admin@landlord.com',
-        password: hashedPassword,
-      },
-    }),
-    prisma.user.create({
-      data: {
-        email: 'manager@landlord.com',
-        password: hashedPassword,
-      },
-    }),
-  ]);
+  // Create users sequentially to ensure first user is always ADMIN
+  const adminUser = await prisma.user.create({
+    data: {
+      email: 'admin@example.com',
+      password: adminPassword,
+      role: 'ADMIN',
+    },
+  });
+
+  const landlordUser = await prisma.user.create({
+    data: {
+      email: 'landlord@example.com',
+      password: landlordPassword,
+      role: 'LANDLORD',
+    },
+  });
+
+  const viewerUser = await prisma.user.create({
+    data: {
+      email: 'viewer@example.com',
+      password: viewerPassword,
+      role: 'VIEWER',
+    },
+  });
+
+  const users = [adminUser, landlordUser, viewerUser];
 
   console.log(`✅ Created ${users.length} users`);
+  console.log(`   - ADMIN: admin@example.com (password: admin123)`);
+  console.log(`   - LANDLORD: landlord@example.com (password: landlord123)`);
+  console.log(`   - VIEWER: viewer@example.com (password: viewer123)`);
   return users;
 }
 

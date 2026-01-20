@@ -1,5 +1,6 @@
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { ApiError, ApiErrorResponse } from '../types/api.types';
+import { toast } from '../contexts/ToastContext';
 
 // Axios instance configuration
 const apiClient: AxiosInstance = axios.create({
@@ -74,6 +75,7 @@ apiClient.interceptors.response.use(
 
       // Handle 403 Forbidden
       if (status === 403) {
+        toast.error("You don't have permission to perform this action");
         throw new ApiError(status, 'You do not have permission to perform this action.', data);
       }
 

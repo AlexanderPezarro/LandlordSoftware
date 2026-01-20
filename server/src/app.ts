@@ -52,7 +52,7 @@ export function createApp() {
   // Strict rate limit for login to prevent brute force
   const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 20, // 20 login attempts per 15 minutes
+    max: process.env.NODE_ENV === 'test' ? 1000 : 20, // More permissive in tests
     message: 'Too many login attempts, please try again later.',
     standardHeaders: true,
     legacyHeaders: false,

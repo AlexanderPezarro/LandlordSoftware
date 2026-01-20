@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { Prisma } from '@prisma/client';
 import { requireAuth } from '../middleware/auth.js';
+import { requireWrite } from '../middleware/permissions.js';
 import prisma from '../db/client.js';
 import { CreateLeaseSchema, UpdateLeaseSchema, LeaseQueryParamsSchema } from '../../../shared/validation/lease.validation.js';
 import { z } from 'zod';
@@ -104,8 +105,8 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST /api/leases - Create lease (requires auth)
-router.post('/', requireAuth, async (req, res) => {
+// POST /api/leases - Create lease (requires auth + write permission)
+router.post('/', requireAuth, requireWrite, async (req, res) => {
   try {
     // Validate request body
     const validationResult = CreateLeaseSchema.safeParse(req.body);
@@ -222,8 +223,8 @@ router.post('/', requireAuth, async (req, res) => {
   }
 });
 
-// PUT /api/leases/:id - Update lease (requires auth)
-router.put('/:id', requireAuth, async (req, res) => {
+// PUT /api/leases/:id - Update lease (requires auth + write permission)
+router.put('/:id', requireAuth, requireWrite, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -375,8 +376,8 @@ router.put('/:id', requireAuth, async (req, res) => {
   }
 });
 
-// DELETE /api/leases/:id - Soft delete to 'Terminated' status (requires auth)
-router.delete('/:id', requireAuth, async (req, res) => {
+// DELETE /api/leases/:id - Soft delete to 'Terminated' status (requires auth + write permission)
+router.delete('/:id', requireAuth, requireWrite, async (req, res) => {
   try {
     const { id } = req.params;
 

@@ -29,6 +29,7 @@ import {
   Folder as FolderIcon,
   Settings as SettingsIcon,
   Logout as LogoutIcon,
+  AdminPanelSettings as AdminPanelSettingsIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -49,6 +50,7 @@ const navigationItems: NavItem[] = [
   { text: 'Reports', icon: <AssessmentIcon />, path: '/finances/reports' },
   { text: 'Events', icon: <EventIcon />, path: '/events' },
   { text: 'Documents', icon: <FolderIcon />, path: '/documents' },
+  { text: 'Users', icon: <AdminPanelSettingsIcon />, path: '/users' },
   { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
 ];
 
@@ -61,7 +63,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const location = useLocation();
-  const { user, logout } = useAuth();
+  const { user, logout, isAdmin } = useAuth();
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -79,42 +81,44 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         </Typography>
       </Toolbar>
       <List>
-        {navigationItems.map((item) => {
-          const isActive = location.pathname === item.path;
-          return (
-            <ListItem key={item.text} disablePadding>
-              <ListItemButton
-                component={Link}
-                to={item.path}
-                selected={isActive}
-                onClick={isMobile ? handleDrawerToggle : undefined}
-                sx={{
-                  '&.Mui-selected': {
-                    backgroundColor: theme.palette.primary.main,
-                    color: theme.palette.primary.contrastText,
-                    '&:hover': {
-                      backgroundColor: theme.palette.primary.dark,
-                    },
-                    '& .MuiListItemIcon-root': {
-                      color: theme.palette.primary.contrastText,
-                    },
-                  },
-                }}
-              >
-                <ListItemIcon
+        {navigationItems
+          .filter(item => item.text !== 'Users' || isAdmin())
+          .map((item) => {
+            const isActive = location.pathname === item.path;
+            return (
+              <ListItem key={item.text} disablePadding>
+                <ListItemButton
+                  component={Link}
+                  to={item.path}
+                  selected={isActive}
+                  onClick={isMobile ? handleDrawerToggle : undefined}
                   sx={{
-                    color: isActive
-                      ? theme.palette.primary.contrastText
-                      : 'inherit',
+                    '&.Mui-selected': {
+                      backgroundColor: theme.palette.primary.main,
+                      color: theme.palette.primary.contrastText,
+                      '&:hover': {
+                        backgroundColor: theme.palette.primary.dark,
+                      },
+                      '& .MuiListItemIcon-root': {
+                        color: theme.palette.primary.contrastText,
+                      },
+                    },
                   }}
                 >
-                  {item.icon}
-                </ListItemIcon>
-                <ListItemText primary={item.text} />
-              </ListItemButton>
-            </ListItem>
-          );
-        })}
+                  <ListItemIcon
+                    sx={{
+                      color: isActive
+                        ? theme.palette.primary.contrastText
+                        : 'inherit',
+                    }}
+                  >
+                    {item.icon}
+                  </ListItemIcon>
+                  <ListItemText primary={item.text} />
+                </ListItemButton>
+              </ListItem>
+            );
+          })}
       </List>
     </div>
   );
