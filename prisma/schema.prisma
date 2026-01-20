@@ -135,8 +135,8 @@ model BankAccount {
   accountName    String    @map("account_name")
   accountType    String    @map("account_type")
   provider       String    @default("monzo")
-  accessToken    String    @map("access_token")
-  refreshToken   String?   @map("refresh_token")
+  accessToken    String    @map("access_token")  // Encrypted at rest (AES-256-GCM)
+  refreshToken   String?   @map("refresh_token") // Encrypted at rest (AES-256-GCM)
   tokenExpiresAt DateTime? @map("token_expires_at")
   syncEnabled    Boolean   @default(true) @map("sync_enabled")
   syncFromDate   DateTime  @map("sync_from_date")
@@ -238,9 +238,12 @@ model SyncLog {
   @@map("sync_logs")
 }
 
+// TransactionAuditLog intentionally has NO foreign key constraint on transactionId.
+// This preserves the complete audit trail even after transactions are deleted,
+// which is critical for compliance and historical tracking.
 model TransactionAuditLog {
   id            String   @id @default(uuid())
-  transactionId String   @map("transaction_id")
+  transactionId String   @map("transaction_id") // No FK - preserves history after deletion
   userId        String   @map("user_id")
   field         String
   oldValue      String?  @map("old_value")
