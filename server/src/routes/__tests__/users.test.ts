@@ -300,7 +300,7 @@ describe('Users Routes', () => {
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
-      expect(response.body.error).toContain('Invalid option');
+      expect(response.body.error).toContain('Role must be ADMIN, LANDLORD, or VIEWER');
     });
 
     it('should validate UUID format', async () => {
