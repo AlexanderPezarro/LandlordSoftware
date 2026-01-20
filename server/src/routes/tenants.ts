@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
+import { requireWrite } from '../middleware/permissions.js';
 import prisma from '../db/client.js';
 import { CreateTenantSchema, UpdateTenantSchema, TenantQueryParamsSchema, LeaseHistoryQueryParamsSchema } from '../../../shared/validation/tenant.validation.js';
 import { z } from 'zod';
@@ -91,8 +92,8 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST /api/tenants - Create tenant (requires auth)
-router.post('/', requireAuth, async (req, res) => {
+// POST /api/tenants - Create tenant (requires auth + write permission)
+router.post('/', requireAuth, requireWrite, async (req, res) => {
   try {
     // Validate request body
     const validationResult = CreateTenantSchema.safeParse(req.body);
@@ -124,8 +125,8 @@ router.post('/', requireAuth, async (req, res) => {
   }
 });
 
-// PUT /api/tenants/:id - Update tenant (requires auth)
-router.put('/:id', requireAuth, async (req, res) => {
+// PUT /api/tenants/:id - Update tenant (requires auth + write permission)
+router.put('/:id', requireAuth, requireWrite, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -184,8 +185,8 @@ router.put('/:id', requireAuth, async (req, res) => {
   }
 });
 
-// DELETE /api/tenants/:id - Soft delete to 'Former' status (requires auth)
-router.delete('/:id', requireAuth, async (req, res) => {
+// DELETE /api/tenants/:id - Soft delete to 'Former' status (requires auth + write permission)
+router.delete('/:id', requireAuth, requireWrite, async (req, res) => {
   try {
     const { id } = req.params;
 

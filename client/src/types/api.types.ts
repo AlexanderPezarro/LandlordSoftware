@@ -34,6 +34,7 @@ export interface LoginRequest {
 export interface User {
   id: string;
   email: string;
+  role: 'ADMIN' | 'LANDLORD' | 'VIEWER';
 }
 
 export interface AuthResponse {
@@ -198,7 +199,7 @@ export interface UpdateLeaseRequest {
 }
 
 export interface LeaseFilters {
-  propertyId?: string;
+  propertyId?: string | string[];
   tenantId?: string;
   status?: 'Draft' | 'Active' | 'Expired' | 'Terminated';
 }

@@ -93,7 +93,15 @@ export {
 // User Validation
 export {
   CreateUserSchema,
+  UpdateUserSchema,
+  UpdateUserRoleSchema,
+  RoleSchema,
+  LoginSchema,
   ChangePasswordSchema,
   type CreateUser,
+  type UpdateUser,
+  type UpdateUserRole,
+  type Login,
+  type Role,
   type ChangePassword,
 } from './user.validation.js';

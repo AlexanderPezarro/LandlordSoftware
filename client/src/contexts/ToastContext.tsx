@@ -20,6 +20,51 @@ interface ToastContextType {
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
+// Singleton toast instance for use outside React components
+let toastInstance: ToastContextType | null = null;
+
+export const setToastInstance = (instance: ToastContextType) => {
+  toastInstance = instance;
+};
+
+export const toast = {
+  success: (message: string) => {
+    if (toastInstance) {
+      toastInstance.success(message);
+    } else {
+      console.warn('Toast instance not initialized');
+    }
+  },
+  error: (message: string) => {
+    if (toastInstance) {
+      toastInstance.error(message);
+    } else {
+      console.warn('Toast instance not initialized');
+    }
+  },
+  warning: (message: string) => {
+    if (toastInstance) {
+      toastInstance.warning(message);
+    } else {
+      console.warn('Toast instance not initialized');
+    }
+  },
+  info: (message: string) => {
+    if (toastInstance) {
+      toastInstance.info(message);
+    } else {
+      console.warn('Toast instance not initialized');
+    }
+  },
+  showToast: (message: string, type: ToastType = 'info') => {
+    if (toastInstance) {
+      toastInstance.showToast(message, type);
+    } else {
+      console.warn('Toast instance not initialized');
+    }
+  },
+};
+
 export const useToast = () => {
   const context = useContext(ToastContext);
   if (context === undefined) {
@@ -70,6 +115,14 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
     warning,
     info,
   };
+
+  // Register singleton instance on mount
+  React.useEffect(() => {
+    setToastInstance(value);
+    return () => {
+      setToastInstance(null as any);
+    };
+  }, [value]);
 
   return (
     <ToastContext.Provider value={value}>

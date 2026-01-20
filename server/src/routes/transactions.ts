@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
+import { requireWrite } from '../middleware/permissions.js';
 import prisma from '../db/client.js';
 import {
   CreateTransactionSchema,
@@ -434,8 +435,8 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST /api/transactions - Create transaction (requires auth)
-router.post('/', requireAuth, async (req, res) => {
+// POST /api/transactions - Create transaction (requires auth + write permission)
+router.post('/', requireAuth, requireWrite, async (req, res) => {
   try {
     // Validate request body
     const validationResult = CreateTransactionSchema.safeParse(req.body);
@@ -500,8 +501,8 @@ router.post('/', requireAuth, async (req, res) => {
   }
 });
 
-// PUT /api/transactions/:id - Update transaction (requires auth)
-router.put('/:id', requireAuth, async (req, res) => {
+// PUT /api/transactions/:id - Update transaction (requires auth + write permission)
+router.put('/:id', requireAuth, requireWrite, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -614,8 +615,8 @@ router.put('/:id', requireAuth, async (req, res) => {
   }
 });
 
-// DELETE /api/transactions/:id - Hard delete transaction (requires auth)
-router.delete('/:id', requireAuth, async (req, res) => {
+// DELETE /api/transactions/:id - Hard delete transaction (requires auth + write permission)
+router.delete('/:id', requireAuth, requireWrite, async (req, res) => {
   try {
     const { id } = req.params;
 
