@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import prisma from '../db/client.js';
+import { Role } from '../../../shared/types/user.types.js';
 
 export async function requireAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
   if (!req.session.userId) {
@@ -25,7 +26,10 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
       return;
     }
 
-    req.user = user;
+    req.user = {
+      id: user.id,
+      role: user.role as Role,
+    };
     next();
   } catch (error) {
     console.error('Auth middleware error:', error);
