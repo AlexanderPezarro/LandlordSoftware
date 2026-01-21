@@ -238,8 +238,9 @@ describe('Webhook Routes', () => {
 
       expect(response1.status).toBe(200);
       expect(response1.body.success).toBe(true);
+      expect(response1.body.message).toBe('Webhook processed successfully');
 
-      // Count transactions
+      // Count transactions after first webhook
       const transactionsAfterFirst = await prisma.bankTransaction.count({
         where: {
           bankAccountId: testBankAccountId,
@@ -248,6 +249,16 @@ describe('Webhook Routes', () => {
       });
       expect(transactionsAfterFirst).toBe(1);
 
+      // Count sync logs after first webhook
+      const syncLogsAfterFirst = await prisma.syncLog.count({
+        where: {
+          bankAccountId: testBankAccountId,
+          syncType: 'webhook',
+          webhookEventId: 'tx_webhook_duplicate',
+        },
+      });
+      expect(syncLogsAfterFirst).toBe(1);
+
       // Send same webhook again
       const response2 = await request(app)
         .post(`/api/bank/webhooks/monzo/${validSecret}`)
@@ -255,8 +266,9 @@ describe('Webhook Routes', () => {
 
       expect(response2.status).toBe(200);
       expect(response2.body.success).toBe(true);
+      expect(response2.body.message).toBe('Webhook event already processed');
 
-      // Verify no duplicate was created
+      // Verify no duplicate transaction was created
       const transactionsAfterSecond = await prisma.bankTransaction.count({
         where: {
           bankAccountId: testBankAccountId,
@@ -265,14 +277,15 @@ describe('Webhook Routes', () => {
       });
       expect(transactionsAfterSecond).toBe(1);
 
-      // Verify two sync logs were created
-      const syncLogs = await prisma.syncLog.count({
+      // Verify no duplicate sync log was created (idempotency - should still be 1)
+      const syncLogsAfterSecond = await prisma.syncLog.count({
         where: {
           bankAccountId: testBankAccountId,
           syncType: 'webhook',
+          webhookEventId: 'tx_webhook_duplicate',
         },
       });
-      expect(syncLogs).toBe(2);
+      expect(syncLogsAfterSecond).toBe(1);
     });
 
     it('should return 400 for invalid webhook type', async () => {

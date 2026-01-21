@@ -119,6 +119,22 @@ router.post('/monzo/:secret', async (req, res) => {
       });
     }
 
+    // Check for duplicate webhook event (idempotency)
+    // If this webhook event has already been processed, return success immediately
+    const existingSyncLog = await prisma.syncLog.findFirst({
+      where: {
+        webhookEventId: transaction.id,
+      },
+    });
+
+    if (existingSyncLog) {
+      console.log(`Webhook event ${transaction.id} already processed, skipping`);
+      return res.status(200).json({
+        success: true,
+        message: 'Webhook event already processed',
+      });
+    }
+
     // Create SyncLog for webhook event
     const syncLog = await prisma.syncLog.create({
       data: {

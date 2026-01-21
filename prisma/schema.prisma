@@ -235,6 +235,7 @@ model SyncLog {
   bankAccount BankAccount @relation(fields: [bankAccountId], references: [id], onDelete: Cascade)
 
   @@index([bankAccountId, startedAt])
+  @@index([webhookEventId])
   @@map("sync_logs")
 }
 
