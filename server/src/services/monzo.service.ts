@@ -10,6 +10,7 @@ const stateStore = new Map<string, { syncFromDate: Date; createdAt: Date }>();
  * Monzo API transaction response types
  */
 export interface MonzoTransaction {
+  account_id: string; // Monzo account ID (e.g., "acc_00008gju41AHyfLUzBUk8A")
   id: string;
   created: string; // RFC3339 timestamp
   description: string;
