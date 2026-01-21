@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
+import { requireWrite } from '../middleware/permissions.js';
 import prisma from '../db/client.js';
 import { CreateLeaseSchema, UpdateLeaseSchema, LeaseQueryParamsSchema } from '../../../shared/validation/lease.validation.js';
 import { z } from 'zod';
@@ -7,7 +8,7 @@ import { z } from 'zod';
 const router = Router();
 
 // GET /api/leases - List leases with filtering
-router.get('/', async (req, res) => {
+router.get('/', requireAuth, async (req, res) => {
   try {
     // Validate query parameters
     const validationResult = LeaseQueryParamsSchema.safeParse(req.query);
@@ -59,7 +60,7 @@ router.get('/', async (req, res) => {
 });
 
 // GET /api/leases/:id - Get single lease
-router.get('/:id', async (req, res) => {
+router.get('/:id', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -99,8 +100,8 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST /api/leases - Create lease (requires auth)
-router.post('/', requireAuth, async (req, res) => {
+// POST /api/leases - Create lease (requires write permission)
+router.post('/', requireAuth, requireWrite(), async (req, res) => {
   try {
     // Validate request body
     const validationResult = CreateLeaseSchema.safeParse(req.body);
@@ -217,8 +218,8 @@ router.post('/', requireAuth, async (req, res) => {
   }
 });
 
-// PUT /api/leases/:id - Update lease (requires auth)
-router.put('/:id', requireAuth, async (req, res) => {
+// PUT /api/leases/:id - Update lease (requires write permission)
+router.put('/:id', requireAuth, requireWrite(), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -370,8 +371,8 @@ router.put('/:id', requireAuth, async (req, res) => {
   }
 });
 
-// DELETE /api/leases/:id - Soft delete to 'Terminated' status (requires auth)
-router.delete('/:id', requireAuth, async (req, res) => {
+// DELETE /api/leases/:id - Soft delete to 'Terminated' status (requires write permission)
+router.delete('/:id', requireAuth, requireWrite(), async (req, res) => {
   try {
     const { id } = req.params;
 

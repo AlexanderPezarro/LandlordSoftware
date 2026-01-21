@@ -3,6 +3,7 @@ import request from 'supertest';
 import { createApp } from '../../app.js';
 import prisma from '../../db/client.js';
 import authService from '../../services/auth.service.js';
+import { Roles } from '../../../../shared/types/user.types.js';
 
 const app = createApp();
 
@@ -13,7 +14,25 @@ describe('Leases Routes', () => {
     password: 'testPassword123',
   };
 
+  const viewerUser = {
+    email: 'viewer@example.com',
+    password: 'viewerPassword123',
+  };
+
+  const landlordUser = {
+    email: 'landlord@example.com',
+    password: 'landlordPassword123',
+  };
+
+  const adminUser = {
+    email: 'admin@example.com',
+    password: 'adminPassword123',
+  };
+
   let authCookies: string[];
+  let viewerCookies: string[];
+  let landlordCookies: string[];
+  let adminCookies: string[];
   let testProperty: any;
   let testTenant: any;
 
@@ -36,7 +55,7 @@ describe('Leases Routes', () => {
     await prisma.property.deleteMany({});
     await prisma.user.deleteMany({});
 
-    // Create test user and login
+    // Create test user and login (default LANDLORD role)
     await authService.createUser(testUser.email, testUser.password);
 
     const loginResponse = await request(app).post('/api/auth/login').send({
@@ -45,6 +64,36 @@ describe('Leases Routes', () => {
     });
 
     authCookies = [loginResponse.headers['set-cookie']];
+
+    // Create viewer user and login
+    await authService.createUser(viewerUser.email, viewerUser.password, Roles.VIEWER);
+
+    const viewerLoginResponse = await request(app).post('/api/auth/login').send({
+      email: viewerUser.email,
+      password: viewerUser.password,
+    });
+
+    viewerCookies = [viewerLoginResponse.headers['set-cookie']];
+
+    // Create landlord user and login
+    await authService.createUser(landlordUser.email, landlordUser.password, Roles.LANDLORD);
+
+    const landlordLoginResponse = await request(app).post('/api/auth/login').send({
+      email: landlordUser.email,
+      password: landlordUser.password,
+    });
+
+    landlordCookies = [landlordLoginResponse.headers['set-cookie']];
+
+    // Create admin user and login
+    await authService.createUser(adminUser.email, adminUser.password, Roles.ADMIN);
+
+    const adminLoginResponse = await request(app).post('/api/auth/login').send({
+      email: adminUser.email,
+      password: adminUser.password,
+    });
+
+    adminCookies = [adminLoginResponse.headers['set-cookie']];
 
     // Create test property
     testProperty = await prisma.property.create({
@@ -98,6 +147,47 @@ describe('Leases Routes', () => {
       expect(response.status).toBe(401);
       expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Authentication required');
+    });
+
+    it('should block VIEWER role from creating leases', async () => {
+      const response = await request(app)
+        .post('/api/leases')
+        .set('Cookie', viewerCookies)
+        .send(validLease);
+
+      expect(response.status).toBe(403);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toContain('Insufficient permissions');
+    });
+
+    it('should allow LANDLORD role to create leases', async () => {
+      const response = await request(app)
+        .post('/api/leases')
+        .set('Cookie', landlordCookies)
+        .send(validLease);
+
+      expect(response.status).toBe(201);
+      expect(response.body.success).toBe(true);
+      expect(response.body.lease).toMatchObject({
+        propertyId: validLease.propertyId,
+        tenantId: validLease.tenantId,
+        monthlyRent: validLease.monthlyRent,
+      });
+    });
+
+    it('should allow ADMIN role to create leases', async () => {
+      const response = await request(app)
+        .post('/api/leases')
+        .set('Cookie', adminCookies)
+        .send(validLease);
+
+      expect(response.status).toBe(201);
+      expect(response.body.success).toBe(true);
+      expect(response.body.lease).toMatchObject({
+        propertyId: validLease.propertyId,
+        tenantId: validLease.tenantId,
+        monthlyRent: validLease.monthlyRent,
+      });
     });
 
     it('should create a lease with valid data', async () => {
@@ -444,8 +534,18 @@ describe('Leases Routes', () => {
   });
 
   describe('GET /api/leases', () => {
-    it('should return empty array when no leases exist', async () => {
+    it('should require authentication', async () => {
       const response = await request(app).get('/api/leases');
+
+      expect(response.status).toBe(401);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBe('Authentication required');
+    });
+
+    it('should return empty array when no leases exist', async () => {
+      const response = await request(app)
+        .get('/api/leases')
+        .set('Cookie', authCookies);
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -478,7 +578,9 @@ describe('Leases Routes', () => {
         },
       });
 
-      const response = await request(app).get('/api/leases');
+      const response = await request(app)
+        .get('/api/leases')
+        .set('Cookie', authCookies);
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -532,6 +634,7 @@ describe('Leases Routes', () => {
 
       const response = await request(app)
         .get('/api/leases')
+        .set('Cookie', authCookies)
         .query({ property_id: testProperty.id });
 
       expect(response.status).toBe(200);
@@ -579,6 +682,7 @@ describe('Leases Routes', () => {
 
       const response = await request(app)
         .get('/api/leases')
+        .set('Cookie', authCookies)
         .query({ tenant_id: testTenant.id });
 
       expect(response.status).toBe(200);
@@ -616,6 +720,7 @@ describe('Leases Routes', () => {
 
       const response = await request(app)
         .get('/api/leases')
+        .set('Cookie', authCookies)
         .query({ status: 'Active' });
 
       expect(response.status).toBe(200);
@@ -675,6 +780,7 @@ describe('Leases Routes', () => {
 
       const response = await request(app)
         .get('/api/leases')
+        .set('Cookie', authCookies)
         .query({ property_id: testProperty.id, status: 'Active' });
 
       expect(response.status).toBe(200);
@@ -689,6 +795,7 @@ describe('Leases Routes', () => {
     it('should reject invalid query parameters - invalid property_id', async () => {
       const response = await request(app)
         .get('/api/leases')
+        .set('Cookie', authCookies)
         .query({ property_id: 'invalid-id' });
 
       expect(response.status).toBe(400);
@@ -699,6 +806,7 @@ describe('Leases Routes', () => {
     it('should reject invalid query parameters - invalid tenant_id', async () => {
       const response = await request(app)
         .get('/api/leases')
+        .set('Cookie', authCookies)
         .query({ tenant_id: 'invalid-id' });
 
       expect(response.status).toBe(400);
@@ -709,6 +817,7 @@ describe('Leases Routes', () => {
     it('should reject invalid query parameters - invalid status', async () => {
       const response = await request(app)
         .get('/api/leases')
+        .set('Cookie', authCookies)
         .query({ status: 'InvalidStatus' });
 
       expect(response.status).toBe(400);
@@ -718,7 +827,7 @@ describe('Leases Routes', () => {
   });
 
   describe('GET /api/leases/:id', () => {
-    it('should return lease by id with relations', async () => {
+    it('should require authentication', async () => {
       const lease = await prisma.lease.create({
         data: {
           propertyId: testProperty.id,
@@ -733,6 +842,28 @@ describe('Leases Routes', () => {
 
       const response = await request(app).get(`/api/leases/${lease.id}`);
 
+      expect(response.status).toBe(401);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBe('Authentication required');
+    });
+
+    it('should return lease by id with relations', async () => {
+      const lease = await prisma.lease.create({
+        data: {
+          propertyId: testProperty.id,
+          tenantId: testTenant.id,
+          startDate: new Date('2024-01-01'),
+          endDate: new Date('2024-12-31'),
+          monthlyRent: 1200,
+          securityDepositAmount: 1200,
+          status: 'Active',
+        },
+      });
+
+      const response = await request(app)
+        .get(`/api/leases/${lease.id}`)
+        .set('Cookie', authCookies);
+
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
       expect(response.body.lease.id).toBe(lease.id);
@@ -744,7 +875,9 @@ describe('Leases Routes', () => {
 
     it('should return 404 for non-existent lease', async () => {
       const nonExistentId = '00000000-0000-0000-0000-000000000000';
-      const response = await request(app).get(`/api/leases/${nonExistentId}`);
+      const response = await request(app)
+        .get(`/api/leases/${nonExistentId}`)
+        .set('Cookie', authCookies);
 
       expect(response.status).toBe(404);
       expect(response.body.success).toBe(false);
@@ -752,7 +885,9 @@ describe('Leases Routes', () => {
     });
 
     it('should return 400 for invalid UUID format', async () => {
-      const response = await request(app).get('/api/leases/invalid-id');
+      const response = await request(app)
+        .get('/api/leases/invalid-id')
+        .set('Cookie', authCookies);
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
@@ -781,6 +916,75 @@ describe('Leases Routes', () => {
       expect(response.status).toBe(401);
       expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Authentication required');
+    });
+
+    it('should block VIEWER role from updating leases', async () => {
+      const lease = await prisma.lease.create({
+        data: {
+          propertyId: testProperty.id,
+          tenantId: testTenant.id,
+          startDate: new Date('2024-01-01'),
+          endDate: new Date('2024-12-31'),
+          monthlyRent: 1200,
+          securityDepositAmount: 1200,
+          status: 'Active',
+        },
+      });
+
+      const response = await request(app)
+        .put(`/api/leases/${lease.id}`)
+        .set('Cookie', viewerCookies)
+        .send({ monthlyRent: 1300 });
+
+      expect(response.status).toBe(403);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toContain('Insufficient permissions');
+    });
+
+    it('should allow LANDLORD role to update leases', async () => {
+      const lease = await prisma.lease.create({
+        data: {
+          propertyId: testProperty.id,
+          tenantId: testTenant.id,
+          startDate: new Date('2024-01-01'),
+          endDate: new Date('2024-12-31'),
+          monthlyRent: 1200,
+          securityDepositAmount: 1200,
+          status: 'Active',
+        },
+      });
+
+      const response = await request(app)
+        .put(`/api/leases/${lease.id}`)
+        .set('Cookie', landlordCookies)
+        .send({ monthlyRent: 1300 });
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.lease.monthlyRent).toBe(1300);
+    });
+
+    it('should allow ADMIN role to update leases', async () => {
+      const lease = await prisma.lease.create({
+        data: {
+          propertyId: testProperty.id,
+          tenantId: testTenant.id,
+          startDate: new Date('2024-01-01'),
+          endDate: new Date('2024-12-31'),
+          monthlyRent: 1200,
+          securityDepositAmount: 1200,
+          status: 'Active',
+        },
+      });
+
+      const response = await request(app)
+        .put(`/api/leases/${lease.id}`)
+        .set('Cookie', adminCookies)
+        .send({ monthlyRent: 1300 });
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.lease.monthlyRent).toBe(1300);
     });
 
     it('should update lease with valid data', async () => {
@@ -1060,6 +1264,72 @@ describe('Leases Routes', () => {
       expect(response.body.error).toBe('Authentication required');
     });
 
+    it('should block VIEWER role from deleting leases', async () => {
+      const lease = await prisma.lease.create({
+        data: {
+          propertyId: testProperty.id,
+          tenantId: testTenant.id,
+          startDate: new Date('2024-01-01'),
+          endDate: new Date('2024-12-31'),
+          monthlyRent: 1200,
+          securityDepositAmount: 1200,
+          status: 'Active',
+        },
+      });
+
+      const response = await request(app)
+        .delete(`/api/leases/${lease.id}`)
+        .set('Cookie', viewerCookies);
+
+      expect(response.status).toBe(403);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toContain('Insufficient permissions');
+    });
+
+    it('should allow LANDLORD role to delete leases', async () => {
+      const lease = await prisma.lease.create({
+        data: {
+          propertyId: testProperty.id,
+          tenantId: testTenant.id,
+          startDate: new Date('2024-01-01'),
+          endDate: new Date('2024-12-31'),
+          monthlyRent: 1200,
+          securityDepositAmount: 1200,
+          status: 'Active',
+        },
+      });
+
+      const response = await request(app)
+        .delete(`/api/leases/${lease.id}`)
+        .set('Cookie', landlordCookies);
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.lease.status).toBe('Terminated');
+    });
+
+    it('should allow ADMIN role to delete leases', async () => {
+      const lease = await prisma.lease.create({
+        data: {
+          propertyId: testProperty.id,
+          tenantId: testTenant.id,
+          startDate: new Date('2024-01-01'),
+          endDate: new Date('2024-12-31'),
+          monthlyRent: 1200,
+          securityDepositAmount: 1200,
+          status: 'Active',
+        },
+      });
+
+      const response = await request(app)
+        .delete(`/api/leases/${lease.id}`)
+        .set('Cookie', adminCookies);
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.lease.status).toBe('Terminated');
+    });
+
     it('should soft delete lease by changing status to Terminated', async () => {
       const lease = await prisma.lease.create({
         data: {
@@ -1147,7 +1417,9 @@ describe('Leases Routes', () => {
       const leaseId = createResponse.body.lease.id;
 
       // Read single
-      const readResponse = await request(app).get(`/api/leases/${leaseId}`);
+      const readResponse = await request(app)
+        .get(`/api/leases/${leaseId}`)
+        .set('Cookie', authCookies);
 
       expect(readResponse.status).toBe(200);
       expect(readResponse.body.lease.id).toBe(leaseId);
@@ -1170,7 +1442,9 @@ describe('Leases Routes', () => {
       expect(deleteResponse.body.lease.status).toBe('Terminated');
 
       // Verify still accessible
-      const finalReadResponse = await request(app).get(`/api/leases/${leaseId}`);
+      const finalReadResponse = await request(app)
+        .get(`/api/leases/${leaseId}`)
+        .set('Cookie', authCookies);
       expect(finalReadResponse.status).toBe(200);
       expect(finalReadResponse.body.lease.status).toBe('Terminated');
     });
@@ -1190,7 +1464,9 @@ describe('Leases Routes', () => {
       }
 
       // List all
-      const listResponse = await request(app).get('/api/leases');
+      const listResponse = await request(app)
+        .get('/api/leases')
+        .set('Cookie', authCookies);
       expect(listResponse.status).toBe(200);
       expect(listResponse.body.leases).toHaveLength(3);
 
