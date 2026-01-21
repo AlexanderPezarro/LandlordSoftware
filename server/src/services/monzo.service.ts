@@ -374,3 +374,228 @@ export async function importFullHistory(bankAccountId: string): Promise<void> {
     });
   }
 }
+
+/**
+ * Sync result interface returned by syncNewTransactions
+ */
+export interface SyncResult {
+  success: boolean;
+  transactionsFetched?: number;
+  lastSyncAt?: Date;
+  lastSyncStatus?: string;
+  error?: string;
+}
+
+/**
+ * Sync new transactions from Monzo API since last sync
+ * This is a synchronous operation with a 30-second timeout for manual sync triggers
+ *
+ * @param bankAccountId - Database ID of the bank account to sync transactions for
+ * @returns SyncResult with status, counts, and timestamps
+ */
+export async function syncNewTransactions(bankAccountId: string): Promise<SyncResult> {
+  let syncLogId: string | undefined;
+  let transactionsFetched = 0;
+  const TIMEOUT_MS = 30000; // 30 seconds for manual sync
+  let timedOut = false;
+
+  try {
+    // Get bank account
+    const bankAccount = await prisma.bankAccount.findUnique({
+      where: { id: bankAccountId },
+    });
+
+    if (!bankAccount) {
+      return {
+        success: false,
+        error: 'Bank account not found',
+      };
+    }
+
+    // Check for concurrent sync
+    const inProgressSync = await prisma.syncLog.findFirst({
+      where: {
+        bankAccountId,
+        status: 'in_progress',
+      },
+    });
+
+    if (inProgressSync) {
+      return {
+        success: false,
+        error: 'Sync already in progress',
+      };
+    }
+
+    // Check if token has expired
+    // TODO: Implement token refresh for expired tokens
+    if (bankAccount.tokenExpiresAt && bankAccount.tokenExpiresAt < new Date()) {
+      return {
+        success: false,
+        error: 'Access token has expired. Please reconnect your bank account.',
+      };
+    }
+
+    // Create sync log
+    const syncLog = await prisma.syncLog.create({
+      data: {
+        bankAccountId,
+        syncType: 'manual',
+        status: 'in_progress',
+      },
+    });
+    syncLogId = syncLog.id;
+
+    // Decrypt access token
+    const accessToken = decryptToken(bankAccount.accessToken);
+
+    // Determine sync start date (lastSyncAt or syncFromDate)
+    const sinceDate = bankAccount.lastSyncAt || bankAccount.syncFromDate;
+
+    // Set timeout for graceful shutdown
+    const timeoutHandle = setTimeout(() => {
+      timedOut = true;
+      console.warn(`Manual sync timeout approaching for bank account ${bankAccountId}, stopping gracefully`);
+    }, TIMEOUT_MS);
+
+    // Fetch transactions with pagination
+    const allTransactions: MonzoTransaction[] = [];
+    let beforeTimestamp: string | undefined;
+    let hasMore = true;
+
+    while (hasMore && !timedOut) {
+      // Build request URL
+      const params = new URLSearchParams({
+        account_id: bankAccount.accountId,
+        since: sinceDate.toISOString(),
+        limit: '100',
+      });
+
+      if (beforeTimestamp) {
+        params.append('before', beforeTimestamp);
+      }
+
+      const url = `https://api.monzo.com/transactions?${params.toString()}`;
+
+      // Fetch transactions
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Monzo transactions fetch error:', errorText);
+        throw new Error(`Failed to fetch transactions: ${errorText}`);
+      }
+
+      const data = await response.json() as MonzoTransactionsResponse;
+      const transactions = data.transactions;
+
+      allTransactions.push(...transactions);
+      transactionsFetched += transactions.length;
+
+      // Check if we need to paginate
+      if (transactions.length < 100) {
+        hasMore = false;
+      } else {
+        // Use the oldest transaction's created timestamp for next page
+        const oldestTransaction = transactions[transactions.length - 1];
+        beforeTimestamp = oldestTransaction.created;
+      }
+    }
+
+    clearTimeout(timeoutHandle);
+
+    // Import transactions in batches
+    if (allTransactions.length > 0) {
+      // Use individual upsert operations to handle duplicates gracefully
+      for (const tx of allTransactions) {
+        await prisma.bankTransaction.upsert({
+          where: {
+            bankAccountId_externalId: {
+              bankAccountId,
+              externalId: tx.id,
+            },
+          },
+          create: {
+            bankAccountId,
+            externalId: tx.id,
+            amount: tx.amount / 100, // Convert pence to pounds
+            currency: tx.currency,
+            description: tx.description,
+            counterpartyName: tx.counterparty?.name || null,
+            reference: tx.notes || null,
+            merchant: tx.merchant?.name || null,
+            category: tx.category || null,
+            transactionDate: new Date(tx.created),
+            settledDate: tx.settled ? new Date(tx.settled) : null,
+          },
+          update: {}, // Don't update if already exists
+        });
+      }
+    }
+
+    // Determine final status
+    const finalStatus = timedOut ? 'partial' : 'success';
+    const now = new Date();
+
+    // Update sync log
+    await prisma.syncLog.update({
+      where: { id: syncLogId },
+      data: {
+        status: finalStatus,
+        completedAt: now,
+        transactionsFetched,
+      },
+    });
+
+    // Update bank account (only update lastSyncAt on complete success)
+    await prisma.bankAccount.update({
+      where: { id: bankAccountId },
+      data: {
+        lastSyncAt: finalStatus === 'success' ? now : undefined,
+        lastSyncStatus: finalStatus,
+      },
+    });
+
+    console.log(`Manual sync completed for bank account ${bankAccountId}: ${transactionsFetched} transactions fetched, status: ${finalStatus}`);
+
+    return {
+      success: true,
+      transactionsFetched,
+      lastSyncAt: finalStatus === 'success' ? now : bankAccount.lastSyncAt || undefined,
+      lastSyncStatus: finalStatus,
+    };
+  } catch (error) {
+    console.error(`Manual sync failed for bank account ${bankAccountId}:`, error);
+
+    // Update sync log with error
+    if (syncLogId) {
+      await prisma.syncLog.update({
+        where: { id: syncLogId },
+        data: {
+          status: 'failed',
+          completedAt: new Date(),
+          transactionsFetched,
+          errorMessage: error instanceof Error ? error.message : 'Unknown error',
+          errorDetails: error instanceof Error ? error.stack : undefined,
+        },
+      });
+    }
+
+    // Update bank account status (don't update lastSyncAt on failure)
+    await prisma.bankAccount.update({
+      where: { id: bankAccountId },
+      data: {
+        lastSyncStatus: 'failed',
+      },
+    });
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}

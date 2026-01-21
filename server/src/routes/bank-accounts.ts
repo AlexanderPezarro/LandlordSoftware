@@ -4,6 +4,7 @@ import { requireAdmin } from '../middleware/permissions.js';
 import prisma from '../db/client.js';
 import { UpdateBankAccountSchema } from '../../../shared/validation/bankAccount.validation.js';
 import { z } from 'zod';
+import { syncNewTransactions } from '../services/monzo.service.js';
 
 const router = Router();
 
@@ -178,6 +179,76 @@ router.delete('/:id', requireAuth, requireAdmin(), async (req, res) => {
     return res.status(500).json({
       success: false,
       error: 'An error occurred while deleting bank account',
+    });
+  }
+});
+
+// POST /api/bank/accounts/:id/sync - Manually trigger transaction sync
+router.post('/:id/sync', requireAuth, requireAdmin(), async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Validate UUID format
+    if (!z.string().uuid().safeParse(id).success) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid bank account ID format',
+      });
+    }
+
+    // Check if bank account exists
+    const existingAccount = await prisma.bankAccount.findUnique({
+      where: { id },
+    });
+
+    if (!existingAccount) {
+      return res.status(404).json({
+        success: false,
+        error: 'Bank account not found',
+      });
+    }
+
+    // Trigger manual sync
+    const syncResult = await syncNewTransactions(id);
+
+    // Handle sync result
+    if (!syncResult.success) {
+      // Check for specific error types
+      if (syncResult.error === 'Sync already in progress') {
+        return res.status(409).json({
+          success: false,
+          error: syncResult.error,
+        });
+      }
+
+      if (syncResult.error === 'Access token has expired. Please reconnect your bank account.') {
+        return res.status(401).json({
+          success: false,
+          error: syncResult.error,
+        });
+      }
+
+      // Generic error
+      return res.status(500).json({
+        success: false,
+        error: syncResult.error,
+      });
+    }
+
+    // Return successful sync result
+    return res.json({
+      success: true,
+      result: {
+        transactionsFetched: syncResult.transactionsFetched,
+        lastSyncAt: syncResult.lastSyncAt,
+        lastSyncStatus: syncResult.lastSyncStatus,
+      },
+    });
+  } catch (error) {
+    console.error('Manual sync endpoint error:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'An error occurred while syncing transactions',
     });
   }
 });

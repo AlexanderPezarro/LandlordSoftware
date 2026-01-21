@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from '@jest/globals';
+import { describe, it, expect, beforeAll, afterAll, beforeEach, jest } from '@jest/globals';
 import request from 'supertest';
 import { createApp } from '../../app.js';
 import prisma from '../../db/client.js';
@@ -621,6 +621,194 @@ describe('Bank Accounts Routes', () => {
       });
       expect(dbAccount?.accessToken).toBeDefined();
       expect(dbAccount?.refreshToken).toBeDefined();
+    });
+  });
+
+  describe('POST /api/bank/accounts/:id/sync', () => {
+    // Mock global fetch for these tests
+    beforeAll(() => {
+      global.fetch = jest.fn() as jest.MockedFunction<typeof fetch>;
+    });
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should require authentication', async () => {
+      const account = await prisma.bankAccount.create({ data: validBankAccount });
+
+      const response = await request(app).post(`/api/bank/accounts/${account.id}/sync`);
+
+      expect(response.status).toBe(401);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBe('Authentication required');
+    });
+
+    it('should require admin role', async () => {
+      const account = await prisma.bankAccount.create({ data: validBankAccount });
+
+      const response = await request(app)
+        .post(`/api/bank/accounts/${account.id}/sync`)
+        .set('Cookie', viewerCookies);
+
+      expect(response.status).toBe(403);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toContain('Insufficient permissions');
+    });
+
+    it('should block LANDLORD role', async () => {
+      const account = await prisma.bankAccount.create({ data: validBankAccount });
+
+      const response = await request(app)
+        .post(`/api/bank/accounts/${account.id}/sync`)
+        .set('Cookie', landlordCookies);
+
+      expect(response.status).toBe(403);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toContain('Insufficient permissions');
+    });
+
+    it('should return 400 for invalid UUID format', async () => {
+      const response = await request(app)
+        .post('/api/bank/accounts/invalid-id/sync')
+        .set('Cookie', adminCookies);
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBe('Invalid bank account ID format');
+    });
+
+    it('should return 404 for non-existent account', async () => {
+      const nonExistentId = '00000000-0000-0000-0000-000000000000';
+
+      const response = await request(app)
+        .post(`/api/bank/accounts/${nonExistentId}/sync`)
+        .set('Cookie', adminCookies);
+
+      expect(response.status).toBe(404);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBe('Bank account not found');
+    });
+
+    it('should successfully trigger manual sync', async () => {
+      const account = await prisma.bankAccount.create({
+        data: {
+          ...validBankAccount,
+          lastSyncAt: new Date('2024-02-01'),
+        },
+      });
+
+      // Mock Monzo API response
+      (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          transactions: [
+            {
+              id: 'tx_1',
+              created: new Date('2024-02-02').toISOString(),
+              description: 'Test transaction',
+              amount: 1000,
+              currency: 'GBP',
+              notes: '',
+              category: 'general',
+            },
+          ],
+        }),
+      } as Response);
+
+      const response = await request(app)
+        .post(`/api/bank/accounts/${account.id}/sync`)
+        .set('Cookie', adminCookies);
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.result.transactionsFetched).toBe(1);
+      expect(response.body.result.lastSyncStatus).toBe('success');
+    });
+
+    it('should return 409 when sync already in progress', async () => {
+      const account = await prisma.bankAccount.create({ data: validBankAccount });
+
+      // Create in-progress sync log
+      await prisma.syncLog.create({
+        data: {
+          bankAccountId: account.id,
+          syncType: 'manual',
+          status: 'in_progress',
+        },
+      });
+
+      const response = await request(app)
+        .post(`/api/bank/accounts/${account.id}/sync`)
+        .set('Cookie', adminCookies);
+
+      expect(response.status).toBe(409);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBe('Sync already in progress');
+    });
+
+    it('should return 401 when access token has expired', async () => {
+      const account = await prisma.bankAccount.create({
+        data: {
+          ...validBankAccount,
+          tokenExpiresAt: new Date(Date.now() - 3600 * 1000), // Expired
+        },
+      });
+
+      const response = await request(app)
+        .post(`/api/bank/accounts/${account.id}/sync`)
+        .set('Cookie', adminCookies);
+
+      expect(response.status).toBe(401);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBe('Access token has expired. Please reconnect your bank account.');
+    });
+
+    it('should return 500 for API errors', async () => {
+      const account = await prisma.bankAccount.create({
+        data: {
+          ...validBankAccount,
+          lastSyncAt: new Date('2024-02-01'),
+        },
+      });
+
+      // Mock API error
+      (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValueOnce({
+        ok: false,
+        text: async () => 'API Error',
+      } as Response);
+
+      const response = await request(app)
+        .post(`/api/bank/accounts/${account.id}/sync`)
+        .set('Cookie', adminCookies);
+
+      expect(response.status).toBe(500);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toContain('Failed to fetch transactions');
+    });
+
+    it('should handle sync with no new transactions', async () => {
+      const account = await prisma.bankAccount.create({
+        data: {
+          ...validBankAccount,
+          lastSyncAt: new Date('2024-02-01'),
+        },
+      });
+
+      // Mock empty API response
+      (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ transactions: [] }),
+      } as Response);
+
+      const response = await request(app)
+        .post(`/api/bank/accounts/${account.id}/sync`)
+        .set('Cookie', adminCookies);
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.result.transactionsFetched).toBe(0);
+      expect(response.body.result.lastSyncStatus).toBe('success');
     });
   });
 });

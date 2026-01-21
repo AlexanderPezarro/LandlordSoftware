@@ -449,4 +449,388 @@ describe('Monzo Service - importFullHistory', () => {
       expect(importedTransaction).toBeTruthy();
     });
   });
+
+  describe('syncNewTransactions', () => {
+    it('should sync transactions since lastSyncAt', async () => {
+      const lastSyncAt = new Date('2024-02-01');
+      const bankAccount = await prisma.bankAccount.create({
+        data: {
+          accountId: 'acc_sync_test',
+          accountName: 'Test Account',
+          accountType: 'current',
+          provider: 'monzo',
+          accessToken: encryptToken('test_access_token'),
+          syncFromDate: new Date('2024-01-01'),
+          lastSyncAt,
+          syncEnabled: true,
+          lastSyncStatus: 'success',
+        },
+      });
+
+      const transactions = [
+        {
+          id: 'tx_new_1',
+          created: new Date('2024-02-02').toISOString(),
+          description: 'New transaction 1',
+          amount: 1000,
+          currency: 'GBP',
+          notes: 'Note 1',
+          category: 'general',
+        },
+        {
+          id: 'tx_new_2',
+          created: new Date('2024-02-03').toISOString(),
+          description: 'New transaction 2',
+          amount: 2000,
+          currency: 'GBP',
+          notes: 'Note 2',
+          category: 'eating_out',
+        },
+      ];
+
+      (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ transactions }),
+      } as Response);
+
+      const result = await monzoService.syncNewTransactions(bankAccount.id);
+
+      // Verify fetch was called with correct parameters
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+      const fetchUrl = (global.fetch as jest.MockedFunction<typeof fetch>).mock.calls[0][0] as string;
+      expect(fetchUrl).toContain(`account_id=${bankAccount.accountId}`);
+      expect(fetchUrl).toContain(`since=${encodeURIComponent(lastSyncAt.toISOString())}`);
+      expect(fetchUrl).toContain('limit=100');
+
+      // Verify result
+      expect(result.success).toBe(true);
+      expect(result.transactionsFetched).toBe(2);
+      expect(result.lastSyncAt).toBeTruthy();
+
+      // Verify transactions were imported
+      const importedTransactions = await prisma.bankTransaction.findMany({
+        where: { bankAccountId: bankAccount.id },
+      });
+      expect(importedTransactions).toHaveLength(2);
+
+      // Verify sync log
+      const syncLog = await prisma.syncLog.findFirst({
+        where: { bankAccountId: bankAccount.id },
+      });
+      expect(syncLog?.syncType).toBe('manual');
+      expect(syncLog?.status).toBe('success');
+      expect(syncLog?.transactionsFetched).toBe(2);
+
+      // Verify bank account was updated
+      const updatedBankAccount = await prisma.bankAccount.findUnique({
+        where: { id: bankAccount.id },
+      });
+      expect(updatedBankAccount?.lastSyncStatus).toBe('success');
+      expect(updatedBankAccount?.lastSyncAt?.getTime()).toBeGreaterThan(lastSyncAt.getTime());
+    });
+
+    it('should use syncFromDate when lastSyncAt is null', async () => {
+      const syncFromDate = new Date('2024-01-01');
+      const bankAccount = await prisma.bankAccount.create({
+        data: {
+          accountId: 'acc_sync_no_last',
+          accountName: 'Test Account',
+          accountType: 'current',
+          provider: 'monzo',
+          accessToken: encryptToken('test_access_token'),
+          syncFromDate,
+          syncEnabled: true,
+          lastSyncStatus: 'never_synced',
+        },
+      });
+
+      (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ transactions: [] }),
+      } as Response);
+
+      await monzoService.syncNewTransactions(bankAccount.id);
+
+      const fetchUrl = (global.fetch as jest.MockedFunction<typeof fetch>).mock.calls[0][0] as string;
+      expect(fetchUrl).toContain(`since=${encodeURIComponent(syncFromDate.toISOString())}`);
+    });
+
+    it('should handle pagination with multiple pages', async () => {
+      const bankAccount = await prisma.bankAccount.create({
+        data: {
+          accountId: 'acc_sync_pagination',
+          accountName: 'Test Account',
+          accountType: 'current',
+          provider: 'monzo',
+          accessToken: encryptToken('test_access_token'),
+          syncFromDate: new Date('2024-01-01'),
+          lastSyncAt: new Date('2024-02-01'),
+          syncEnabled: true,
+          lastSyncStatus: 'success',
+        },
+      });
+
+      // Mock first page (100 transactions)
+      const firstPage = Array.from({ length: 100 }, (_, i) => ({
+        id: `tx_page1_${i}`,
+        created: new Date(Date.UTC(2024, 1, 2 + i)).toISOString(),
+        description: `Transaction ${i}`,
+        amount: 1000 + i,
+        currency: 'GBP',
+        notes: '',
+        category: 'general',
+      }));
+
+      // Mock second page (50 transactions)
+      const secondPage = Array.from({ length: 50 }, (_, i) => ({
+        id: `tx_page2_${i}`,
+        created: new Date(Date.UTC(2024, 1, 102 + i)).toISOString(),
+        description: `Transaction ${100 + i}`,
+        amount: 2000 + i,
+        currency: 'GBP',
+        notes: '',
+        category: 'general',
+      }));
+
+      (global.fetch as jest.MockedFunction<typeof fetch>)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ transactions: firstPage }),
+        } as Response)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ transactions: secondPage }),
+        } as Response);
+
+      const result = await monzoService.syncNewTransactions(bankAccount.id);
+
+      expect(global.fetch).toHaveBeenCalledTimes(2);
+      expect(result.transactionsFetched).toBe(150);
+
+      const importedTransactions = await prisma.bankTransaction.findMany({
+        where: { bankAccountId: bankAccount.id },
+      });
+      expect(importedTransactions).toHaveLength(150);
+    });
+
+    it('should return 409 conflict if sync already in progress', async () => {
+      const bankAccount = await prisma.bankAccount.create({
+        data: {
+          accountId: 'acc_sync_conflict',
+          accountName: 'Test Account',
+          accountType: 'current',
+          provider: 'monzo',
+          accessToken: encryptToken('test_access_token'),
+          syncFromDate: new Date('2024-01-01'),
+          lastSyncAt: new Date('2024-02-01'),
+          syncEnabled: true,
+          lastSyncStatus: 'success',
+        },
+      });
+
+      // Create an in-progress sync log
+      await prisma.syncLog.create({
+        data: {
+          bankAccountId: bankAccount.id,
+          syncType: 'manual',
+          status: 'in_progress',
+        },
+      });
+
+      const result = await monzoService.syncNewTransactions(bankAccount.id);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Sync already in progress');
+    });
+
+    it('should handle expired tokens and return error', async () => {
+      const bankAccount = await prisma.bankAccount.create({
+        data: {
+          accountId: 'acc_sync_expired',
+          accountName: 'Test Account',
+          accountType: 'current',
+          provider: 'monzo',
+          accessToken: encryptToken('test_access_token'),
+          tokenExpiresAt: new Date(Date.now() - 3600 * 1000), // Expired 1 hour ago
+          syncFromDate: new Date('2024-01-01'),
+          lastSyncAt: new Date('2024-02-01'),
+          syncEnabled: true,
+          lastSyncStatus: 'success',
+        },
+      });
+
+      const result = await monzoService.syncNewTransactions(bankAccount.id);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Access token has expired. Please reconnect your bank account.');
+    });
+
+    it('should handle API errors gracefully', async () => {
+      const bankAccount = await prisma.bankAccount.create({
+        data: {
+          accountId: 'acc_sync_error',
+          accountName: 'Test Account',
+          accountType: 'current',
+          provider: 'monzo',
+          accessToken: encryptToken('test_access_token'),
+          syncFromDate: new Date('2024-01-01'),
+          lastSyncAt: new Date('2024-02-01'),
+          syncEnabled: true,
+          lastSyncStatus: 'success',
+        },
+      });
+
+      (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValueOnce({
+        ok: false,
+        text: async () => 'API Error',
+      } as Response);
+
+      const result = await monzoService.syncNewTransactions(bankAccount.id);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('Failed to fetch transactions');
+
+      // Verify sync log shows failed status
+      const syncLog = await prisma.syncLog.findFirst({
+        where: { bankAccountId: bankAccount.id },
+        orderBy: { startedAt: 'desc' },
+      });
+      expect(syncLog?.status).toBe('failed');
+    });
+
+    it('should handle timeout with 30-second limit', async () => {
+      const bankAccount = await prisma.bankAccount.create({
+        data: {
+          accountId: 'acc_sync_timeout',
+          accountName: 'Test Account',
+          accountType: 'current',
+          provider: 'monzo',
+          accessToken: encryptToken('test_access_token'),
+          syncFromDate: new Date('2024-01-01'),
+          lastSyncAt: new Date('2024-02-01'),
+          syncEnabled: true,
+          lastSyncStatus: 'success',
+        },
+      });
+
+      // Mock a slow response that should complete normally
+      const transactions = Array.from({ length: 10 }, (_, i) => ({
+        id: `tx_timeout_${i}`,
+        created: new Date(Date.UTC(2024, 1, 2 + i)).toISOString(),
+        description: `Transaction ${i}`,
+        amount: 1000,
+        currency: 'GBP',
+        notes: '',
+        category: 'general',
+      }));
+
+      (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ transactions }),
+      } as Response);
+
+      const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
+
+      await monzoService.syncNewTransactions(bankAccount.id);
+
+      // Verify setTimeout was called with 30000ms
+      expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 30000);
+
+      jest.restoreAllMocks();
+    });
+
+    it('should skip duplicate transactions', async () => {
+      const bankAccount = await prisma.bankAccount.create({
+        data: {
+          accountId: 'acc_sync_duplicates',
+          accountName: 'Test Account',
+          accountType: 'current',
+          provider: 'monzo',
+          accessToken: encryptToken('test_access_token'),
+          syncFromDate: new Date('2024-01-01'),
+          lastSyncAt: new Date('2024-02-01'),
+          syncEnabled: true,
+          lastSyncStatus: 'success',
+        },
+      });
+
+      // Create existing transaction
+      await prisma.bankTransaction.create({
+        data: {
+          bankAccountId: bankAccount.id,
+          externalId: 'tx_existing',
+          amount: 10.0,
+          currency: 'GBP',
+          description: 'Existing transaction',
+          transactionDate: new Date('2024-02-02'),
+        },
+      });
+
+      const transactions = [
+        {
+          id: 'tx_existing', // Duplicate
+          created: new Date('2024-02-02').toISOString(),
+          description: 'Existing transaction',
+          amount: 1000,
+          currency: 'GBP',
+          notes: '',
+          category: 'general',
+        },
+        {
+          id: 'tx_new',
+          created: new Date('2024-02-03').toISOString(),
+          description: 'New transaction',
+          amount: 2000,
+          currency: 'GBP',
+          notes: '',
+          category: 'general',
+        },
+      ];
+
+      (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ transactions }),
+      } as Response);
+
+      const result = await monzoService.syncNewTransactions(bankAccount.id);
+
+      expect(result.transactionsFetched).toBe(2);
+
+      const allTransactions = await prisma.bankTransaction.findMany({
+        where: { bankAccountId: bankAccount.id },
+      });
+      expect(allTransactions).toHaveLength(2); // 1 existing + 1 new
+    });
+
+    it('should update lastSyncAt only on complete success', async () => {
+      const lastSyncAt = new Date('2024-02-01');
+      const bankAccount = await prisma.bankAccount.create({
+        data: {
+          accountId: 'acc_sync_partial',
+          accountName: 'Test Account',
+          accountType: 'current',
+          provider: 'monzo',
+          accessToken: encryptToken('test_access_token'),
+          syncFromDate: new Date('2024-01-01'),
+          lastSyncAt,
+          syncEnabled: true,
+          lastSyncStatus: 'success',
+        },
+      });
+
+      (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValueOnce({
+        ok: false,
+        text: async () => 'API Error',
+      } as Response);
+
+      await monzoService.syncNewTransactions(bankAccount.id);
+
+      // Verify lastSyncAt was not updated on failure
+      const updatedBankAccount = await prisma.bankAccount.findUnique({
+        where: { id: bankAccount.id },
+      });
+      expect(updatedBankAccount?.lastSyncAt?.getTime()).toBe(lastSyncAt.getTime());
+      expect(updatedBankAccount?.lastSyncStatus).toBe('failed');
+    });
+  });
 });
