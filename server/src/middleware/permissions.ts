@@ -4,9 +4,9 @@ import { Role, Roles } from '../../../shared/types/user.types.js';
 
 // Role hierarchy mapping
 const roleHierarchy: Record<Role, number> = {
-  [Roles.ADMIN]: 3,
-  [Roles.LANDLORD]: 2,
-  [Roles.VIEWER]: 1,
+  ADMIN: 3,
+  LANDLORD: 2,
+  VIEWER: 1,
 };
 
 // Check if user has at least the required role level

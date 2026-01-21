@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
+import { requireWrite } from '../middleware/permissions.js';
 import prisma from '../db/client.js';
 import { CreatePropertySchema, UpdatePropertySchema, PropertyQueryParamsSchema } from '../../../shared/validation/property.validation.js';
 import { z } from 'zod';
@@ -95,8 +96,8 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST /api/properties - Create property (requires auth)
-router.post('/', requireAuth, async (req, res) => {
+// POST /api/properties - Create property (requires auth and write permission)
+router.post('/', requireAuth, requireWrite(), async (req, res) => {
   try {
     // Validate request body
     const validationResult = CreatePropertySchema.safeParse(req.body);
@@ -128,8 +129,8 @@ router.post('/', requireAuth, async (req, res) => {
   }
 });
 
-// PUT /api/properties/:id - Update property (requires auth)
-router.put('/:id', requireAuth, async (req, res) => {
+// PUT /api/properties/:id - Update property (requires auth and write permission)
+router.put('/:id', requireAuth, requireWrite(), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -188,8 +189,8 @@ router.put('/:id', requireAuth, async (req, res) => {
   }
 });
 
-// DELETE /api/properties/:id - Soft delete via status change (requires auth)
-router.delete('/:id', requireAuth, async (req, res) => {
+// DELETE /api/properties/:id - Soft delete via status change (requires auth and write permission)
+router.delete('/:id', requireAuth, requireWrite(), async (req, res) => {
   try {
     const { id } = req.params;
 
