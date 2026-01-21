@@ -35,7 +35,9 @@ Unmatched transactions require manual assignment by admin.
 Users can remove/modify default rules.
 
 ### Authentication
-**Admin-Only OAuth** - Only admins connect Monzo accounts via OAuth. All users benefit from imported transactions. Credentials stored securely per bank account.
+**Admin-Only OAuth with Confidential Client** - Only admins connect Monzo accounts via OAuth. Application registered as **confidential client** (server-side) to receive refresh tokens for long-lived access. All users benefit from imported transactions. Credentials stored securely per bank account.
+
+**Strong Customer Authentication (SCA)**: During OAuth flow, users receive push notification in Monzo app requiring approval via PIN/fingerprint/Face ID. Access tokens have no permissions until user approves in-app.
 
 ### Duplicate Handling
 **Skip Duplicates** - Detect duplicates by:
@@ -48,10 +50,10 @@ Skip importing duplicates, log skipped count.
 **Pending Review Queue** - Transactions that can't be fully matched go to pending state. Admins review in dedicated UI, assign missing fields, then approve. Only approved transactions appear in reports.
 
 ### Sync Frequency
-**Hybrid Approach** - Automatic daily sync (2 AM) plus manual "Sync Now" button for immediate updates.
+**Webhook-Driven with Manual Fallback** - Real-time updates via Monzo webhooks (`transaction.created` event) trigger immediate import. Manual "Sync Now" button available for initial backfill, webhook failures, or on-demand refresh. No scheduled polling (hosting platform spins down when idle; webhooks wake service).
 
 ### Historical Data
-**Configurable Range** - Admin selects date range during setup (default 90 days). Range adjustable later to backfill older transactions.
+**Immediate Full Import with Range Selection** - Admin selects date range during OAuth setup (default 90 days, max depends on user's transaction history). **Critical**: Monzo API restricts historical fetching to 90 days after 5 minutes post-authentication. Full history **must** be fetched immediately during OAuth callback. Range cannot be extended retroactively beyond this window.
 
 ### Sync Failures
 **Retry with Alerts** - Automatic retry with exponential backoff. Alert admins if failures persist. Dashboard shows sync status/errors.
@@ -73,10 +75,136 @@ Skip importing duplicates, log skipped count.
 **Multiple Accounts Supported** - Connect multiple Monzo accounts, each with independent rules and sync settings.
 
 ### Transaction Detection
-**Polling Only** - Scheduled job fetches new transactions periodically. Simple, reliable, adequate for financial data.
+**Webhooks Primary** - Monzo sends `transaction.created` webhook immediately when transactions occur. Webhook handler validates signature, processes transaction through matching rules. Monzo retries failed webhooks up to 5 times with exponential backoff. Manual "Sync Now" available as fallback for webhook failures or gaps.
 
 ### Rule Processing
 **Auto-Reprocess Pending** - When rules change, automatically reapply to all pending transactions. Newly matched transactions auto-approve.
+
+---
+
+## Monzo API Specifics
+
+### API Endpoints
+
+**Transactions:**
+```
+GET /transactions
+  Query params:
+    - account_id (required): Monzo account ID
+    - since (optional): RFC3339 timestamp or transaction ID
+    - before (optional): RFC3339 timestamp
+    - limit (optional): Results per page (default 30, max 100)
+
+  Returns: { transactions: Transaction[] }
+```
+
+**Webhooks:**
+```
+POST /webhooks
+  Body: { account_id, url }
+  Returns: { webhook: { id, account_id, url } }
+
+DELETE /webhooks/:webhook_id
+  Removes webhook registration
+```
+
+### Response Format
+
+Monzo transactions include:
+- `id`: Unique transaction ID (external ID for us)
+- `amount`: Integer in **pence** (divide by 100 for pounds)
+- `currency`: e.g., "GBP"
+- `created`: RFC3339 timestamp
+- `description`: Human-readable description
+- `merchant`: Merchant object (name, category, etc.)
+- `counterparty`: Object with account details
+- `notes`: User-added notes
+- `metadata`: Key-value pairs
+- `is_load`: Boolean (true for top-ups)
+- `settled`: RFC3339 timestamp (when transaction settled)
+- `category`: Monzo's category (not our category system)
+
+### Critical Constraints
+
+1. **5-Minute Window**: Full transaction history only accessible for 5 minutes after OAuth. After that, only 90 days of history.
+
+2. **Pagination**: Default 30 results, max 100. Always set `limit=100`.
+
+3. **Client Type**: Must register as **confidential client** to receive refresh tokens.
+
+4. **Strong Customer Authentication**: Users must approve in Monzo app (push notification) with PIN/fingerprint/Face ID before token has permissions.
+
+5. **Webhook Retries**: Monzo retries failed webhooks up to 5 times with exponential backoff.
+
+6. **Rate Limits**: Not publicly documented. Implement conservative retry logic and monitor for 429 responses.
+
+### Webhook Payload
+
+```typescript
+interface MonzoWebhookPayload {
+  type: "transaction.created";
+  data: {
+    account_id: string;
+    amount: number; // pence
+    created: string; // RFC3339
+    currency: string;
+    description: string;
+    id: string; // transaction ID
+    merchant?: string;
+    metadata: Record<string, any>;
+    notes: string;
+    is_load: boolean;
+    settled: string;
+    category: string;
+  };
+}
+```
+
+### Type Definitions
+
+```typescript
+// Add to server/src/services/monzo/types.ts
+interface MonzoTransaction {
+  id: string;
+  account_id: string;
+  amount: number; // pence
+  currency: string;
+  created: string;
+  description: string;
+  merchant?: {
+    id: string;
+    name: string;
+    logo?: string;
+  };
+  counterparty?: {
+    account_id?: string;
+    name?: string;
+    user_id?: string;
+  };
+  metadata: Record<string, any>;
+  notes: string;
+  is_load: boolean;
+  settled?: string;
+  category: string;
+}
+
+interface MonzoTransactionsResponse {
+  transactions: MonzoTransaction[];
+}
+
+interface MonzoWebhookRegistration {
+  account_id: string;
+  url: string;
+}
+
+interface MonzoWebhookResponse {
+  webhook: {
+    id: string;
+    account_id: string;
+    url: string;
+  };
+}
+```
 
 ---
 
@@ -98,9 +226,11 @@ model BankAccount {
   refreshToken    String?  // Encrypted refresh token
   tokenExpiresAt  DateTime?
   syncEnabled     Boolean  @default(true)
-  syncFromDate    DateTime // Start date for fetching
+  syncFromDate    DateTime // Historical import start date
   lastSyncAt      DateTime?
   lastSyncStatus  String   @default("never_synced") // success, failed, in_progress
+  webhookId       String?  @unique // Monzo webhook ID
+  webhookUrl      String?  // Registered webhook URL
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -221,7 +351,7 @@ Audit trail of sync operations.
 model SyncLog {
   id                    String   @id @default(uuid())
   bankAccountId         String   @map("bank_account_id")
-  syncType              String   @map("sync_type") // "scheduled", "manual"
+  syncType              String   @map("sync_type") // "webhook", "manual", "initial"
   status                String   // "success", "failed", "partial"
   startedAt             DateTime @default(now()) @map("started_at")
   completedAt           DateTime? @map("completed_at")
@@ -233,6 +363,7 @@ model SyncLog {
 
   errorMessage          String?  @map("error_message")
   errorDetails          String?  @map("error_details") // JSON
+  webhookEventId        String?  @map("webhook_event_id") // Monzo webhook event ID
 
   bankAccount           BankAccount @relation(fields: [bankAccountId], references: [id], onDelete: Cascade)
 
@@ -280,29 +411,56 @@ model Transaction {
 
 ## Data Flow
 
-### Sync Process
+### Initial Import Process (OAuth Callback)
+
+1. **Immediate Full History Fetch**
+   - **Critical**: Must occur within 5 minutes of OAuth completion
+   - User selects historical range during connection (default 90 days)
+   - Call Monzo API: `GET /transactions?account_id={accountId}&since={selectedDate}&limit=100`
+   - Handle pagination (default 30, set `limit=100` for efficiency)
+   - Create SyncLog (syncType="initial")
+
+2. **Register Webhook**
+   - Call Monzo API: `POST /webhooks` with callback URL
+   - Store webhookId in BankAccount
+   - Webhook URL format: `https://yourdomain.com/api/bank/webhooks/monzo`
+
+3. **Process Fetched Transactions**
+   - Continue to duplicate detection and matching (see below)
+
+### Webhook-Driven Sync Process
+
+1. **Webhook Receipt**
+   - Monzo sends POST to registered webhook URL
+   - Verify webhook signature (HMAC validation)
+   - Extract transaction data from payload
+   - Create SyncLog (syncType="webhook")
+
+2. **Process Single Transaction**
+   - No API call needed (transaction data in webhook payload)
+   - Continue to duplicate detection and matching (see below)
+
+### Manual Sync Process
 
 1. **Initiation**
-   - Scheduled cron job (daily 2 AM) OR manual "Sync Now"
-   - Create SyncLog (status="in_progress")
-   - Process each enabled BankAccount
-
-2. **Fetch Transactions**
-   - Call Monzo API: `GET /transactions?since=syncFromDate`
-   - Handle pagination (max 100 per page)
-   - Handle rate limits (retry with backoff)
+   - Admin clicks "Sync Now" button
+   - Create SyncLog (syncType="manual")
+   - Call Monzo API: `GET /transactions?account_id={accountId}&since={lastSyncAt}&limit=100`
+   - Handle pagination and rate limits (retry with backoff)
    - Refresh token if expired
 
-3. **Duplicate Detection**
+### Common Transaction Processing
+
+1. **Duplicate Detection**
    - Check BankTransaction by (bankAccountId + externalId)
    - Check Transaction by fuzzy match (amount, date ±1 day, description similarity >80%)
    - Skip duplicates, increment transactionsSkipped
 
-4. **Create BankTransaction Records**
+2. **Create BankTransaction Records**
    - Insert for each non-duplicate
    - Convert Monzo amount (pence → pounds)
 
-5. **Apply Matching Rules**
+3. **Apply Matching Rules**
    - Fetch all MatchingRule (account-specific + global)
    - Sort by priority ASC
    - For each BankTransaction:
@@ -313,7 +471,7 @@ model Transaction {
        - If all three fields set, stop
      - Result: fully matched, partially matched, or unmatched
 
-6. **Create Transactions or Pending**
+4. **Create Transactions or Pending**
    - **Fully matched** (all three fields set):
      - Validate property exists, status != "For Sale"
      - Validate type/category match
@@ -324,7 +482,7 @@ model Transaction {
      - Link BankTransaction
      - Increment transactionsPending
 
-7. **Complete Sync**
+5. **Complete Sync**
    - Update SyncLog (counts, status, completedAt)
    - Update BankAccount (lastSyncAt, lastSyncStatus)
    - If errors but some processed: status="partial"
@@ -378,8 +536,11 @@ POST   /api/bank/monzo/connect
 
 GET    /api/bank/monzo/callback
   - OAuth callback, exchanges code for tokens
+  - Prompts user for historical import range
+  - **Immediately** fetches full transaction history (must complete within 5 minutes)
+  - Registers webhook with Monzo
   - Creates BankAccount
-  - Redirects to admin UI
+  - Redirects to admin UI with import status
 
 GET    /api/bank/accounts
   - List all connected accounts
@@ -397,8 +558,14 @@ DELETE /api/bank/accounts/:id
   - Auth: requireAuth, requireAdmin
 
 POST   /api/bank/accounts/:id/sync
-  - Manual sync trigger
+  - Manual sync trigger (backfill or on-demand)
   - Auth: requireAuth, requireAdmin
+
+POST   /api/bank/webhooks/monzo
+  - Webhook endpoint for Monzo transaction.created events
+  - Validates HMAC signature
+  - Processes transaction asynchronously
+  - Public endpoint (validated via signature)
 ```
 
 ### Matching Rules
@@ -490,6 +657,13 @@ GET    /api/transactions/:id/audit-log
 - Unique IV per token
 - Tokens never logged or exposed in responses
 
+### Webhook Security
+- HMAC signature verification on all webhook requests
+- Webhook secret from env var: `MONZO_WEBHOOK_SECRET`
+- Reject requests with invalid signatures (403)
+- Idempotency handling via webhook event ID
+- Rate limiting on webhook endpoint
+
 ### OAuth Security
 - Cryptographically secure state tokens (32 bytes)
 - State tokens stored in Redis with 5-minute expiry
@@ -505,6 +679,8 @@ GET    /api/transactions/:id/audit-log
 Log all sensitive operations:
 - Account connections/disconnections
 - Token refreshes
+- Webhook registrations/deletions
+- Webhook signature validation failures
 - Rule changes
 - Approvals/rejections
 - Manual syncs
@@ -542,9 +718,10 @@ interface RetryConfig {
 ### Admin Notifications
 
 Alert when:
-- Sync fails after all retries
+- Webhook delivery fails repeatedly (Monzo exhausts retries)
 - Token refresh fails (immediate action required)
-- Sync completes with warnings
+- Manual sync fails after all retries
+- Webhook signature validation fails (security concern)
 - Large pending queue (>50)
 
 Channels:
@@ -559,10 +736,11 @@ Channels:
 ### Admin Pages
 
 **`/admin/bank-accounts`**
-- BankAccountsList (cards with status, pending count)
-- "Connect New Account" button
+- BankAccountsList (cards with status, pending count, webhook status)
+- "Connect New Account" button (with historical range selector)
 - BankAccountSettings modal
-- SyncStatusWidget
+- WebhookStatusWidget (last event, health)
+- Manual sync button (for troubleshooting)
 
 **`/admin/bank-accounts/:id/rules`**
 - RulesList (draggable for reordering)
@@ -583,9 +761,10 @@ Channels:
 - Audit log icon for edited imports
 
 **Dashboard Widget**
-- Bank sync status overview
+- Bank webhook status overview
 - Pending count
-- Recent failures
+- Last transaction received timestamp
+- Webhook health indicator
 - Quick actions
 
 ---
@@ -593,42 +772,54 @@ Channels:
 ## Implementation Plan
 
 ### Phase 1: Foundation (Week 1-2)
-- Database schema and migrations
-- OAuth flow implementation
+- Database schema and migrations (add webhook fields)
+- OAuth flow with historical range selector
+- **Immediate** full history import in OAuth callback
 - Token encryption service
 - Basic BankAccount CRUD
 - Manual sync trigger
 
-### Phase 2: Core Sync Logic (Week 2-3)
-- Monzo API client
-- Transaction fetching with pagination
-- Duplicate detection
+### Phase 2: Webhook Infrastructure (Week 2-3)
+- Webhook endpoint (`POST /api/bank/webhooks/monzo`)
+- HMAC signature verification
+- Webhook registration with Monzo during OAuth
+- Webhook deletion on account disconnect
+- Idempotency handling (event ID tracking)
+
+### Phase 3: Core Transaction Logic (Week 3)
+- Monzo API client with type definitions
+- Transaction processing (webhook payload + manual sync)
+- Duplicate detection (external ID + fuzzy match)
 - BankTransaction storage
+- Amount conversion (pence → pounds)
 - SyncLog creation
 
-### Phase 3: Matching System (Week 3-4)
+### Phase 4: Matching System (Week 4)
 - MatchingRule CRUD
 - Rule evaluation engine
 - Transaction/PendingTransaction creation
 - Default rules setup
 - Rule reprocessing
 
-### Phase 4: Admin UI (Week 4-5)
+### Phase 5: Admin UI (Week 5)
 - Bank accounts management page
-- OAuth connection flow
+- OAuth connection flow with range selection
+- Historical import progress indicator
+- Webhook status monitoring
 - Matching rules editor
 - Pending review interface
 - Bulk operations
 
-### Phase 5: Automation & Polish (Week 5-6)
-- Scheduled background sync (cron)
-- Error handling and retry logic
-- Admin notifications
+### Phase 6: Polish & Monitoring (Week 6)
+- Error handling and retry logic (manual sync)
+- Admin notifications (webhook failures)
 - Transaction audit logging
-- Sync status dashboard
+- Webhook health dashboard
+- Security audit (signature validation)
 
-### Phase 6: Testing & Documentation (Week 6-7)
+### Phase 7: Testing & Documentation (Week 7)
 - Comprehensive test suite
+- Webhook integration tests
 - Monzo sandbox testing
 - User documentation
 - Admin guide
@@ -648,10 +839,14 @@ MONZO_ENVIRONMENT=sandbox  # or 'production'
 
 # Security
 BANK_TOKEN_ENCRYPTION_KEY=  # 32-byte hex: openssl rand -hex 32
+MONZO_WEBHOOK_SECRET=       # From Monzo developer console
 
-# Sync Settings
-BANK_SYNC_CRON=0 2 * * *  # Daily at 2 AM
-BANK_SYNC_DEFAULT_DAYS=90
+# Webhook Settings
+BANK_WEBHOOK_BASE_URL=https://yourdomain.com  # Public-facing URL
+
+# Import Settings
+BANK_IMPORT_DEFAULT_DAYS=90  # Default historical import range
+BANK_IMPORT_MAX_DAYS=1825    # Max 5 years
 ```
 
 ### Dependencies
@@ -659,15 +854,17 @@ BANK_SYNC_DEFAULT_DAYS=90
 ```json
 {
   "dependencies": {
-    "node-cron": "^3.0.3",
     "node-fetch": "^3.3.2",
-    "string-similarity": "^4.0.4"
+    "string-similarity": "^4.0.4",
+    "crypto": "built-in"
   },
   "devDependencies": {
     "nock": "^13.3.8"
   }
 }
 ```
+
+**Note:** Removed `node-cron` as sync is webhook-driven, not scheduled.
 
 ---
 
@@ -680,10 +877,12 @@ BANK_SYNC_DEFAULT_DAYS=90
 - Data validation
 
 ### Integration Tests
-- Full sync flow (fetch → match → create)
-- OAuth flow
+- Webhook flow (receive → verify → process → match → create)
+- OAuth flow with immediate history import
+- Manual sync flow (fetch → match → create)
 - Pending approval workflow
 - Rule reprocessing
+- Webhook signature verification
 
 ### API Tests (100% endpoint coverage)
 - All CRUD operations
@@ -692,8 +891,9 @@ BANK_SYNC_DEFAULT_DAYS=90
 - Bulk operations
 
 ### E2E Tests
-- Complete user journey (connect → sync → review → approve)
-- Error recovery (token expiry, refresh failure)
+- Complete user journey (connect → immediate import → webhook → review → approve)
+- Webhook delivery and processing
+- Error recovery (token expiry, refresh failure, webhook retry)
 
 ### Test Environment
 - Use Monzo sandbox for dev/testing
@@ -704,11 +904,11 @@ BANK_SYNC_DEFAULT_DAYS=90
 
 ## Future Enhancements
 
-1. **Multi-Bank Support** - Abstract into adapters, add Starling, Revolut
-2. **Webhooks** - Real-time notifications from Monzo
-3. **Machine Learning** - Learn from manual categorizations, suggest rules
-4. **Advanced Matching** - Link to tenants, detect recurring, split transactions
-5. **Enhanced Reports** - Bank reconciliation, transaction source breakdown
+1. **Multi-Bank Support** - Abstract into adapters, add Starling, Revolut (each with own webhook handlers)
+2. **Machine Learning** - Learn from manual categorizations, suggest rules
+3. **Advanced Matching** - Link to tenants, detect recurring, split transactions
+4. **Enhanced Reports** - Bank reconciliation, transaction source breakdown
+5. **Webhook Monitoring Dashboard** - Visual timeline of webhook deliveries, latency tracking
 
 ---
 
@@ -718,9 +918,11 @@ BANK_SYNC_DEFAULT_DAYS=90
 |------|--------|------------|
 | Monzo API changes | High | Version calls, monitor changelog, fallback |
 | Token security breach | Critical | Encrypt tokens, rotate keys, audit logs |
+| Webhook signature forgery | Critical | HMAC validation, reject invalid signatures |
 | Duplicate imports | Medium | Robust dedup, unique constraints, review queue |
 | Rule complexity confusion | Medium | Clear UI/UX, testing/preview, docs |
-| Sync failures | Medium | Retry logic, alerting, manual option |
+| Webhook delivery failures | Medium | Monzo retries 5x, manual sync fallback |
+| Hosting platform cold start | Low | Webhooks wake service, keep-alive pings |
 | Performance (large imports) | Low | Pagination, batching, background jobs |
 
 ---
@@ -730,5 +932,6 @@ BANK_SYNC_DEFAULT_DAYS=90
 - Time saved: Reduce manual transaction entry by 80%+
 - Accuracy: 90%+ of transactions auto-matched and approved
 - User satisfaction: Admins find review queue intuitive and efficient
-- Reliability: 99%+ sync success rate
-- Performance: Sync 1000 transactions in <60 seconds
+- Reliability: 99%+ webhook delivery success rate
+- Latency: Transactions appear in system within 5 seconds of webhook receipt
+- Performance: Process webhook payload in <2 seconds
