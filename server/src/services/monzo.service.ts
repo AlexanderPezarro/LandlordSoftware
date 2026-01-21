@@ -1,8 +1,35 @@
 import crypto from 'crypto';
+import prisma from '../db/client.js';
+import { decryptToken } from './encryption.js';
 
 // In-memory state storage (in production, use Redis or database)
 // Maps state -> { syncFromDate: Date, createdAt: Date }
 const stateStore = new Map<string, { syncFromDate: Date; createdAt: Date }>();
+
+/**
+ * Monzo API transaction response types
+ */
+export interface MonzoTransaction {
+  id: string;
+  created: string; // RFC3339 timestamp
+  description: string;
+  amount: number; // Amount in pence (divide by 100 for pounds)
+  currency: string;
+  notes: string;
+  merchant?: {
+    id: string;
+    name: string;
+  } | null;
+  counterparty?: {
+    name: string;
+  } | null;
+  category?: string;
+  settled?: string; // RFC3339 timestamp
+}
+
+export interface MonzoTransactionsResponse {
+  transactions: MonzoTransaction[];
+}
 
 // Clean up expired states every 10 minutes
 setInterval(() => {
@@ -174,4 +201,176 @@ export async function getAccountInfo(accessToken: string): Promise<{
     accountName: account.description || account.type || 'Monzo Account',
     accountType: account.type || 'current',
   };
+}
+
+/**
+ * Import full transaction history from Monzo API
+ * This function runs asynchronously in the background and must complete within 5 minutes
+ * of OAuth completion (Monzo API restriction).
+ *
+ * @param bankAccountId - Database ID of the bank account to import transactions for
+ */
+export async function importFullHistory(bankAccountId: string): Promise<void> {
+  let syncLogId: string | undefined;
+  let transactionsFetched = 0;
+  const TIMEOUT_MS = 270000; // 4 minutes 30 seconds (safety buffer for 5-minute window)
+  let timedOut = false;
+
+  try {
+    // Get bank account
+    const bankAccount = await prisma.bankAccount.findUnique({
+      where: { id: bankAccountId },
+    });
+
+    if (!bankAccount) {
+      throw new Error('Bank account not found');
+    }
+
+    // Create sync log
+    const syncLog = await prisma.syncLog.create({
+      data: {
+        bankAccountId,
+        syncType: 'initial',
+        status: 'in_progress',
+      },
+    });
+    syncLogId = syncLog.id;
+
+    // Decrypt access token
+    const accessToken = decryptToken(bankAccount.accessToken);
+
+    // Set timeout for graceful shutdown
+    const timeoutHandle = setTimeout(() => {
+      timedOut = true;
+      console.warn(`Import timeout approaching for bank account ${bankAccountId}, stopping gracefully`);
+    }, TIMEOUT_MS);
+
+    // Fetch transactions with pagination
+    const allTransactions: MonzoTransaction[] = [];
+    let beforeTimestamp: string | undefined;
+    let hasMore = true;
+
+    while (hasMore && !timedOut) {
+      // Build request URL
+      const params = new URLSearchParams({
+        account_id: bankAccount.accountId,
+        since: bankAccount.syncFromDate.toISOString(),
+        limit: '100',
+      });
+
+      if (beforeTimestamp) {
+        params.append('before', beforeTimestamp);
+      }
+
+      const url = `https://api.monzo.com/transactions?${params.toString()}`;
+
+      // Fetch transactions
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Monzo transactions fetch error:', errorText);
+        throw new Error(`Failed to fetch transactions: ${errorText}`);
+      }
+
+      const data = await response.json() as MonzoTransactionsResponse;
+      const transactions = data.transactions;
+
+      allTransactions.push(...transactions);
+      transactionsFetched += transactions.length;
+
+      // Check if we need to paginate
+      if (transactions.length < 100) {
+        hasMore = false;
+      } else {
+        // Use the oldest transaction's created timestamp for next page
+        const oldestTransaction = transactions[transactions.length - 1];
+        beforeTimestamp = oldestTransaction.created;
+      }
+    }
+
+    clearTimeout(timeoutHandle);
+
+    // Import transactions in batches
+    if (allTransactions.length > 0) {
+      // Use individual upsert operations to handle duplicates gracefully
+      for (const tx of allTransactions) {
+        await prisma.bankTransaction.upsert({
+          where: {
+            bankAccountId_externalId: {
+              bankAccountId,
+              externalId: tx.id,
+            },
+          },
+          create: {
+            bankAccountId,
+            externalId: tx.id,
+            amount: tx.amount / 100, // Convert pence to pounds
+            currency: tx.currency,
+            description: tx.description,
+            counterpartyName: tx.counterparty?.name || null,
+            reference: tx.notes || null,
+            merchant: tx.merchant?.name || null,
+            category: tx.category || null,
+            transactionDate: new Date(tx.created),
+            settledDate: tx.settled ? new Date(tx.settled) : null,
+          },
+          update: {}, // Don't update if already exists
+        });
+      }
+    }
+
+    // Determine final status
+    const finalStatus = timedOut ? 'partial' : 'success';
+
+    // Update sync log
+    await prisma.syncLog.update({
+      where: { id: syncLogId },
+      data: {
+        status: finalStatus,
+        completedAt: new Date(),
+        transactionsFetched,
+      },
+    });
+
+    // Update bank account
+    await prisma.bankAccount.update({
+      where: { id: bankAccountId },
+      data: {
+        lastSyncAt: new Date(),
+        lastSyncStatus: finalStatus,
+      },
+    });
+
+    console.log(`Import completed for bank account ${bankAccountId}: ${transactionsFetched} transactions fetched, status: ${finalStatus}`);
+  } catch (error) {
+    console.error(`Import failed for bank account ${bankAccountId}:`, error);
+
+    // Update sync log with error
+    if (syncLogId) {
+      await prisma.syncLog.update({
+        where: { id: syncLogId },
+        data: {
+          status: 'failed',
+          completedAt: new Date(),
+          transactionsFetched,
+          errorMessage: error instanceof Error ? error.message : 'Unknown error',
+          errorDetails: error instanceof Error ? error.stack : undefined,
+        },
+      });
+    }
+
+    // Update bank account status
+    await prisma.bankAccount.update({
+      where: { id: bankAccountId },
+      data: {
+        lastSyncAt: transactionsFetched > 0 ? new Date() : undefined,
+        lastSyncStatus: 'failed',
+      },
+    });
+  }
 }

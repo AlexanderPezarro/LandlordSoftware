@@ -16,12 +16,14 @@ const mockGetAccountInfo = jest.fn<(accessToken: string) => Promise<{
   accountName: string;
   accountType: string;
 }>>();
+const mockImportFullHistory = jest.fn<(bankAccountId: string) => Promise<void>>();
 
 jest.unstable_mockModule('../../services/monzo.service.js', () => ({
   generateAuthUrl: mockGenerateAuthUrl,
   validateState: mockValidateState,
   exchangeCodeForTokens: mockExchangeCodeForTokens,
   getAccountInfo: mockGetAccountInfo,
+  importFullHistory: mockImportFullHistory,
 }));
 
 // Import app after mocking
@@ -201,6 +203,7 @@ describe('Monzo OAuth Routes', () => {
       mockValidateState.mockReturnValue(mockTokenResponse.syncFromDate);
       mockExchangeCodeForTokens.mockResolvedValue(mockTokenResponse);
       mockGetAccountInfo.mockResolvedValue(mockAccountInfo);
+      mockImportFullHistory.mockResolvedValue(undefined);
 
       const response = await request(app)
         .get('/api/bank/monzo/callback')
@@ -226,6 +229,9 @@ describe('Monzo OAuth Routes', () => {
       expect(bankAccount?.lastSyncStatus).toBe('never_synced');
       // Access token should be encrypted (not plaintext)
       expect(bankAccount?.accessToken).not.toBe(mockTokenResponse.access_token);
+
+      // Verify import was triggered (fire and forget)
+      expect(mockImportFullHistory).toHaveBeenCalledWith(bankAccount!.id);
     });
 
     it('should handle invalid state parameter', async () => {
@@ -287,6 +293,7 @@ describe('Monzo OAuth Routes', () => {
       mockValidateState.mockReturnValue(mockTokenResponse.syncFromDate);
       mockExchangeCodeForTokens.mockResolvedValue(mockTokenResponse);
       mockGetAccountInfo.mockResolvedValue(mockAccountInfo);
+      mockImportFullHistory.mockResolvedValue(undefined);
 
       const response = await request(app)
         .get('/api/bank/monzo/callback')
@@ -302,6 +309,42 @@ describe('Monzo OAuth Routes', () => {
 
       expect(bankAccounts).toHaveLength(1);
       expect(bankAccounts[0].accountName).toBe(mockAccountInfo.accountName);
+
+      // Verify import was triggered
+      expect(mockImportFullHistory).toHaveBeenCalled();
+    });
+
+    it('should redirect even if background import fails', async () => {
+      const mockState = 'valid_state';
+      const mockCode = 'auth_code_123';
+      const mockTokenResponse = {
+        access_token: 'access_token_123',
+        refresh_token: 'refresh_token_123',
+        expires_in: 3600,
+        syncFromDate: new Date('2024-01-01'),
+      };
+      const mockAccountInfo = {
+        accountId: 'acc_import_fail',
+        accountName: 'Current Account',
+        accountType: 'current',
+      };
+
+      mockValidateState.mockReturnValue(mockTokenResponse.syncFromDate);
+      mockExchangeCodeForTokens.mockResolvedValue(mockTokenResponse);
+      mockGetAccountInfo.mockResolvedValue(mockAccountInfo);
+      // Mock import failure
+      mockImportFullHistory.mockRejectedValue(new Error('Import failed'));
+
+      const response = await request(app)
+        .get('/api/bank/monzo/callback')
+        .query({ code: mockCode, state: mockState });
+
+      // Should still redirect successfully (fire and forget)
+      expect(response.status).toBe(302);
+      expect(response.headers.location).toBe('/settings?success=monzo_connected');
+
+      // Verify import was attempted
+      expect(mockImportFullHistory).toHaveBeenCalled();
     });
   });
 });

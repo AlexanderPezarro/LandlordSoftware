@@ -89,7 +89,7 @@ router.get('/callback', async (req, res) => {
       : null;
 
     // Save or update bank account
-    await prisma.bankAccount.upsert({
+    const bankAccount = await prisma.bankAccount.upsert({
       where: { accountId: accountInfo.accountId },
       create: {
         accountId: accountInfo.accountId,
@@ -112,6 +112,12 @@ router.get('/callback', async (req, res) => {
         syncFromDate,
         syncEnabled: true,
       },
+    });
+
+    // Start background import immediately (don't await - fire and forget)
+    // This must complete within 5 minutes of OAuth completion (Monzo API restriction)
+    monzoService.importFullHistory(bankAccount.id).catch((error) => {
+      console.error('Background import failed:', error);
     });
 
     // Redirect to settings page with success message
