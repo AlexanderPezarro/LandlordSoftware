@@ -15,6 +15,7 @@ import documentsRouter from './routes/documents.js';
 import leasesRouter from './routes/leases.js';
 import transactionsRouter from './routes/transactions.js';
 import usersRouter from './routes/users.js';
+import monzoRouter from './routes/monzo.js';
 
 // ES module __dirname equivalent
 const __filename = fileURLToPath(import.meta.url);
@@ -123,6 +124,9 @@ export function createApp() {
 
   // Users routes
   app.use('/api/users', usersRouter);
+
+  // Bank integration routes
+  app.use('/api/bank/monzo', monzoRouter);
 
   // Serve static files from React build in production
   if (process.env.NODE_ENV === 'production') {

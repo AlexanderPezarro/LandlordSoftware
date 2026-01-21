@@ -20,12 +20,19 @@ import {
   DialogContent,
   DialogActions,
   Divider,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  FormHelperText,
 } from '@mui/material';
 import {
   Add as AddIcon,
   Delete as DeleteIcon,
+  AccountBalance as BankIcon,
 } from '@mui/icons-material';
 import { usersService, UserListItem } from '../services/api/users.service';
+import { bankService } from '../services/api/bank.service';
 import { ApiError } from '../types/api.types';
 import ConfirmDialog from '../components/shared/ConfirmDialog';
 import { useToast } from '../contexts/ToastContext';
@@ -59,9 +66,35 @@ export const Settings: React.FC = () => {
   const [userToDelete, setUserToDelete] = useState<UserListItem | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
+  // Bank connection dialog state
+  const [bankDialogOpen, setBankDialogOpen] = useState(false);
+  const [syncFromDays, setSyncFromDays] = useState(90);
+  const [bankConnectLoading, setBankConnectLoading] = useState(false);
+
   useEffect(() => {
     fetchUsers();
-  }, []);
+
+    // Check for OAuth callback success/error in URL
+    const params = new URLSearchParams(window.location.search);
+    const success = params.get('success');
+    const error = params.get('error');
+
+    if (success === 'monzo_connected') {
+      toast.success('Monzo account connected successfully');
+      // Clean up URL
+      window.history.replaceState({}, '', '/settings');
+    } else if (error) {
+      const errorMessages: Record<string, string> = {
+        access_denied: 'You denied access to your Monzo account',
+        missing_code: 'Authorization failed: missing code',
+        missing_state: 'Authorization failed: invalid request',
+        oauth_failed: 'Failed to connect Monzo account. Please try again.',
+      };
+      toast.error(errorMessages[error] || 'Failed to connect Monzo account');
+      // Clean up URL
+      window.history.replaceState({}, '', '/settings');
+    }
+  }, [toast]);
 
   const fetchUsers = async () => {
     try {
@@ -217,6 +250,31 @@ export const Settings: React.FC = () => {
     });
   };
 
+  // Bank connection handlers
+  const handleOpenBankDialog = () => {
+    setSyncFromDays(90); // Reset to default
+    setBankDialogOpen(true);
+  };
+
+  const handleCloseBankDialog = () => {
+    setBankDialogOpen(false);
+  };
+
+  const handleConnectMonzo = async () => {
+    try {
+      setBankConnectLoading(true);
+      const response = await bankService.connectMonzo(syncFromDays);
+
+      // Redirect to Monzo OAuth page
+      window.location.href = response.authUrl;
+    } catch (err) {
+      console.error('Error connecting Monzo:', err);
+      const errorMessage = err instanceof ApiError ? err.message : 'Failed to connect Monzo account';
+      toast.error(errorMessage);
+      setBankConnectLoading(false);
+    }
+  };
+
   return (
     <Container maxWidth="lg">
       <Box sx={{ mb: 4 }}>
@@ -294,6 +352,26 @@ export const Settings: React.FC = () => {
               {passwordLoading ? <CircularProgress size={24} /> : 'Change Password'}
             </Button>
           </Box>
+        </Paper>
+
+        {/* Bank Accounts Section */}
+        <Paper sx={{ p: 3, mb: 4 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Typography variant="h6">
+              Bank Accounts
+            </Typography>
+            <Button
+              variant="contained"
+              startIcon={<BankIcon />}
+              onClick={handleOpenBankDialog}
+            >
+              Connect Monzo
+            </Button>
+          </Box>
+          <Divider sx={{ mb: 3 }} />
+          <Typography variant="body2" color="text.secondary">
+            Connect your Monzo account to automatically import and categorize transactions.
+          </Typography>
         </Paper>
 
         {/* User Management Section */}
@@ -445,6 +523,56 @@ export const Settings: React.FC = () => {
         onCancel={handleDeleteCancel}
         loading={deleteLoading}
       />
+
+      {/* Bank Connection Dialog */}
+      <Dialog
+        open={bankDialogOpen}
+        onClose={handleCloseBankDialog}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Connect Monzo Account</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+            <Typography variant="body2" color="text.secondary">
+              Select how far back to import your transaction history. You can import transactions from the last 30 days up to 5 years.
+            </Typography>
+            <FormControl fullWidth>
+              <InputLabel id="sync-from-days-label">Import History</InputLabel>
+              <Select
+                labelId="sync-from-days-label"
+                id="sync-from-days"
+                value={syncFromDays}
+                label="Import History"
+                onChange={(e) => setSyncFromDays(Number(e.target.value))}
+              >
+                <MenuItem value={30}>30 days</MenuItem>
+                <MenuItem value={90}>90 days (recommended)</MenuItem>
+                <MenuItem value={180}>6 months</MenuItem>
+                <MenuItem value={365}>1 year</MenuItem>
+                <MenuItem value={730}>2 years</MenuItem>
+                <MenuItem value={1825}>5 years (maximum)</MenuItem>
+              </Select>
+              <FormHelperText>
+                Default: 90 days. Importing more history may take longer to process.
+              </FormHelperText>
+            </FormControl>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseBankDialog} color="inherit" disabled={bankConnectLoading}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleConnectMonzo}
+            variant="contained"
+            disabled={bankConnectLoading}
+            startIcon={<BankIcon />}
+          >
+            {bankConnectLoading ? <CircularProgress size={24} /> : 'Connect to Monzo'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };
