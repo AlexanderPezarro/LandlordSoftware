@@ -105,3 +105,13 @@ export {
   type Role,
   type ChangePassword,
 } from './user.validation.js';
+
+// BankAccount Validation
+export {
+  SyncStatusSchema,
+  UpdateBankAccountSchema,
+  BankAccountResponseSchema,
+  type SyncStatus,
+  type UpdateBankAccount,
+  type BankAccountResponse,
+} from './bankAccount.validation.js';
