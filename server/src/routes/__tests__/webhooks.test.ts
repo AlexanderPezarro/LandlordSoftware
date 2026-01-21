@@ -49,8 +49,102 @@ describe('Webhook Routes', () => {
     testBankAccountId = bankAccount.id;
   });
 
-  describe('POST /api/bank/webhooks/monzo', () => {
-    it('should successfully process a valid transaction.created webhook', async () => {
+  describe('POST /api/bank/webhooks/monzo/:secret', () => {
+    const validSecret = 'test-webhook-secret-123';
+
+    beforeEach(() => {
+      // Set environment variable for tests
+      process.env.MONZO_WEBHOOK_SECRET = validSecret;
+    });
+
+    it('should reject webhook with missing secret parameter', async () => {
+      const webhookPayload = {
+        type: 'transaction.created',
+        data: {
+          account_id: testAccountId,
+          id: 'tx_test_001',
+          created: '2024-01-15T10:30:00Z',
+          description: 'Test Transaction',
+          amount: -100,
+          currency: 'GBP',
+          notes: '',
+        },
+      };
+
+      const response = await request(app)
+        .post('/api/bank/webhooks/monzo')
+        .send(webhookPayload);
+
+      // Should return 404 since the route requires :secret parameter
+      expect(response.status).toBe(404);
+    });
+
+    it('should reject webhook with invalid secret', async () => {
+      const webhookPayload = {
+        type: 'transaction.created',
+        data: {
+          account_id: testAccountId,
+          id: 'tx_test_002',
+          created: '2024-01-15T10:30:00Z',
+          description: 'Test Transaction',
+          amount: -100,
+          currency: 'GBP',
+          notes: '',
+        },
+      };
+
+      const response = await request(app)
+        .post('/api/bank/webhooks/monzo/wrong-secret')
+        .send(webhookPayload);
+
+      expect(response.status).toBe(403);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBe('Forbidden');
+
+      // Verify no transaction was created
+      const transactions = await prisma.bankTransaction.count({
+        where: { bankAccountId: testBankAccountId },
+      });
+      expect(transactions).toBe(0);
+
+      // Verify no sync log was created
+      const syncLogs = await prisma.syncLog.count({
+        where: { bankAccountId: testBankAccountId },
+      });
+      expect(syncLogs).toBe(0);
+    });
+
+    it('should return 500 when MONZO_WEBHOOK_SECRET is not configured', async () => {
+      // Temporarily remove environment variable
+      const originalSecret = process.env.MONZO_WEBHOOK_SECRET;
+      delete process.env.MONZO_WEBHOOK_SECRET;
+
+      const webhookPayload = {
+        type: 'transaction.created',
+        data: {
+          account_id: testAccountId,
+          id: 'tx_test_003',
+          created: '2024-01-15T10:30:00Z',
+          description: 'Test Transaction',
+          amount: -100,
+          currency: 'GBP',
+          notes: '',
+        },
+      };
+
+      const response = await request(app)
+        .post('/api/bank/webhooks/monzo/any-secret')
+        .send(webhookPayload);
+
+      expect(response.status).toBe(500);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBe('Webhook not configured');
+
+      // Restore environment variable
+      process.env.MONZO_WEBHOOK_SECRET = originalSecret;
+    });
+
+    it('should successfully process a valid transaction.created webhook with valid secret', async () => {
       const webhookPayload = {
         type: 'transaction.created',
         data: {
@@ -74,7 +168,7 @@ describe('Webhook Routes', () => {
       };
 
       const response = await request(app)
-        .post('/api/bank/webhooks/monzo')
+        .post(`/api/bank/webhooks/monzo/${validSecret}`)
         .send(webhookPayload);
 
       expect(response.status).toBe(200);
@@ -139,7 +233,7 @@ describe('Webhook Routes', () => {
 
       // Send webhook first time
       const response1 = await request(app)
-        .post('/api/bank/webhooks/monzo')
+        .post(`/api/bank/webhooks/monzo/${validSecret}`)
         .send(webhookPayload);
 
       expect(response1.status).toBe(200);
@@ -156,7 +250,7 @@ describe('Webhook Routes', () => {
 
       // Send same webhook again
       const response2 = await request(app)
-        .post('/api/bank/webhooks/monzo')
+        .post(`/api/bank/webhooks/monzo/${validSecret}`)
         .send(webhookPayload);
 
       expect(response2.status).toBe(200);
@@ -188,7 +282,7 @@ describe('Webhook Routes', () => {
       };
 
       const response = await request(app)
-        .post('/api/bank/webhooks/monzo')
+        .post(`/api/bank/webhooks/monzo/${validSecret}`)
         .send(invalidPayload);
 
       expect(response.status).toBe(400);
@@ -209,7 +303,7 @@ describe('Webhook Routes', () => {
       };
 
       const response = await request(app)
-        .post('/api/bank/webhooks/monzo')
+        .post(`/api/bank/webhooks/monzo/${validSecret}`)
         .send(invalidPayload);
 
       expect(response.status).toBe(400);
@@ -228,7 +322,7 @@ describe('Webhook Routes', () => {
       };
 
       const response = await request(app)
-        .post('/api/bank/webhooks/monzo')
+        .post(`/api/bank/webhooks/monzo/${validSecret}`)
         .send(invalidPayload);
 
       expect(response.status).toBe(400);
@@ -251,7 +345,7 @@ describe('Webhook Routes', () => {
       };
 
       const response = await request(app)
-        .post('/api/bank/webhooks/monzo')
+        .post(`/api/bank/webhooks/monzo/${validSecret}`)
         .send(webhookPayload);
 
       // Should return 200 but indicate account not found
@@ -284,7 +378,7 @@ describe('Webhook Routes', () => {
       };
 
       const response = await request(app)
-        .post('/api/bank/webhooks/monzo')
+        .post(`/api/bank/webhooks/monzo/${validSecret}`)
         .send(webhookPayload);
 
       expect(response.status).toBe(200);
@@ -322,7 +416,7 @@ describe('Webhook Routes', () => {
       };
 
       const response = await request(app)
-        .post('/api/bank/webhooks/monzo')
+        .post(`/api/bank/webhooks/monzo/${validSecret}`)
         .send(webhookPayload);
 
       expect(response.status).toBe(200);
@@ -354,7 +448,7 @@ describe('Webhook Routes', () => {
       };
 
       const response = await request(app)
-        .post('/api/bank/webhooks/monzo')
+        .post(`/api/bank/webhooks/monzo/${validSecret}`)
         .send(webhookPayload);
 
       expect(response.status).toBe(200);
@@ -389,7 +483,7 @@ describe('Webhook Routes', () => {
       };
 
       const response = await request(app)
-        .post('/api/bank/webhooks/monzo')
+        .post(`/api/bank/webhooks/monzo/${validSecret}`)
         .send(webhookPayload);
 
       expect(response.status).toBe(500);
@@ -426,7 +520,7 @@ describe('Webhook Routes', () => {
 
       // Send request without any authentication headers
       const response = await request(app)
-        .post('/api/bank/webhooks/monzo')
+        .post(`/api/bank/webhooks/monzo/${validSecret}`)
         .send(webhookPayload);
 
       // Should succeed without authentication

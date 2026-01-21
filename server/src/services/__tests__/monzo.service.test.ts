@@ -833,4 +833,128 @@ describe('Monzo Service - importFullHistory', () => {
       expect(updatedBankAccount?.lastSyncStatus).toBe('failed');
     });
   });
+
+  describe('registerWebhook', () => {
+    it('should successfully register webhook and return webhookId and webhookUrl', async () => {
+      const accessToken = 'test_access_token';
+      const accountId = 'acc_123';
+      const webhookUrl = 'https://example.com/api/bank/webhooks/monzo/secret-123';
+
+      const mockResponse = {
+        webhook: {
+          id: 'webhook_123',
+          account_id: accountId,
+          url: webhookUrl,
+        },
+      };
+
+      (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockResponse,
+      } as Response);
+
+      const result = await monzoService.registerWebhook(accessToken, accountId, webhookUrl);
+
+      expect(result.webhookId).toBe('webhook_123');
+      expect(result.webhookUrl).toBe(webhookUrl);
+
+      // Verify fetch was called correctly
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+      const [url, options] = (global.fetch as jest.MockedFunction<typeof fetch>).mock.calls[0];
+      expect(url).toBe('https://api.monzo.com/webhooks');
+      expect(options?.method).toBe('POST');
+      expect(options?.headers).toEqual({
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      });
+
+      // Verify request body
+      const body = options?.body as URLSearchParams;
+      expect(body.get('account_id')).toBe(accountId);
+      expect(body.get('url')).toBe(webhookUrl);
+    });
+
+    it('should throw error when webhook registration fails', async () => {
+      const accessToken = 'test_access_token';
+      const accountId = 'acc_123';
+      const webhookUrl = 'https://example.com/webhooks';
+
+      (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValueOnce({
+        ok: false,
+        text: async () => 'Webhook registration failed',
+      } as Response);
+
+      await expect(
+        monzoService.registerWebhook(accessToken, accountId, webhookUrl)
+      ).rejects.toThrow('Failed to register webhook with Monzo');
+
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('should handle network errors', async () => {
+      const accessToken = 'test_access_token';
+      const accountId = 'acc_123';
+      const webhookUrl = 'https://example.com/webhooks';
+
+      (global.fetch as jest.MockedFunction<typeof fetch>).mockRejectedValueOnce(
+        new Error('Network error')
+      );
+
+      await expect(
+        monzoService.registerWebhook(accessToken, accountId, webhookUrl)
+      ).rejects.toThrow('Network error');
+    });
+  });
+
+  describe('deleteWebhook', () => {
+    it('should successfully delete webhook', async () => {
+      const accessToken = 'test_access_token';
+      const webhookId = 'webhook_123';
+
+      (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({}),
+      } as Response);
+
+      await monzoService.deleteWebhook(accessToken, webhookId);
+
+      // Verify fetch was called correctly
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+      const [url, options] = (global.fetch as jest.MockedFunction<typeof fetch>).mock.calls[0];
+      expect(url).toBe(`https://api.monzo.com/webhooks/${webhookId}`);
+      expect(options?.method).toBe('DELETE');
+      expect(options?.headers).toEqual({
+        Authorization: `Bearer ${accessToken}`,
+      });
+    });
+
+    it('should throw error when webhook deletion fails', async () => {
+      const accessToken = 'test_access_token';
+      const webhookId = 'webhook_123';
+
+      (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValueOnce({
+        ok: false,
+        text: async () => 'Webhook not found',
+      } as Response);
+
+      await expect(
+        monzoService.deleteWebhook(accessToken, webhookId)
+      ).rejects.toThrow('Failed to delete webhook from Monzo');
+
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('should handle network errors', async () => {
+      const accessToken = 'test_access_token';
+      const webhookId = 'webhook_123';
+
+      (global.fetch as jest.MockedFunction<typeof fetch>).mockRejectedValueOnce(
+        new Error('Network error')
+      );
+
+      await expect(
+        monzoService.deleteWebhook(accessToken, webhookId)
+      ).rejects.toThrow('Network error');
+    });
+  });
 });

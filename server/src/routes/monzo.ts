@@ -88,6 +88,49 @@ router.get('/callback', async (req, res) => {
       ? encryptToken(tokenResponse.refresh_token)
       : null;
 
+    // Check if bank account already exists (for re-authentication)
+    const existingAccount = await prisma.bankAccount.findUnique({
+      where: { accountId: accountInfo.accountId },
+    });
+
+    // Delete old webhook if re-authenticating
+    if (existingAccount?.webhookId) {
+      try {
+        await monzoService.deleteWebhook(tokenResponse.access_token, existingAccount.webhookId);
+        console.log(`Deleted old webhook: ${existingAccount.webhookId}`);
+      } catch (error) {
+        console.error('Failed to delete old webhook:', error);
+        // Continue with OAuth - don't block on webhook deletion
+      }
+    }
+
+    // Register new webhook
+    let webhookId: string | null = null;
+    let webhookUrl: string | null = null;
+
+    const webhookSecret = process.env.MONZO_WEBHOOK_SECRET;
+    if (webhookSecret) {
+      try {
+        const baseUrl = process.env.WEBHOOK_BASE_URL || 'http://localhost:3000';
+        const webhookUrlToRegister = `${baseUrl}/api/bank/webhooks/monzo/${webhookSecret}`;
+
+        const webhookResult = await monzoService.registerWebhook(
+          tokenResponse.access_token,
+          accountInfo.accountId,
+          webhookUrlToRegister
+        );
+
+        webhookId = webhookResult.webhookId;
+        webhookUrl = webhookResult.webhookUrl;
+        console.log(`Registered webhook: ${webhookId} at ${webhookUrl}`);
+      } catch (error) {
+        console.error('Failed to register webhook:', error);
+        // Continue with OAuth - user can still use manual sync if webhooks fail
+      }
+    } else {
+      console.warn('MONZO_WEBHOOK_SECRET not configured - skipping webhook registration');
+    }
+
     // Save or update bank account
     const bankAccount = await prisma.bankAccount.upsert({
       where: { accountId: accountInfo.accountId },
@@ -102,6 +145,8 @@ router.get('/callback', async (req, res) => {
         syncFromDate,
         syncEnabled: true,
         lastSyncStatus: 'never_synced',
+        webhookId,
+        webhookUrl,
       },
       update: {
         accountName: accountInfo.accountName,
@@ -111,6 +156,8 @@ router.get('/callback', async (req, res) => {
         tokenExpiresAt,
         syncFromDate,
         syncEnabled: true,
+        webhookId,
+        webhookUrl,
       },
     });
 

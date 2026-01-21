@@ -388,6 +388,14 @@ export interface SyncResult {
 }
 
 /**
+ * Webhook registration result
+ */
+export interface WebhookRegistrationResult {
+  webhookId: string;
+  webhookUrl: string;
+}
+
+/**
  * Sync new transactions from Monzo API since last sync
  * This is a synchronous operation with a 30-second timeout for manual sync triggers
  *
@@ -598,5 +606,72 @@ export async function syncNewTransactions(bankAccountId: string): Promise<SyncRe
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
     };
+  }
+}
+
+/**
+ * Register a webhook with Monzo API
+ * @param accessToken - Monzo access token
+ * @param accountId - Monzo account ID
+ * @param webhookUrl - The URL where Monzo will send webhook events
+ * @returns Webhook ID and URL
+ */
+export async function registerWebhook(
+  accessToken: string,
+  accountId: string,
+  webhookUrl: string
+): Promise<WebhookRegistrationResult> {
+  const response = await fetch('https://api.monzo.com/webhooks', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: new URLSearchParams({
+      account_id: accountId,
+      url: webhookUrl,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Monzo webhook registration error:', errorText);
+    throw new Error('Failed to register webhook with Monzo');
+  }
+
+  const data = await response.json() as {
+    webhook: {
+      id: string;
+      account_id: string;
+      url: string;
+    };
+  };
+
+  return {
+    webhookId: data.webhook.id,
+    webhookUrl: data.webhook.url,
+  };
+}
+
+/**
+ * Delete a webhook from Monzo API
+ * @param accessToken - Monzo access token
+ * @param webhookId - The webhook ID to delete
+ */
+export async function deleteWebhook(
+  accessToken: string,
+  webhookId: string
+): Promise<void> {
+  const response = await fetch(`https://api.monzo.com/webhooks/${webhookId}`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Monzo webhook deletion error:', errorText);
+    throw new Error('Failed to delete webhook from Monzo');
   }
 }
