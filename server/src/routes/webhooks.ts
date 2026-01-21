@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import crypto from 'crypto';
 import prisma from '../db/client.js';
 import type { MonzoTransaction } from '../services/monzo.service.js';
 
@@ -13,14 +14,20 @@ interface MonzoWebhookPayload {
 }
 
 /**
- * POST /api/bank/webhooks/monzo
+ * POST /api/bank/webhooks/monzo/:secret
  *
  * Webhook endpoint for Monzo transaction.created events.
  * This is a public endpoint (no authentication) as it receives webhooks from Monzo servers.
  *
+ * Security:
+ * - Monzo does not support HMAC signature verification for webhooks
+ * - Security is provided via secret URL path parameter validation
+ * - The webhook URL registered with Monzo should be:
+ *   https://yourdomain.com/api/bank/webhooks/monzo/{MONZO_WEBHOOK_SECRET}
+ *
  * Process:
  * 1. Receive webhook payload
- * 2. TODO: Implement HMAC signature verification (Task-7im)
+ * 2. Validate secret parameter against MONZO_WEBHOOK_SECRET environment variable
  * 3. Find bank account by account_id from transaction
  * 4. Create SyncLog with syncType="webhook"
  * 5. Create BankTransaction record (with duplicate detection via upsert)
@@ -29,15 +36,50 @@ interface MonzoWebhookPayload {
  * Response:
  * - 200: Successfully processed webhook
  * - 400: Malformed payload
- * - 500: Processing error
+ * - 403: Invalid or missing secret
+ * - 500: Processing error or webhook not configured
  */
-router.post('/monzo', async (req, res) => {
+router.post('/monzo/:secret', async (req, res) => {
   let syncLogId: string | undefined;
 
   try {
-    // TODO: Implement HMAC signature verification (Task-7im)
-    // This will validate that the webhook actually came from Monzo
-    // For now, we accept all requests
+    // Note: Monzo does not support HMAC signature verification for webhooks.
+    // Security is provided via secret URL path parameter validation.
+    // The webhook URL registered with Monzo should be:
+    // https://yourdomain.com/api/bank/webhooks/monzo/{MONZO_WEBHOOK_SECRET}
+
+    const secret = req.params.secret;
+    const expectedSecret = process.env.MONZO_WEBHOOK_SECRET;
+
+    // Validate that webhook secret is configured
+    if (!expectedSecret) {
+      console.error('MONZO_WEBHOOK_SECRET not configured');
+      return res.status(500).json({
+        success: false,
+        error: 'Webhook not configured',
+      });
+    }
+
+    // Timing-safe comparison to prevent timing attacks
+    // Check length first (length check doesn't need to be timing-safe)
+    if (secret.length !== expectedSecret.length) {
+      console.warn('Invalid webhook secret attempt');
+      return res.status(403).json({
+        success: false,
+        error: 'Forbidden',
+      });
+    }
+
+    // Use crypto.timingSafeEqual for the actual secret comparison
+    const secretBuffer = Buffer.from(secret);
+    const expectedBuffer = Buffer.from(expectedSecret);
+    if (!crypto.timingSafeEqual(secretBuffer, expectedBuffer)) {
+      console.warn('Invalid webhook secret attempt');
+      return res.status(403).json({
+        success: false,
+        error: 'Forbidden',
+      });
+    }
 
     // Validate payload structure
     const payload = req.body as MonzoWebhookPayload;
