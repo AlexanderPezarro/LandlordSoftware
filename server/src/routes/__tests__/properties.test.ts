@@ -326,8 +326,18 @@ describe('Properties Routes', () => {
   });
 
   describe('GET /api/properties', () => {
-    it('should return empty array when no properties exist', async () => {
+    it('should require authentication', async () => {
       const response = await request(app).get('/api/properties');
+
+      expect(response.status).toBe(401);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBe('Authentication required');
+    });
+
+    it('should return empty array when no properties exist', async () => {
+      const response = await request(app)
+        .get('/api/properties')
+        .set('Cookie', authCookies);
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -345,7 +355,9 @@ describe('Properties Routes', () => {
         },
       });
 
-      const response = await request(app).get('/api/properties');
+      const response = await request(app)
+        .get('/api/properties')
+        .set('Cookie', authCookies);
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -364,6 +376,7 @@ describe('Properties Routes', () => {
 
       const response = await request(app)
         .get('/api/properties')
+        .set('Cookie', authCookies)
         .query({ status: 'Available' });
 
       expect(response.status).toBe(200);
@@ -380,6 +393,7 @@ describe('Properties Routes', () => {
 
       const response = await request(app)
         .get('/api/properties')
+        .set('Cookie', authCookies)
         .query({ propertyType: 'House' });
 
       expect(response.status).toBe(200);
@@ -396,6 +410,7 @@ describe('Properties Routes', () => {
 
       const response = await request(app)
         .get('/api/properties')
+        .set('Cookie', authCookies)
         .query({ search: 'Sunny' });
 
       expect(response.status).toBe(200);
@@ -412,6 +427,7 @@ describe('Properties Routes', () => {
 
       const response = await request(app)
         .get('/api/properties')
+        .set('Cookie', authCookies)
         .query({ search: 'Oak' });
 
       expect(response.status).toBe(200);
@@ -428,6 +444,7 @@ describe('Properties Routes', () => {
 
       const response = await request(app)
         .get('/api/properties')
+        .set('Cookie', authCookies)
         .query({ search: 'Manchester' });
 
       expect(response.status).toBe(200);
@@ -454,6 +471,7 @@ describe('Properties Routes', () => {
 
       const response = await request(app)
         .get('/api/properties')
+        .set('Cookie', authCookies)
         .query({ status: 'Available', propertyType: 'Flat', search: 'Sunny' });
 
       expect(response.status).toBe(200);
@@ -465,6 +483,7 @@ describe('Properties Routes', () => {
     it('should reject invalid query parameters - invalid status', async () => {
       const response = await request(app)
         .get('/api/properties')
+        .set('Cookie', authCookies)
         .query({ status: 'InvalidStatus' });
 
       expect(response.status).toBe(400);
@@ -475,6 +494,7 @@ describe('Properties Routes', () => {
     it('should reject invalid query parameters - invalid propertyType', async () => {
       const response = await request(app)
         .get('/api/properties')
+        .set('Cookie', authCookies)
         .query({ propertyType: 'InvalidType' });
 
       expect(response.status).toBe(400);
@@ -484,10 +504,22 @@ describe('Properties Routes', () => {
   });
 
   describe('GET /api/properties/:id', () => {
-    it('should return property by id', async () => {
+    it('should require authentication', async () => {
       const property = await prisma.property.create({ data: validProperty });
 
       const response = await request(app).get(`/api/properties/${property.id}`);
+
+      expect(response.status).toBe(401);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBe('Authentication required');
+    });
+
+    it('should return property by id', async () => {
+      const property = await prisma.property.create({ data: validProperty });
+
+      const response = await request(app)
+        .get(`/api/properties/${property.id}`)
+        .set('Cookie', authCookies);
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -497,7 +529,9 @@ describe('Properties Routes', () => {
 
     it('should return 404 for non-existent property', async () => {
       const nonExistentId = '00000000-0000-0000-0000-000000000000';
-      const response = await request(app).get(`/api/properties/${nonExistentId}`);
+      const response = await request(app)
+        .get(`/api/properties/${nonExistentId}`)
+        .set('Cookie', authCookies);
 
       expect(response.status).toBe(404);
       expect(response.body.success).toBe(false);
@@ -505,7 +539,9 @@ describe('Properties Routes', () => {
     });
 
     it('should return 400 for invalid UUID format', async () => {
-      const response = await request(app).get('/api/properties/invalid-id');
+      const response = await request(app)
+        .get('/api/properties/invalid-id')
+        .set('Cookie', authCookies);
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
@@ -807,7 +843,9 @@ describe('Properties Routes', () => {
       const propertyId = createResponse.body.property.id;
 
       // Read single
-      const readResponse = await request(app).get(`/api/properties/${propertyId}`);
+      const readResponse = await request(app)
+        .get(`/api/properties/${propertyId}`)
+        .set('Cookie', authCookies);
 
       expect(readResponse.status).toBe(200);
       expect(readResponse.body.property.id).toBe(propertyId);
@@ -830,7 +868,9 @@ describe('Properties Routes', () => {
       expect(deleteResponse.body.property.status).toBe('For Sale');
 
       // Verify still accessible
-      const finalReadResponse = await request(app).get(`/api/properties/${propertyId}`);
+      const finalReadResponse = await request(app)
+        .get(`/api/properties/${propertyId}`)
+        .set('Cookie', authCookies);
       expect(finalReadResponse.status).toBe(200);
       expect(finalReadResponse.body.property.status).toBe('For Sale');
     });
@@ -850,7 +890,9 @@ describe('Properties Routes', () => {
       }
 
       // List all
-      const listResponse = await request(app).get('/api/properties');
+      const listResponse = await request(app)
+        .get('/api/properties')
+        .set('Cookie', authCookies);
       expect(listResponse.status).toBe(200);
       expect(listResponse.body.properties).toHaveLength(5);
 
@@ -889,7 +931,9 @@ describe('Properties Routes', () => {
       expect(response2.body.property.id).not.toBe(response1.body.property.id);
 
       // Verify both exist in database
-      const listResponse = await request(app).get('/api/properties');
+      const listResponse = await request(app)
+        .get('/api/properties')
+        .set('Cookie', authCookies);
       expect(listResponse.status).toBe(200);
       expect(listResponse.body.properties).toHaveLength(2);
     });
@@ -901,6 +945,7 @@ describe('Properties Routes', () => {
       // Attempt SQL injection in search parameter
       const response = await request(app)
         .get('/api/properties')
+        .set('Cookie', authCookies)
         .query({ search: "' OR '1'='1" });
 
       expect(response.status).toBe(200);
