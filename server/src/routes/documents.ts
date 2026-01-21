@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { requireAuth } from '../middleware/auth.js';
+import { requireWrite } from '../middleware/permissions.js';
 import { upload, handleUploadError } from '../middleware/upload.js';
 import prisma from '../db/client.js';
 import { LocalStorageService } from '../services/storage/LocalStorageService.js';
@@ -31,10 +32,11 @@ async function validateEntity(entityType: string, entityId: string): Promise<boo
   return entity !== null;
 }
 
-// POST /api/documents - Upload document (requires auth)
+// POST /api/documents - Upload document (requires write permission)
 router.post(
   '/',
   requireAuth,
+  requireWrite(),
   upload.single('file'),
   handleUploadError,
   async (req: Request, res: Response) => {
@@ -274,8 +276,8 @@ router.get('/:id/download', requireAuth, async (req, res) => {
   }
 });
 
-// DELETE /api/documents/:id - Delete document (requires auth)
-router.delete('/:id', requireAuth, async (req, res) => {
+// DELETE /api/documents/:id - Delete document (requires write permission)
+router.delete('/:id', requireAuth, requireWrite(), async (req, res) => {
   try {
     const { id } = req.params;
 
