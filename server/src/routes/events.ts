@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
+import { requireWrite } from '../middleware/permissions.js';
 import prisma from '../db/client.js';
 import {
   CreateEventSchema,
@@ -11,7 +12,7 @@ import { z } from 'zod';
 const router = Router();
 
 // GET /api/events - List events with filtering
-router.get('/', async (req, res) => {
+router.get('/', requireAuth, async (req, res) => {
   try {
     // Validate query parameters
     const validationResult = EventQueryParamsSchema.safeParse(req.query);
@@ -69,7 +70,7 @@ router.get('/', async (req, res) => {
 });
 
 // GET /api/events/:id - Get single event
-router.get('/:id', async (req, res) => {
+router.get('/:id', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -105,8 +106,8 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST /api/events - Create event (requires auth)
-router.post('/', requireAuth, async (req, res) => {
+// POST /api/events - Create event (requires write permission)
+router.post('/', requireAuth, requireWrite(), async (req, res) => {
   try {
     // Validate request body
     const validationResult = CreateEventSchema.safeParse(req.body);
@@ -138,8 +139,8 @@ router.post('/', requireAuth, async (req, res) => {
   }
 });
 
-// PUT /api/events/:id - Update event (requires auth)
-router.put('/:id', requireAuth, async (req, res) => {
+// PUT /api/events/:id - Update event (requires write permission)
+router.put('/:id', requireAuth, requireWrite(), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -198,8 +199,8 @@ router.put('/:id', requireAuth, async (req, res) => {
   }
 });
 
-// PATCH /api/events/:id/complete - Mark event as completed (requires auth)
-router.patch('/:id/complete', requireAuth, async (req, res) => {
+// PATCH /api/events/:id/complete - Mark event as completed (requires write permission)
+router.patch('/:id/complete', requireAuth, requireWrite(), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -245,8 +246,8 @@ router.patch('/:id/complete', requireAuth, async (req, res) => {
   }
 });
 
-// DELETE /api/events/:id - Hard delete event (requires auth)
-router.delete('/:id', requireAuth, async (req, res) => {
+// DELETE /api/events/:id - Hard delete event (requires write permission)
+router.delete('/:id', requireAuth, requireWrite(), async (req, res) => {
   try {
     const { id } = req.params;
 
