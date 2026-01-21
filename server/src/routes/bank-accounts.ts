@@ -4,7 +4,8 @@ import { requireAdmin } from '../middleware/permissions.js';
 import prisma from '../db/client.js';
 import { UpdateBankAccountSchema } from '../../../shared/validation/bankAccount.validation.js';
 import { z } from 'zod';
-import { syncNewTransactions } from '../services/monzo.service.js';
+import { syncNewTransactions, deleteWebhook } from '../services/monzo.service.js';
+import { decryptToken } from '../services/encryption.js';
 
 const router = Router();
 
@@ -163,6 +164,19 @@ router.delete('/:id', requireAuth, requireAdmin(), async (req, res) => {
         success: false,
         error: 'Bank account not found',
       });
+    }
+
+    // Delete webhook from Monzo if it exists
+    if (existingAccount.webhookId) {
+      try {
+        const accessToken = decryptToken(existingAccount.accessToken);
+        await deleteWebhook(accessToken, existingAccount.webhookId);
+        console.log(`Deleted webhook: ${existingAccount.webhookId}`);
+      } catch (error) {
+        console.error('Failed to delete webhook from Monzo:', error);
+        // Continue with account deletion even if webhook deletion fails
+        // The webhook will eventually expire or can be cleaned up manually
+      }
     }
 
     // Hard delete the account (cascade will remove related records)

@@ -524,6 +524,123 @@ describe('Bank Accounts Routes', () => {
       expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Invalid bank account ID format');
     });
+
+    it('should delete webhook from Monzo when deleting account with webhook', async () => {
+      // Mock global fetch for webhook deletion
+      const mockFetch = jest.fn() as jest.MockedFunction<typeof fetch>;
+      global.fetch = mockFetch;
+
+      // Mock successful webhook deletion
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({}),
+      } as Response);
+
+      // Create account with webhook
+      const account = await prisma.bankAccount.create({
+        data: {
+          ...validBankAccount,
+          webhookId: 'webhook_test_123',
+          webhookUrl: 'https://example.com/webhook',
+        },
+      });
+
+      const response = await request(app)
+        .delete(`/api/bank/accounts/${account.id}`)
+        .set('Cookie', adminCookies);
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.message).toBe('Bank account deleted successfully');
+
+      // Verify fetch was called to delete the webhook
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://api.monzo.com/webhooks/webhook_test_123',
+        expect.objectContaining({
+          method: 'DELETE',
+          headers: expect.objectContaining({
+            Authorization: expect.stringContaining('Bearer'),
+          }),
+        })
+      );
+
+      // Verify account no longer exists in database
+      const deletedAccount = await prisma.bankAccount.findUnique({
+        where: { id: account.id },
+      });
+      expect(deletedAccount).toBeNull();
+    });
+
+    it('should not call webhook API when account has no webhook', async () => {
+      // Mock global fetch
+      const mockFetch = jest.fn() as jest.MockedFunction<typeof fetch>;
+      global.fetch = mockFetch;
+
+      // Create account without webhook
+      const account = await prisma.bankAccount.create({
+        data: {
+          ...validBankAccount,
+          webhookId: null,
+          webhookUrl: null,
+        },
+      });
+
+      const response = await request(app)
+        .delete(`/api/bank/accounts/${account.id}`)
+        .set('Cookie', adminCookies);
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+
+      // Verify fetch was NOT called (no webhook to delete)
+      expect(mockFetch).not.toHaveBeenCalled();
+
+      // Verify account was still deleted
+      const deletedAccount = await prisma.bankAccount.findUnique({
+        where: { id: account.id },
+      });
+      expect(deletedAccount).toBeNull();
+    });
+
+    it('should still delete account even if webhook deletion fails', async () => {
+      // Mock global fetch for webhook deletion
+      const mockFetch = jest.fn() as jest.MockedFunction<typeof fetch>;
+      global.fetch = mockFetch;
+
+      // Mock failed webhook deletion
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        text: async () => 'Webhook not found',
+      } as Response);
+
+      // Create account with webhook
+      const account = await prisma.bankAccount.create({
+        data: {
+          ...validBankAccount,
+          webhookId: 'webhook_test_456',
+          webhookUrl: 'https://example.com/webhook',
+        },
+      });
+
+      const response = await request(app)
+        .delete(`/api/bank/accounts/${account.id}`)
+        .set('Cookie', adminCookies);
+
+      // Should still succeed
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.message).toBe('Bank account deleted successfully');
+
+      // Verify fetch was called
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+
+      // Verify account was still deleted despite webhook deletion failure
+      const deletedAccount = await prisma.bankAccount.findUnique({
+        where: { id: account.id },
+      });
+      expect(deletedAccount).toBeNull();
+    });
   });
 
   describe('Integration scenarios', () => {
