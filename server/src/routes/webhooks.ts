@@ -1,17 +1,9 @@
 import { Router } from 'express';
 import crypto from 'crypto';
 import prisma from '../db/client.js';
-import type { MonzoTransaction } from '../services/monzo.service.js';
+import type { MonzoWebhookPayload } from '../services/monzo/types.js';
 
 const router = Router();
-
-/**
- * Monzo webhook payload interface for transaction.created events
- */
-interface MonzoWebhookPayload {
-  type: 'transaction.created';
-  data: MonzoTransaction;
-}
 
 /**
  * POST /api/bank/webhooks/monzo/:secret

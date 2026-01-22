@@ -1,36 +1,14 @@
 import crypto from 'crypto';
 import prisma from '../db/client.js';
 import { decryptToken } from './encryption.js';
+import type { MonzoTransaction, MonzoTransactionsResponse } from './monzo/types.js';
+
+// Re-export types for backwards compatibility
+export type { MonzoTransaction, MonzoTransactionsResponse };
 
 // In-memory state storage (in production, use Redis or database)
 // Maps state -> { syncFromDate: Date, createdAt: Date }
 const stateStore = new Map<string, { syncFromDate: Date; createdAt: Date }>();
-
-/**
- * Monzo API transaction response types
- */
-export interface MonzoTransaction {
-  account_id: string; // Monzo account ID (e.g., "acc_00008gju41AHyfLUzBUk8A")
-  id: string;
-  created: string; // RFC3339 timestamp
-  description: string;
-  amount: number; // Amount in pence (divide by 100 for pounds)
-  currency: string;
-  notes: string;
-  merchant?: {
-    id: string;
-    name: string;
-  } | null;
-  counterparty?: {
-    name: string;
-  } | null;
-  category?: string;
-  settled?: string; // RFC3339 timestamp
-}
-
-export interface MonzoTransactionsResponse {
-  transactions: MonzoTransaction[];
-}
 
 // Clean up expired states every 10 minutes
 setInterval(() => {
