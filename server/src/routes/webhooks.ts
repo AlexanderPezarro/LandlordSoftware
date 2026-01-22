@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import crypto from 'crypto';
 import prisma from '../db/client.js';
+import { processTransactions } from '../services/transactionProcessor.js';
 import type { MonzoWebhookPayload } from '../services/monzo/types.js';
 
 const router = Router();
@@ -138,29 +139,38 @@ router.post('/monzo/:secret', async (req, res) => {
     });
     syncLogId = syncLog.id;
 
-    // Create or update BankTransaction record (upsert for duplicate detection)
-    await prisma.bankTransaction.upsert({
-      where: {
-        bankAccountId_externalId: {
-          bankAccountId: bankAccount.id,
-          externalId: transaction.id,
+    // Process transaction through unified pipeline
+    const processResult = await processTransactions([transaction], bankAccount.id);
+
+    // Check if processing failed
+    if (processResult.errors.length > 0) {
+      // Update SyncLog with failure
+      await prisma.syncLog.update({
+        where: { id: syncLogId },
+        data: {
+          status: 'failed',
+          completedAt: new Date(),
+          transactionsFetched: processResult.processed + processResult.duplicatesSkipped,
+          errorMessage: processResult.errors[0].error,
         },
-      },
-      create: {
-        bankAccountId: bankAccount.id,
-        externalId: transaction.id,
-        amount: transaction.amount / 100, // Convert pence to pounds
-        currency: transaction.currency,
-        description: transaction.description,
-        counterpartyName: transaction.counterparty?.name || null,
-        reference: transaction.notes || null,
-        merchant: transaction.merchant?.name || null,
-        category: transaction.category || null,
-        transactionDate: new Date(transaction.created),
-        settledDate: transaction.settled ? new Date(transaction.settled) : null,
-      },
-      update: {}, // Don't update if already exists (idempotency)
-    });
+      });
+
+      // Update bank account last sync status
+      await prisma.bankAccount.update({
+        where: { id: bankAccount.id },
+        data: {
+          lastSyncAt: new Date(),
+          lastSyncStatus: 'failed',
+        },
+      });
+
+      console.error(`Webhook processing failed for transaction ${transaction.id}:`, processResult.errors[0].error);
+
+      return res.status(500).json({
+        success: false,
+        error: 'An error occurred while processing webhook',
+      });
+    }
 
     // Update SyncLog with success
     await prisma.syncLog.update({
@@ -168,7 +178,7 @@ router.post('/monzo/:secret', async (req, res) => {
       data: {
         status: 'success',
         completedAt: new Date(),
-        transactionsFetched: 1,
+        transactionsFetched: processResult.processed + processResult.duplicatesSkipped,
       },
     });
 

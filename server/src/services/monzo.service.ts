@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import prisma from '../db/client.js';
 import { decryptToken } from './encryption.js';
+import { processTransactions } from './transactionProcessor.js';
 import type { MonzoTransaction, MonzoTransactionsResponse } from './monzo/types.js';
 
 // Re-export types for backwards compatibility
@@ -274,32 +275,17 @@ export async function importFullHistory(bankAccountId: string): Promise<void> {
 
     clearTimeout(timeoutHandle);
 
-    // Import transactions in batches
+    // Process transactions through unified pipeline
+    let processedCount = 0;
+    let duplicatesSkipped = 0;
     if (allTransactions.length > 0) {
-      // Use individual upsert operations to handle duplicates gracefully
-      for (const tx of allTransactions) {
-        await prisma.bankTransaction.upsert({
-          where: {
-            bankAccountId_externalId: {
-              bankAccountId,
-              externalId: tx.id,
-            },
-          },
-          create: {
-            bankAccountId,
-            externalId: tx.id,
-            amount: tx.amount / 100, // Convert pence to pounds
-            currency: tx.currency,
-            description: tx.description,
-            counterpartyName: tx.counterparty?.name || null,
-            reference: tx.notes || null,
-            merchant: tx.merchant?.name || null,
-            category: tx.category || null,
-            transactionDate: new Date(tx.created),
-            settledDate: tx.settled ? new Date(tx.settled) : null,
-          },
-          update: {}, // Don't update if already exists
-        });
+      const processResult = await processTransactions(allTransactions, bankAccountId);
+      processedCount = processResult.processed;
+      duplicatesSkipped = processResult.duplicatesSkipped;
+
+      // Log any processing errors
+      if (processResult.errors.length > 0) {
+        console.error(`Import encountered ${processResult.errors.length} errors:`, processResult.errors);
       }
     }
 
@@ -325,7 +311,7 @@ export async function importFullHistory(bankAccountId: string): Promise<void> {
       },
     });
 
-    console.log(`Import completed for bank account ${bankAccountId}: ${transactionsFetched} transactions fetched, status: ${finalStatus}`);
+    console.log(`Import completed for bank account ${bankAccountId}: ${transactionsFetched} transactions fetched (${processedCount} processed, ${duplicatesSkipped} duplicates skipped), status: ${finalStatus}`);
   } catch (error) {
     console.error(`Import failed for bank account ${bankAccountId}:`, error);
 
@@ -495,32 +481,17 @@ export async function syncNewTransactions(bankAccountId: string): Promise<SyncRe
 
     clearTimeout(timeoutHandle);
 
-    // Import transactions in batches
+    // Process transactions through unified pipeline
+    let processedCount = 0;
+    let duplicatesSkipped = 0;
     if (allTransactions.length > 0) {
-      // Use individual upsert operations to handle duplicates gracefully
-      for (const tx of allTransactions) {
-        await prisma.bankTransaction.upsert({
-          where: {
-            bankAccountId_externalId: {
-              bankAccountId,
-              externalId: tx.id,
-            },
-          },
-          create: {
-            bankAccountId,
-            externalId: tx.id,
-            amount: tx.amount / 100, // Convert pence to pounds
-            currency: tx.currency,
-            description: tx.description,
-            counterpartyName: tx.counterparty?.name || null,
-            reference: tx.notes || null,
-            merchant: tx.merchant?.name || null,
-            category: tx.category || null,
-            transactionDate: new Date(tx.created),
-            settledDate: tx.settled ? new Date(tx.settled) : null,
-          },
-          update: {}, // Don't update if already exists
-        });
+      const processResult = await processTransactions(allTransactions, bankAccountId);
+      processedCount = processResult.processed;
+      duplicatesSkipped = processResult.duplicatesSkipped;
+
+      // Log any processing errors
+      if (processResult.errors.length > 0) {
+        console.error(`Manual sync encountered ${processResult.errors.length} errors:`, processResult.errors);
       }
     }
 
@@ -547,7 +518,7 @@ export async function syncNewTransactions(bankAccountId: string): Promise<SyncRe
       },
     });
 
-    console.log(`Manual sync completed for bank account ${bankAccountId}: ${transactionsFetched} transactions fetched, status: ${finalStatus}`);
+    console.log(`Manual sync completed for bank account ${bankAccountId}: ${transactionsFetched} transactions fetched (${processedCount} processed, ${duplicatesSkipped} duplicates skipped), status: ${finalStatus}`);
 
     return {
       success: true,
