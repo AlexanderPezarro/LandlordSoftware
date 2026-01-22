@@ -299,6 +299,7 @@ export async function importFullHistory(bankAccountId: string): Promise<void> {
         status: finalStatus,
         completedAt: new Date(),
         transactionsFetched,
+        transactionsSkipped: duplicatesSkipped,
       },
     });
 
@@ -506,6 +507,7 @@ export async function syncNewTransactions(bankAccountId: string): Promise<SyncRe
         status: finalStatus,
         completedAt: now,
         transactionsFetched,
+        transactionsSkipped: duplicatesSkipped,
       },
     });
 

@@ -151,6 +151,7 @@ router.post('/monzo/:secret', async (req, res) => {
           status: 'failed',
           completedAt: new Date(),
           transactionsFetched: processResult.processed + processResult.duplicatesSkipped,
+          transactionsSkipped: processResult.duplicatesSkipped,
           errorMessage: processResult.errors[0].error,
         },
       });
@@ -179,6 +180,7 @@ router.post('/monzo/:secret', async (req, res) => {
         status: 'success',
         completedAt: new Date(),
         transactionsFetched: processResult.processed + processResult.duplicatesSkipped,
+        transactionsSkipped: processResult.duplicatesSkipped,
       },
     });
 
