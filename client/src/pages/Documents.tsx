@@ -45,6 +45,7 @@ import type {
 import { ApiError } from '../types/api.types';
 import ConfirmDialog from '../components/shared/ConfirmDialog';
 import { useToast } from '../contexts/ToastContext';
+import { useAuth } from '../contexts/AuthContext';
 
 type EntityType = 'Property' | 'Tenant' | 'Lease' | 'Transaction';
 
@@ -101,6 +102,7 @@ const formatDate = (dateString: string): string => {
 
 export const Documents: React.FC = () => {
   const toast = useToast();
+  const { canWrite } = useAuth();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -445,14 +447,16 @@ export const Documents: React.FC = () => {
           <Typography variant="h4" component="h1">
             Documents
           </Typography>
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<AddIcon />}
-            onClick={handleOpenUploadDialog}
-          >
-            Upload Document
-          </Button>
+          {canWrite() && (
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<AddIcon />}
+              onClick={handleOpenUploadDialog}
+            >
+              Upload Document
+            </Button>
+          )}
         </Box>
 
         {/* Filters */}
@@ -502,13 +506,15 @@ export const Documents: React.FC = () => {
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
               Upload your first document to get started
             </Typography>
-            <Button
-              variant="outlined"
-              startIcon={<AddIcon />}
-              onClick={handleOpenUploadDialog}
-            >
-              Upload First Document
-            </Button>
+            {canWrite() && (
+              <Button
+                variant="outlined"
+                startIcon={<AddIcon />}
+                onClick={handleOpenUploadDialog}
+              >
+                Upload First Document
+              </Button>
+            )}
           </Box>
         ) : (
           <Box
@@ -578,16 +584,18 @@ export const Documents: React.FC = () => {
                         <DownloadIcon fontSize="small" />
                       </IconButton>
                     </Tooltip>
-                    <Tooltip title="Delete">
-                      <IconButton
-                        size="small"
-                        color="error"
-                        onClick={(e) => handleDeleteClick(doc, e)}
-                        aria-label="Delete document"
-                      >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
+                    {canWrite() && (
+                      <Tooltip title="Delete">
+                        <IconButton
+                          size="small"
+                          color="error"
+                          onClick={(e) => handleDeleteClick(doc, e)}
+                          aria-label="Delete document"
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    )}
                   </Box>
                 </CardContent>
               </Card>
