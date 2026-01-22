@@ -1,7 +1,7 @@
 // server/src/middleware/__tests__/permissions.test.ts
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { Request, Response, NextFunction } from 'express';
-import { Role, Roles } from '../../../../shared/types/user.types.js';
+import { Roles } from '../../../../shared/types/user.types.js';
 import { requireRole, requireWrite, requireAdmin } from '../permissions.js';
 
 describe('Permissions Middleware', () => {
@@ -39,7 +39,7 @@ describe('Permissions Middleware', () => {
 
     describe('role hierarchy - ADMIN (level 3)', () => {
       beforeEach(() => {
-        mockReq.user = { id: '1', email: 'admin@test.com', role: Roles.ADMIN };
+        mockReq.user = { id: '1', role: Roles.ADMIN };
       });
 
       it('should allow ADMIN to access ADMIN routes', () => {
@@ -69,7 +69,7 @@ describe('Permissions Middleware', () => {
 
     describe('role hierarchy - LANDLORD (level 2)', () => {
       beforeEach(() => {
-        mockReq.user = { id: '2', email: 'landlord@test.com', role: Roles.LANDLORD };
+        mockReq.user = { id: '2', role: Roles.LANDLORD };
       });
 
       it('should block LANDLORD from ADMIN routes', () => {
@@ -103,7 +103,7 @@ describe('Permissions Middleware', () => {
 
     describe('role hierarchy - VIEWER (level 1)', () => {
       beforeEach(() => {
-        mockReq.user = { id: '3', email: 'viewer@test.com', role: Roles.VIEWER };
+        mockReq.user = { id: '3', role: Roles.VIEWER };
       });
 
       it('should block VIEWER from ADMIN routes', () => {
@@ -142,7 +142,7 @@ describe('Permissions Middleware', () => {
 
   describe('requireWrite', () => {
     it('should allow ADMIN users', () => {
-      mockReq.user = { id: '1', email: 'admin@test.com', role: Roles.ADMIN };
+      mockReq.user = { id: '1', role: Roles.ADMIN };
       const middleware = requireWrite();
       middleware(mockReq as Request, mockRes as Response, mockNext);
 
@@ -151,7 +151,7 @@ describe('Permissions Middleware', () => {
     });
 
     it('should allow LANDLORD users', () => {
-      mockReq.user = { id: '2', email: 'landlord@test.com', role: Roles.LANDLORD };
+      mockReq.user = { id: '2', role: Roles.LANDLORD };
       const middleware = requireWrite();
       middleware(mockReq as Request, mockRes as Response, mockNext);
 
@@ -160,7 +160,7 @@ describe('Permissions Middleware', () => {
     });
 
     it('should block VIEWER users', () => {
-      mockReq.user = { id: '3', email: 'viewer@test.com', role: Roles.VIEWER };
+      mockReq.user = { id: '3', role: Roles.VIEWER };
       const middleware = requireWrite();
       middleware(mockReq as Request, mockRes as Response, mockNext);
 
@@ -187,7 +187,7 @@ describe('Permissions Middleware', () => {
 
   describe('requireAdmin', () => {
     it('should allow ADMIN users', () => {
-      mockReq.user = { id: '1', email: 'admin@test.com', role: Roles.ADMIN };
+      mockReq.user = { id: '1', role: Roles.ADMIN };
       const middleware = requireAdmin();
       middleware(mockReq as Request, mockRes as Response, mockNext);
 
@@ -196,7 +196,7 @@ describe('Permissions Middleware', () => {
     });
 
     it('should block LANDLORD users', () => {
-      mockReq.user = { id: '2', email: 'landlord@test.com', role: Roles.LANDLORD };
+      mockReq.user = { id: '2', role: Roles.LANDLORD };
       const middleware = requireAdmin();
       middleware(mockReq as Request, mockRes as Response, mockNext);
 
@@ -209,7 +209,7 @@ describe('Permissions Middleware', () => {
     });
 
     it('should block VIEWER users', () => {
-      mockReq.user = { id: '3', email: 'viewer@test.com', role: Roles.VIEWER };
+      mockReq.user = { id: '3', role: Roles.VIEWER };
       const middleware = requireAdmin();
       middleware(mockReq as Request, mockRes as Response, mockNext);
 

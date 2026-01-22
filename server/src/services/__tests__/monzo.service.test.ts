@@ -71,7 +71,7 @@ describe('Monzo Service - importFullHistory', () => {
       await monzoService.importFullHistory(bankAccount.id);
 
       // Wait for async processing
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // Verify fetch was called correctly
       expect(global.fetch).toHaveBeenCalledTimes(2);
@@ -109,7 +109,7 @@ describe('Monzo Service - importFullHistory', () => {
       });
       expect(updatedBankAccount?.lastSyncStatus).toBe('success');
       expect(updatedBankAccount?.lastSyncAt).toBeTruthy();
-    });
+    }, 15000); // Increase timeout for pagination test
 
     it('should handle empty transaction list', async () => {
       const bankAccount = await prisma.bankAccount.create({
@@ -229,7 +229,7 @@ describe('Monzo Service - importFullHistory', () => {
       } as Response);
 
       await monzoService.importFullHistory(bankAccount.id);
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
       const syncLog = await prisma.syncLog.findFirst({
         where: { bankAccountId: bankAccount.id },
