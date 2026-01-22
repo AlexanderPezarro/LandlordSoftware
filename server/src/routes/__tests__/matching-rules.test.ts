@@ -1149,4 +1149,271 @@ describe('Matching Rules Routes', () => {
       expect(response.body.error).toBe('Invalid rule ID format');
     });
   });
+
+  describe('Rule reprocessing integration', () => {
+    beforeEach(async () => {
+      // Clean related tables
+      await prisma.pendingTransaction.deleteMany({});
+      await prisma.transaction.deleteMany({});
+      await prisma.bankTransaction.deleteMany({});
+    });
+
+    describe('POST /api/bank/accounts/:accountId/rules - with reprocessing', () => {
+      it('should reprocess pending transactions after creating a rule', async () => {
+        // Create a pending transaction
+        const bankTx = await prisma.bankTransaction.create({
+          data: {
+            bankAccountId: testBankAccount.id,
+            externalId: 'tx_reprocess_001',
+            amount: 1000,
+            currency: 'GBP',
+            description: 'Monthly rent payment',
+            transactionDate: new Date('2024-01-15'),
+          },
+        });
+
+        const pendingTx = await prisma.pendingTransaction.create({
+          data: {
+            bankTransactionId: bankTx.id,
+            transactionDate: bankTx.transactionDate,
+            description: bankTx.description,
+          },
+        });
+
+        await prisma.bankTransaction.update({
+          where: { id: bankTx.id },
+          data: { pendingTransactionId: pendingTx.id },
+        });
+
+        // Create rule that matches the pending transaction
+        const response = await request(app)
+          .post(`/api/bank/accounts/${testBankAccount.id}/rules`)
+          .set('Cookie', adminCookies)
+          .send({
+            name: 'Rent Rule',
+            enabled: true,
+            conditions: JSON.stringify({
+              operator: 'AND',
+              rules: [
+                {
+                  field: 'description',
+                  matchType: 'contains',
+                  value: 'rent',
+                  caseSensitive: false,
+                },
+              ],
+            }),
+            propertyId: testProperty.id,
+            type: 'INCOME',
+            category: 'Rent',
+          });
+
+        expect(response.status).toBe(201);
+        expect(response.body.success).toBe(true);
+        expect(response.body.rule).toBeDefined();
+
+        // Check reprocessing stats
+        expect(response.body.reprocessing).toBeDefined();
+        expect(response.body.reprocessing.processed).toBe(1);
+        expect(response.body.reprocessing.approved).toBe(1);
+        expect(response.body.reprocessing.failed).toBe(0);
+
+        // Verify transaction was created
+        const transaction = await prisma.transaction.findFirst({
+          where: { propertyId: testProperty.id },
+        });
+        expect(transaction).toBeDefined();
+
+        // Verify pending was deleted
+        const deletedPending = await prisma.pendingTransaction.findUnique({
+          where: { id: pendingTx.id },
+        });
+        expect(deletedPending).toBeNull();
+      });
+    });
+
+    describe('PUT /api/bank/rules/:id - with reprocessing', () => {
+      it('should reprocess pending transactions after updating a rule', async () => {
+        // Create initial rule without propertyId
+        const rule = await prisma.matchingRule.create({
+          data: {
+            bankAccountId: testBankAccount.id,
+            priority: 0,
+            name: 'Incomplete Rule',
+            enabled: true,
+            conditions: JSON.stringify({
+              operator: 'AND',
+              rules: [
+                {
+                  field: 'description',
+                  matchType: 'contains',
+                  value: 'rent',
+                  caseSensitive: false,
+                },
+              ],
+            }),
+            type: 'INCOME',
+            category: 'Rent',
+            // No propertyId
+          },
+        });
+
+        // Create a pending transaction
+        const bankTx = await prisma.bankTransaction.create({
+          data: {
+            bankAccountId: testBankAccount.id,
+            externalId: 'tx_update_001',
+            amount: 1000,
+            currency: 'GBP',
+            description: 'Monthly rent payment',
+            transactionDate: new Date('2024-01-15'),
+          },
+        });
+
+        const pendingTx = await prisma.pendingTransaction.create({
+          data: {
+            bankTransactionId: bankTx.id,
+            transactionDate: bankTx.transactionDate,
+            description: bankTx.description,
+            type: 'Income',
+            category: 'Rent',
+            // No propertyId
+          },
+        });
+
+        await prisma.bankTransaction.update({
+          where: { id: bankTx.id },
+          data: { pendingTransactionId: pendingTx.id },
+        });
+
+        // Update rule to add propertyId
+        const response = await request(app)
+          .put(`/api/bank/rules/${rule.id}`)
+          .set('Cookie', adminCookies)
+          .send({
+            propertyId: testProperty.id,
+          });
+
+        expect(response.status).toBe(200);
+        expect(response.body.success).toBe(true);
+
+        // Check reprocessing stats
+        expect(response.body.reprocessing).toBeDefined();
+        expect(response.body.reprocessing.processed).toBe(1);
+        expect(response.body.reprocessing.approved).toBe(1);
+
+        // Verify transaction was created
+        const transaction = await prisma.transaction.findFirst({
+          where: { propertyId: testProperty.id },
+        });
+        expect(transaction).toBeDefined();
+
+        // Verify pending was deleted
+        const deletedPending = await prisma.pendingTransaction.findUnique({
+          where: { id: pendingTx.id },
+        });
+        expect(deletedPending).toBeNull();
+      });
+    });
+
+    describe('DELETE /api/bank/rules/:id - with reprocessing', () => {
+      it('should reprocess pending transactions after deleting a rule', async () => {
+        // Create first rule with lower priority (propertyId only)
+        const rule1 = await prisma.matchingRule.create({
+          data: {
+            bankAccountId: testBankAccount.id,
+            priority: 0,
+            name: 'Property Rule',
+            enabled: true,
+            conditions: JSON.stringify({
+              operator: 'AND',
+              rules: [
+                {
+                  field: 'description',
+                  matchType: 'contains',
+                  value: 'rent',
+                  caseSensitive: false,
+                },
+              ],
+            }),
+            propertyId: testProperty.id,
+          },
+        });
+
+        // Create second rule with higher priority (type and category)
+        await prisma.matchingRule.create({
+          data: {
+            bankAccountId: testBankAccount.id,
+            priority: 1,
+            name: 'Type/Category Rule',
+            enabled: true,
+            conditions: JSON.stringify({
+              operator: 'AND',
+              rules: [
+                {
+                  field: 'description',
+                  matchType: 'contains',
+                  value: 'rent',
+                  caseSensitive: false,
+                },
+              ],
+            }),
+            type: 'INCOME',
+            category: 'Rent',
+          },
+        });
+
+        // Create a pending transaction (should be fully matched by both rules)
+        const bankTx = await prisma.bankTransaction.create({
+          data: {
+            bankAccountId: testBankAccount.id,
+            externalId: 'tx_delete_001',
+            amount: 1000,
+            currency: 'GBP',
+            description: 'Monthly rent payment',
+            transactionDate: new Date('2024-01-15'),
+          },
+        });
+
+        const pendingTx = await prisma.pendingTransaction.create({
+          data: {
+            bankTransactionId: bankTx.id,
+            transactionDate: bankTx.transactionDate,
+            description: bankTx.description,
+            propertyId: testProperty.id,
+            type: 'Income',
+            category: 'Rent',
+          },
+        });
+
+        await prisma.bankTransaction.update({
+          where: { id: bankTx.id },
+          data: { pendingTransactionId: pendingTx.id },
+        });
+
+        // Delete the first rule (should still be matched by second rule)
+        const response = await request(app)
+          .delete(`/api/bank/rules/${rule1.id}`)
+          .set('Cookie', adminCookies);
+
+        expect(response.status).toBe(200);
+        expect(response.body.success).toBe(true);
+
+        // Check reprocessing stats
+        expect(response.body.reprocessing).toBeDefined();
+        expect(response.body.reprocessing.processed).toBe(1);
+        // Should NOT be approved (missing propertyId after deletion)
+        expect(response.body.reprocessing.approved).toBe(0);
+
+        // Verify pending still exists but updated
+        const updatedPending = await prisma.pendingTransaction.findUnique({
+          where: { id: pendingTx.id },
+        });
+        expect(updatedPending).not.toBeNull();
+        expect(updatedPending?.propertyId).toBeNull(); // propertyId removed
+        expect(updatedPending?.type).toBe('Income');
+        expect(updatedPending?.category).toBe('Rent');
+      });
+    });
+  });
 });

@@ -10,6 +10,7 @@ import {
 } from '../../../shared/validation/matchingRule.validation.js';
 import { z } from 'zod';
 import { evaluateRules } from '../services/ruleEvaluationEngine.js';
+import { reprocessPendingTransactions } from '../services/ruleReprocessing.js';
 import type { BankTransaction } from '@prisma/client';
 
 const router = Router();
@@ -112,9 +113,17 @@ router.post('/accounts/:accountId/rules', requireAuth, requireAdmin(), async (re
       },
     });
 
+    // Reprocess pending transactions for this account
+    const reprocessingResult = await reprocessPendingTransactions(accountId);
+
     return res.status(201).json({
       success: true,
       rule,
+      reprocessing: {
+        processed: reprocessingResult.processed,
+        approved: reprocessingResult.approved,
+        failed: reprocessingResult.failed,
+      },
     });
   } catch (error) {
     console.error('Create matching rule error:', error);
@@ -217,9 +226,17 @@ router.put('/rules/:id', requireAuth, requireAdmin(), async (req, res) => {
       data: updateData,
     });
 
+    // Reprocess pending transactions for this account
+    const reprocessingResult = await reprocessPendingTransactions(existingRule.bankAccountId);
+
     return res.json({
       success: true,
       rule,
+      reprocessing: {
+        processed: reprocessingResult.processed,
+        approved: reprocessingResult.approved,
+        failed: reprocessingResult.failed,
+      },
     });
   } catch (error) {
     console.error('Update matching rule error:', error);
@@ -268,9 +285,17 @@ router.delete('/rules/:id', requireAuth, requireAdmin(), async (req, res) => {
       where: { id },
     });
 
+    // Reprocess pending transactions for this account
+    const reprocessingResult = await reprocessPendingTransactions(existingRule.bankAccountId);
+
     return res.json({
       success: true,
       message: 'Matching rule deleted successfully',
+      reprocessing: {
+        processed: reprocessingResult.processed,
+        approved: reprocessingResult.approved,
+        failed: reprocessingResult.failed,
+      },
     });
   } catch (error) {
     console.error('Delete matching rule error:', error);
