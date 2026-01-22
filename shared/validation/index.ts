@@ -115,3 +115,19 @@ export {
   type UpdateBankAccount,
   type BankAccountResponse,
 } from './bankAccount.validation.js';
+
+// MatchingRule Validation
+export {
+  TransactionTypeSchema as MatchingRuleTransactionTypeSchema,
+  CreateMatchingRuleSchema,
+  UpdateMatchingRuleSchema,
+  MatchingRuleSchema,
+  ReorderRulesSchema,
+  TestRuleSchema,
+  type TransactionType as MatchingRuleTransactionType,
+  type CreateMatchingRule,
+  type UpdateMatchingRule,
+  type MatchingRule,
+  type ReorderRules,
+  type TestRule,
+} from './matchingRule.validation.js';

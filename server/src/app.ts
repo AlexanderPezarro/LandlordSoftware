@@ -18,6 +18,7 @@ import usersRouter from './routes/users.js';
 import monzoRouter from './routes/monzo.js';
 import bankAccountsRouter from './routes/bank-accounts.js';
 import webhooksRouter from './routes/webhooks.js';
+import matchingRulesRouter from './routes/matching-rules.js';
 
 // ES module __dirname equivalent
 const __filename = fileURLToPath(import.meta.url);
@@ -130,6 +131,7 @@ export function createApp() {
   // Bank integration routes
   app.use('/api/bank/webhooks', webhooksRouter);
   app.use('/api/bank/monzo', monzoRouter);
+  app.use('/api/bank', matchingRulesRouter);
   app.use('/api/bank/accounts', bankAccountsRouter);
 
   // Serve static files from React build in production
