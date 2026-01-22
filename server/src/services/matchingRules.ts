@@ -29,8 +29,8 @@ export async function createDefaultMatchingRules(): Promise<number> {
     },
   });
 
-  // If any default rules exist, assume they're all there and return early
-  if (existingRules.length > 0) {
+  // If all default rules exist, return early
+  if (existingRules.length >= 5) {
     return 0;
   }
 

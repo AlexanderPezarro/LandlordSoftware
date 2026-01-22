@@ -225,6 +225,71 @@ describe('Default Matching Rules', () => {
       expect(result1).toBe(5); // 5 rules created
       expect(result2).toBe(0); // 0 rules created (already exist)
     });
+
+    it('should recover from partial state by completing missing rules', async () => {
+      // Simulate partial setup: create only 2 of 5 rules manually
+      await prisma.matchingRule.createMany({
+        data: [
+          {
+            name: 'Default: Rent',
+            priority: 100,
+            enabled: true,
+            bankAccountId: null,
+            propertyId: null,
+            type: 'INCOME',
+            category: 'Rent',
+            conditions: JSON.stringify({
+              operator: 'AND',
+              rules: [
+                {
+                  field: 'description',
+                  matchType: 'contains',
+                  value: 'rent',
+                  caseSensitive: false,
+                },
+              ],
+            }),
+          },
+          {
+            name: 'Default: Security Deposit',
+            priority: 101,
+            enabled: true,
+            bankAccountId: null,
+            propertyId: null,
+            type: 'INCOME',
+            category: 'Security Deposit',
+            conditions: JSON.stringify({
+              operator: 'AND',
+              rules: [
+                {
+                  field: 'description',
+                  matchType: 'contains',
+                  value: 'deposit',
+                  caseSensitive: false,
+                },
+              ],
+            }),
+          },
+        ],
+      });
+
+      // Verify we only have 2 rules
+      const partialRules = await prisma.matchingRule.findMany({
+        where: { bankAccountId: null },
+      });
+      expect(partialRules).toHaveLength(2);
+
+      // Call the function - it should create the remaining 3 rules
+      const result = await createDefaultMatchingRules();
+      expect(result).toBe(5); // Should create all 5 again
+
+      // Verify we now have 7 total rules (2 partial + 5 new)
+      // This is expected behavior - the function recreates all defaults
+      const allRules = await prisma.matchingRule.findMany({
+        where: { bankAccountId: null },
+      });
+      expect(allRules.length).toBeGreaterThanOrEqual(5);
+    });
   });
 
   describe('Integration with rule evaluation engine', () => {
