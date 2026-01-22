@@ -34,6 +34,7 @@ const router = Router();
  */
 router.post('/monzo/:secret', async (req, res) => {
   let syncLogId: string | undefined;
+  let duplicatesSkipped = 0;
 
   try {
     // Note: Monzo does not support HMAC signature verification for webhooks.
@@ -141,6 +142,7 @@ router.post('/monzo/:secret', async (req, res) => {
 
     // Process transaction through unified pipeline
     const processResult = await processTransactions([transaction], bankAccount.id);
+    duplicatesSkipped = processResult.duplicatesSkipped;
 
     // Check if processing failed
     if (processResult.errors.length > 0) {
@@ -210,6 +212,7 @@ router.post('/monzo/:secret', async (req, res) => {
           data: {
             status: 'failed',
             completedAt: new Date(),
+            transactionsSkipped: duplicatesSkipped,
             errorMessage: error instanceof Error ? error.message : 'Unknown error',
             errorDetails: error instanceof Error ? error.stack : undefined,
           },

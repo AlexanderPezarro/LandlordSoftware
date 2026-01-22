@@ -193,6 +193,7 @@ export async function getAccountInfo(accessToken: string): Promise<{
 export async function importFullHistory(bankAccountId: string): Promise<void> {
   let syncLogId: string | undefined;
   let transactionsFetched = 0;
+  let duplicatesSkipped = 0;
   const TIMEOUT_MS = 270000; // 4 minutes 30 seconds (safety buffer for 5-minute window)
   let timedOut = false;
 
@@ -277,7 +278,6 @@ export async function importFullHistory(bankAccountId: string): Promise<void> {
 
     // Process transactions through unified pipeline
     let processedCount = 0;
-    let duplicatesSkipped = 0;
     if (allTransactions.length > 0) {
       const processResult = await processTransactions(allTransactions, bankAccountId);
       processedCount = processResult.processed;
@@ -324,6 +324,7 @@ export async function importFullHistory(bankAccountId: string): Promise<void> {
           status: 'failed',
           completedAt: new Date(),
           transactionsFetched,
+          transactionsSkipped: duplicatesSkipped,
           errorMessage: error instanceof Error ? error.message : 'Unknown error',
           errorDetails: error instanceof Error ? error.stack : undefined,
         },
@@ -370,6 +371,7 @@ export interface WebhookRegistrationResult {
 export async function syncNewTransactions(bankAccountId: string): Promise<SyncResult> {
   let syncLogId: string | undefined;
   let transactionsFetched = 0;
+  let duplicatesSkipped = 0;
   const TIMEOUT_MS = 30000; // 30 seconds for manual sync
   let timedOut = false;
 
@@ -484,7 +486,6 @@ export async function syncNewTransactions(bankAccountId: string): Promise<SyncRe
 
     // Process transactions through unified pipeline
     let processedCount = 0;
-    let duplicatesSkipped = 0;
     if (allTransactions.length > 0) {
       const processResult = await processTransactions(allTransactions, bankAccountId);
       processedCount = processResult.processed;
@@ -539,6 +540,7 @@ export async function syncNewTransactions(bankAccountId: string): Promise<SyncRe
           status: 'failed',
           completedAt: new Date(),
           transactionsFetched,
+          transactionsSkipped: duplicatesSkipped,
           errorMessage: error instanceof Error ? error.message : 'Unknown error',
           errorDetails: error instanceof Error ? error.stack : undefined,
         },
