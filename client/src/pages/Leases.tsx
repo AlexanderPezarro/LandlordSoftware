@@ -42,6 +42,7 @@ import type {
 import { ApiError } from '../types/api.types';
 import ConfirmDialog from '../components/shared/ConfirmDialog';
 import { useToast } from '../contexts/ToastContext';
+import { useAuth } from '../contexts/AuthContext';
 
 type LeaseStatus = 'Draft' | 'Active' | 'Expired' | 'Terminated';
 
@@ -103,6 +104,7 @@ const formatDate = (dateString: string): string => {
 
 export const Leases: React.FC = () => {
   const toast = useToast();
+  const { canWrite } = useAuth();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
@@ -376,14 +378,16 @@ export const Leases: React.FC = () => {
           <Typography variant="h4" component="h1">
             Leases
           </Typography>
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<AddIcon />}
-            onClick={() => handleOpenDialog('create')}
-          >
-            Add Lease
-          </Button>
+          {canWrite() && (
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<AddIcon />}
+              onClick={() => handleOpenDialog('create')}
+            >
+              Add Lease
+            </Button>
+          )}
         </Box>
 
         {/* Search and Filters */}
@@ -444,14 +448,16 @@ export const Leases: React.FC = () => {
             <Typography variant="h6" color="text.secondary" gutterBottom>
               No leases found
             </Typography>
-            <Button
-              variant="outlined"
-              startIcon={<AddIcon />}
-              onClick={() => handleOpenDialog('create')}
-              sx={{ mt: 2 }}
-            >
-              Add First Lease
-            </Button>
+            {canWrite() && (
+              <Button
+                variant="outlined"
+                startIcon={<AddIcon />}
+                onClick={() => handleOpenDialog('create')}
+                sx={{ mt: 2 }}
+              >
+                Add First Lease
+              </Button>
+            )}
           </Box>
         ) : (
           <Box
@@ -469,12 +475,12 @@ export const Leases: React.FC = () => {
               <Card
                 key={lease.id}
                 sx={{
-                  cursor: 'pointer',
-                  '&:hover': {
+                  cursor: canWrite() ? 'pointer' : 'default',
+                  '&:hover': canWrite() ? {
                     boxShadow: 4,
-                  },
+                  } : {},
                 }}
-                onClick={() => handleOpenDialog('edit', lease)}
+                onClick={canWrite() ? () => handleOpenDialog('edit', lease) : undefined}
               >
                 <CardContent>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
@@ -499,24 +505,26 @@ export const Leases: React.FC = () => {
                     {formatDate(lease.startDate)} - {lease.endDate ? formatDate(lease.endDate) : 'Ongoing'}
                   </Typography>
                 </CardContent>
-                <CardActions sx={{ justifyContent: 'flex-end', pt: 0 }}>
-                  <IconButton
-                    size="small"
-                    color="primary"
-                    onClick={(e) => handleEditClick(lease, e)}
-                    aria-label="Edit lease"
-                  >
-                    <EditIcon fontSize="small" />
-                  </IconButton>
-                  <IconButton
-                    size="small"
-                    color="error"
-                    onClick={(e) => handleDeleteClick(lease, e)}
-                    aria-label="Delete lease"
-                  >
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
-                </CardActions>
+                {canWrite() && (
+                  <CardActions sx={{ justifyContent: 'flex-end', pt: 0 }}>
+                    <IconButton
+                      size="small"
+                      color="primary"
+                      onClick={(e) => handleEditClick(lease, e)}
+                      aria-label="Edit lease"
+                    >
+                      <EditIcon fontSize="small" />
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      color="error"
+                      onClick={(e) => handleDeleteClick(lease, e)}
+                      aria-label="Delete lease"
+                    >
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </CardActions>
+                )}
               </Card>
             ))}
           </Box>
