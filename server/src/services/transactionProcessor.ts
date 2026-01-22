@@ -1,7 +1,9 @@
 import prisma from '../db/client.js';
 import { checkForDuplicate } from './duplicateDetection.js';
 import { convertPenceToPounds } from '../utils/monzo.js';
+import { evaluateRules, type RuleEvaluationResult } from './ruleEvaluationEngine.js';
 import type { MonzoTransaction } from './monzo/types.js';
+import type { BankTransaction } from '@prisma/client';
 
 /**
  * Result of transaction processing operation
@@ -29,7 +31,10 @@ export interface ProcessTransactionsResult {
  * 1. Convert amount from pence to pounds using convertPenceToPounds
  * 2. Check for duplicates using checkForDuplicate
  * 3. If not duplicate: create BankTransaction record with all fields
- * 4. If duplicate: skip and count it
+ * 4. Evaluate matching rules to determine propertyId, type, and category
+ * 5. If fully matched and valid: create Transaction record
+ * 6. If partially matched or unmatched: create PendingTransaction record
+ * 7. If duplicate: skip and count it
  *
  * Error handling: Continue processing remaining transactions if one fails.
  * Each transaction is processed independently (partial success allowed).
@@ -47,6 +52,21 @@ export async function processTransactions(
     duplicatesSkipped: 0,
     errors: [],
   };
+
+  // Fetch matching rules (account-specific + global) once for efficiency
+  const matchingRules = await prisma.matchingRule.findMany({
+    where: {
+      OR: [
+        { bankAccountId: bankAccountId },
+        { bankAccountId: null }, // Global rules
+      ],
+    },
+    orderBy: [
+      // Account-specific rules should be evaluated before global rules
+      { bankAccountId: 'desc' }, // Non-null (account-specific) comes before null (global)
+      { priority: 'asc' },
+    ],
+  });
 
   // Process each transaction independently
   for (const monzoTx of monzoTransactions) {
@@ -70,7 +90,7 @@ export async function processTransactions(
       }
 
       // Step 4: Create BankTransaction record
-      await prisma.bankTransaction.create({
+      const bankTransaction = await prisma.bankTransaction.create({
         data: {
           bankAccountId,
           externalId: monzoTx.id,
@@ -86,6 +106,12 @@ export async function processTransactions(
         },
       });
 
+      // Step 5: Evaluate matching rules
+      const ruleResult = evaluateRules(bankTransaction, matchingRules);
+
+      // Step 6: Create Transaction or PendingTransaction based on rule evaluation
+      await createTransactionOrPending(bankTransaction, ruleResult);
+
       result.processed++;
     } catch (error) {
       // Record error but continue processing remaining transactions
@@ -97,4 +123,121 @@ export async function processTransactions(
   }
 
   return result;
+}
+
+/**
+ * Create Transaction or PendingTransaction based on rule evaluation result
+ *
+ * Business logic:
+ * - If fully matched (all 3 fields) AND valid: create Transaction
+ * - Otherwise: create PendingTransaction
+ *
+ * Validation:
+ * - Property must exist
+ * - Type/category combination must be valid
+ *
+ * @param bankTransaction - The bank transaction to process
+ * @param ruleResult - Result from rule evaluation engine
+ */
+async function createTransactionOrPending(
+  bankTransaction: BankTransaction,
+  ruleResult: RuleEvaluationResult
+): Promise<void> {
+  // Convert type from rule format to database format
+  const transactionType = ruleResult.type
+    ? ruleResult.type === 'INCOME'
+      ? 'Income'
+      : 'Expense'
+    : null;
+
+  // Check if fully matched and valid
+  const isFullyMatched = ruleResult.isFullyMatched;
+  let isValid = false;
+
+  if (isFullyMatched && ruleResult.propertyId && transactionType && ruleResult.category) {
+    // Validate property exists
+    const propertyExists = await prisma.property.findUnique({
+      where: { id: ruleResult.propertyId },
+      select: { id: true },
+    });
+
+    // Validate type/category combination
+    const isValidCombination = validateTypeCategoryCombo(transactionType, ruleResult.category);
+
+    isValid = !!propertyExists && isValidCombination;
+  }
+
+  if (isFullyMatched && isValid && ruleResult.propertyId && transactionType && ruleResult.category) {
+    // Create Transaction
+    const transaction = await prisma.transaction.create({
+      data: {
+        propertyId: ruleResult.propertyId,
+        type: transactionType,
+        category: ruleResult.category,
+        amount: bankTransaction.amount, // Preserve sign as-is
+        transactionDate: bankTransaction.transactionDate,
+        description: bankTransaction.description,
+        isImported: true,
+        importedAt: new Date(),
+      },
+    });
+
+    // Link BankTransaction to Transaction
+    await prisma.bankTransaction.update({
+      where: { id: bankTransaction.id },
+      data: { transactionId: transaction.id },
+    });
+  } else {
+    // Create PendingTransaction with whatever fields were matched
+    const pendingTransaction = await prisma.pendingTransaction.create({
+      data: {
+        bankTransactionId: bankTransaction.id,
+        propertyId: ruleResult.propertyId ?? null,
+        type: transactionType,
+        category: ruleResult.category ?? null,
+        transactionDate: bankTransaction.transactionDate,
+        description: bankTransaction.description,
+      },
+    });
+
+    // Link BankTransaction to PendingTransaction
+    await prisma.bankTransaction.update({
+      where: { id: bankTransaction.id },
+      data: { pendingTransactionId: pendingTransaction.id },
+    });
+  }
+}
+
+/**
+ * Validate that a type/category combination is valid
+ *
+ * Income categories: Rent, Security Deposit, Late Fee, Lease Fee
+ * Expense categories: Maintenance, Repair, Utilities, Insurance, Property Tax,
+ *                     Management Fee, Legal Fee, Transport, Other
+ *
+ * @param type - Transaction type (Income or Expense)
+ * @param category - Transaction category
+ * @returns True if combination is valid
+ */
+function validateTypeCategoryCombo(type: string, category: string): boolean {
+  const incomeCategories = ['Rent', 'Security Deposit', 'Late Fee', 'Lease Fee'];
+  const expenseCategories = [
+    'Maintenance',
+    'Repair',
+    'Utilities',
+    'Insurance',
+    'Property Tax',
+    'Management Fee',
+    'Legal Fee',
+    'Transport',
+    'Other',
+  ];
+
+  if (type === 'Income') {
+    return incomeCategories.includes(category);
+  } else if (type === 'Expense') {
+    return expenseCategories.includes(category);
+  }
+
+  return false;
 }
