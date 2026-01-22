@@ -411,7 +411,6 @@ export const Tenants: React.FC = () => {
               helperText={formErrors.firstName}
               required
               fullWidth
-              disabled={!canWrite()}
             />
             <TextField
               label="Last Name"
@@ -421,7 +420,6 @@ export const Tenants: React.FC = () => {
               helperText={formErrors.lastName}
               required
               fullWidth
-              disabled={!canWrite()}
             />
             <TextField
               label="Email"
@@ -432,14 +430,12 @@ export const Tenants: React.FC = () => {
               helperText={formErrors.email}
               required
               fullWidth
-              disabled={!canWrite()}
             />
             <TextField
               label="Phone"
               value={formData.phone}
               onChange={(e) => handleFormChange('phone', e.target.value)}
               fullWidth
-              disabled={!canWrite()}
             />
             <TextField
               label="Status"
@@ -448,7 +444,6 @@ export const Tenants: React.FC = () => {
               onChange={(e) => handleFormChange('status', e.target.value)}
               required
               fullWidth
-              disabled={!canWrite()}
             >
               <MenuItem value="Prospective">Prospective</MenuItem>
               <MenuItem value="Active">Active</MenuItem>
@@ -459,14 +454,12 @@ export const Tenants: React.FC = () => {
               value={formData.emergencyContactName}
               onChange={(e) => handleFormChange('emergencyContactName', e.target.value)}
               fullWidth
-              disabled={!canWrite()}
             />
             <TextField
               label="Emergency Contact Phone"
               value={formData.emergencyContactPhone}
               onChange={(e) => handleFormChange('emergencyContactPhone', e.target.value)}
               fullWidth
-              disabled={!canWrite()}
             />
             <TextField
               label="Notes"
@@ -475,7 +468,6 @@ export const Tenants: React.FC = () => {
               multiline
               rows={3}
               fullWidth
-              disabled={!canWrite()}
             />
           </Box>
         </DialogContent>
