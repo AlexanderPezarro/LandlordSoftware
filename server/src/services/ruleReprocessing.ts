@@ -1,5 +1,6 @@
 import prisma from '../db/client.js';
 import { evaluateRules } from './ruleEvaluationEngine.js';
+import { validateTypeCategoryCombo } from '../utils/transactionValidation.js';
 
 /**
  * Result of reprocessing pending transactions
@@ -117,32 +118,40 @@ export async function reprocessPendingTransactions(
 
       // If fully matched and valid, auto-approve
       if (isFullyMatched && isValid && ruleResult.propertyId && transactionType && ruleResult.category) {
-        // Create Transaction
-        const transaction = await prisma.transaction.create({
-          data: {
-            propertyId: ruleResult.propertyId,
-            type: transactionType,
-            category: ruleResult.category,
-            amount: pending.bankTransaction.amount, // Preserve sign as-is
-            transactionDate: pending.bankTransaction.transactionDate,
-            description: pending.bankTransaction.description,
-            isImported: true,
-            importedAt: new Date(),
-          },
-        });
+        // Capture values before transaction to satisfy TypeScript type narrowing
+        const propertyId = ruleResult.propertyId;
+        const category = ruleResult.category;
+        const type = transactionType;
 
-        // Update BankTransaction to link to Transaction and clear pending
-        await prisma.bankTransaction.update({
-          where: { id: pending.bankTransactionId },
-          data: {
-            transactionId: transaction.id,
-            pendingTransactionId: null,
-          },
-        });
+        // Wrap in transaction to ensure atomicity of the three operations
+        await prisma.$transaction(async (tx) => {
+          // Create Transaction
+          const transaction = await tx.transaction.create({
+            data: {
+              propertyId,
+              type,
+              category,
+              amount: pending.bankTransaction.amount, // Preserve sign as-is
+              transactionDate: pending.bankTransaction.transactionDate,
+              description: pending.bankTransaction.description,
+              isImported: true,
+              importedAt: new Date(),
+            },
+          });
 
-        // Delete PendingTransaction
-        await prisma.pendingTransaction.delete({
-          where: { id: pending.id },
+          // Update BankTransaction to link to Transaction and clear pending
+          await tx.bankTransaction.update({
+            where: { id: pending.bankTransactionId },
+            data: {
+              transactionId: transaction.id,
+              pendingTransactionId: null,
+            },
+          });
+
+          // Delete PendingTransaction
+          await tx.pendingTransaction.delete({
+            where: { id: pending.id },
+          });
         });
 
         result.approved++;
@@ -168,38 +177,4 @@ export async function reprocessPendingTransactions(
   }
 
   return result;
-}
-
-/**
- * Validate that a type/category combination is valid
- *
- * Income categories: Rent, Security Deposit, Late Fee, Lease Fee
- * Expense categories: Maintenance, Repair, Utilities, Insurance, Property Tax,
- *                     Management Fee, Legal Fee, Transport, Other
- *
- * @param type - Transaction type (Income or Expense)
- * @param category - Transaction category
- * @returns True if combination is valid
- */
-function validateTypeCategoryCombo(type: string, category: string): boolean {
-  const incomeCategories = ['Rent', 'Security Deposit', 'Late Fee', 'Lease Fee'];
-  const expenseCategories = [
-    'Maintenance',
-    'Repair',
-    'Utilities',
-    'Insurance',
-    'Property Tax',
-    'Management Fee',
-    'Legal Fee',
-    'Transport',
-    'Other',
-  ];
-
-  if (type === 'Income') {
-    return incomeCategories.includes(category);
-  } else if (type === 'Expense') {
-    return expenseCategories.includes(category);
-  }
-
-  return false;
 }
