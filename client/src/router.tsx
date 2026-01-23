@@ -19,6 +19,7 @@ const Events = lazy(() => import('./pages/Events').then(m => ({ default: m.Event
 const Documents = lazy(() => import('./pages/Documents').then(m => ({ default: m.Documents })));
 const Settings = lazy(() => import('./pages/Settings').then(m => ({ default: m.Settings })));
 const Users = lazy(() => import('./pages/Users').then(m => ({ default: m.Users })));
+const BankAccounts = lazy(() => import('./pages/admin/BankAccounts').then(m => ({ default: m.BankAccounts })));
 const NotFound = lazy(() => import('./pages/NotFound').then(m => ({ default: m.NotFound })));
 
 // Loading fallback component
@@ -107,6 +108,10 @@ export const router = createBrowserRouter([
       {
         path: 'users',
         element: <LazyPage Component={Users} />,
+      },
+      {
+        path: 'admin/bank-accounts',
+        element: <LazyPage Component={BankAccounts} />,
       },
     ],
   },
