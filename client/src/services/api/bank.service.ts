@@ -21,6 +21,7 @@ export interface BankAccount {
   lastSyncStatus: string;
   webhookId: string | null;
   webhookUrl: string | null;
+  pendingCount?: number;
   createdAt: string;
   updatedAt: string;
 }

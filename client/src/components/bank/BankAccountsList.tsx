@@ -173,6 +173,18 @@ const BankAccountsList: React.FC<BankAccountsListProps> = ({ accounts }) => {
 
                 <Box>
                   <Typography variant="caption" color="text.secondary" display="block">
+                    Pending Review
+                  </Typography>
+                  <Chip
+                    label={account.pendingCount || 0}
+                    size="small"
+                    color={(account.pendingCount || 0) > 0 ? 'warning' : 'default'}
+                    sx={{ mt: 0.5 }}
+                  />
+                </Box>
+
+                <Box>
+                  <Typography variant="caption" color="text.secondary" display="block">
                     Sync Enabled
                   </Typography>
                   <Typography variant="body2">

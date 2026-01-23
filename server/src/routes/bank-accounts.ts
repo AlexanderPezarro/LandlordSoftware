@@ -19,11 +19,28 @@ function sanitizeBankAccount(account: any) {
 router.get('/', requireAuth, requireAdmin(), async (_req, res) => {
   try {
     const accounts = await prisma.bankAccount.findMany({
+      include: {
+        _count: {
+          select: {
+            bankTransactions: {
+              where: {
+                pendingTransactionId: { not: null },
+              },
+            },
+          },
+        },
+      },
       orderBy: { createdAt: 'desc' },
     });
 
-    // Remove sensitive tokens from response
-    const sanitizedAccounts = accounts.map(sanitizeBankAccount);
+    // Transform accounts to include pendingCount and remove sensitive tokens
+    const sanitizedAccounts = accounts.map((account) => {
+      const sanitized = sanitizeBankAccount(account);
+      return {
+        ...sanitized,
+        pendingCount: account._count.bankTransactions,
+      };
+    });
 
     return res.json({
       success: true,
