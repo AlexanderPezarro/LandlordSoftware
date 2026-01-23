@@ -20,27 +20,10 @@ import {
   Add as AddIcon,
   AccountBalance as BankIcon,
 } from '@mui/icons-material';
-import { bankService } from '../../services/api/bank.service';
+import { bankService, BankAccount } from '../../services/api/bank.service';
 import { ApiError } from '../../types/api.types';
 import { useToast } from '../../contexts/ToastContext';
 import BankAccountsList from '../../components/bank/BankAccountsList';
-
-export interface BankAccount {
-  id: string;
-  accountId: string;
-  accountName: string;
-  accountType: string;
-  provider: string;
-  syncEnabled: boolean;
-  syncFromDate: string;
-  lastSyncAt: string | null;
-  lastSyncStatus: string;
-  webhookId: string | null;
-  webhookUrl: string | null;
-  pendingCount?: number;
-  createdAt: string;
-  updatedAt: string;
-}
 
 export const BankAccounts: React.FC = () => {
   const toast = useToast();
@@ -177,7 +160,7 @@ export const BankAccounts: React.FC = () => {
             </Button>
           </Box>
         ) : (
-          <BankAccountsList accounts={accounts} onRefresh={fetchAccounts} />
+          <BankAccountsList accounts={accounts} />
         )}
       </Box>
 

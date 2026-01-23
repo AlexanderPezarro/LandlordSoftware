@@ -174,6 +174,55 @@ describe('Bank Accounts Routes', () => {
       expect(response.body.accounts[0].accountName).toBe(validBankAccount.accountName);
       expect(response.body.accounts[0].syncEnabled).toBe(true);
     });
+
+    it('should include pending transaction count', async () => {
+      // Create account
+      const account = await prisma.bankAccount.create({
+        data: {
+          accountId: 'test_account_123',
+          accountName: 'Test Account',
+          accountType: 'uk_retail',
+          provider: 'monzo',
+          accessToken: encryptToken('test_token'),
+          syncFromDate: new Date(),
+          lastSyncStatus: 'never_synced',
+        },
+      });
+
+      // Create bank transaction with pending transaction link
+      await prisma.bankTransaction.create({
+        data: {
+          bankAccountId: account.id,
+          externalId: 'tx_pending_1',
+          description: 'Pending transaction',
+          amount: 1000,
+          currency: 'GBP',
+          transactionDate: new Date(),
+          pendingTransactionId: 'pending_123', // This makes it count as pending
+        },
+      });
+
+      // Create another bank transaction WITHOUT pending link
+      await prisma.bankTransaction.create({
+        data: {
+          bankAccountId: account.id,
+          externalId: 'tx_approved_1',
+          description: 'Approved transaction',
+          amount: 500,
+          currency: 'GBP',
+          transactionDate: new Date(),
+          // No pendingTransactionId - should NOT be counted
+        },
+      });
+
+      const response = await request(app)
+        .get('/api/bank/accounts')
+        .set('Cookie', adminCookies);
+
+      expect(response.status).toBe(200);
+      expect(response.body.accounts).toHaveLength(1);
+      expect(response.body.accounts[0].pendingCount).toBe(1); // Should count only the one with pendingTransactionId
+    });
   });
 
   describe('GET /api/bank/accounts/:id', () => {

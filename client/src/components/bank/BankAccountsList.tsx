@@ -17,11 +17,10 @@ import {
   Warning as WarningIcon,
   Schedule as ScheduleIcon,
 } from '@mui/icons-material';
-import type { BankAccount } from '../../pages/admin/BankAccounts';
+import type { BankAccount } from '../../services/api/bank.service';
 
 interface BankAccountsListProps {
   accounts: BankAccount[];
-  onRefresh: () => void;
 }
 
 const BankAccountsList: React.FC<BankAccountsListProps> = ({ accounts }) => {
