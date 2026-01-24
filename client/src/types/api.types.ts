@@ -199,7 +199,7 @@ export interface UpdateLeaseRequest {
 }
 
 export interface LeaseFilters {
-  propertyId?: string;
+  propertyId?: string | string[];
   tenantId?: string;
   status?: 'Draft' | 'Active' | 'Expired' | 'Terminated';
 }

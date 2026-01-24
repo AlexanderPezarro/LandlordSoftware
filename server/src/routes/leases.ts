@@ -26,7 +26,9 @@ router.get('/', requireAuth, async (req, res) => {
     const where: any = {};
 
     if (property_id) {
-      where.propertyId = property_id;
+      // Normalize to array for consistent handling (supports both single and batch queries)
+      const propertyIds = Array.isArray(property_id) ? property_id : [property_id];
+      where.propertyId = { in: propertyIds };
     }
 
     if (tenant_id) {

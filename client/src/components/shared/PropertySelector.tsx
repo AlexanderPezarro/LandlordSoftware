@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   FormControl,
   InputLabel,
@@ -7,9 +7,8 @@ import {
   CircularProgress,
   SelectChangeEvent,
 } from '@mui/material';
-import { api } from '../../services/api';
-import { PropertiesResponse, Property } from '../../types/api.types';
 import { PropertySelectorProps } from '../../types/component.types';
+import { useProperties } from '../../contexts/PropertiesContext';
 
 const PropertySelector: React.FC<PropertySelectorProps> = ({
   value,
@@ -17,33 +16,7 @@ const PropertySelector: React.FC<PropertySelectorProps> = ({
   includeAllOption = true,
   disabled = false,
 }) => {
-  const [properties, setProperties] = useState<Property[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchProperties = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const response = await api.get<PropertiesResponse>('/properties');
-
-        // Sort properties alphabetically by name
-        const sortedProperties = response.data.properties.sort((a, b) =>
-          a.name.localeCompare(b.name)
-        );
-
-        setProperties(sortedProperties);
-      } catch (err) {
-        setError('Failed to load properties');
-        console.error('Error fetching properties:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProperties();
-  }, []);
+  const { properties, loading, error } = useProperties();
 
   const handleChange = (event: SelectChangeEvent) => {
     onChange(event.target.value);
@@ -74,7 +47,7 @@ const PropertySelector: React.FC<PropertySelectorProps> = ({
             Loading properties...
           </MenuItem>
         ) : error ? (
-          <MenuItem disabled>{error}</MenuItem>
+          <MenuItem disabled>Failed to load properties</MenuItem>
         ) : properties.length === 0 ? (
           <MenuItem disabled>No properties available</MenuItem>
         ) : (

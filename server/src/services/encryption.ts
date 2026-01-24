@@ -6,14 +6,14 @@ const AUTH_TAG_LENGTH = 16; // 16 bytes for GCM auth tag
 const KEY_LENGTH = 32; // 32 bytes for AES-256
 
 /**
- * Encryption key loaded from environment variable and validated at module initialization.
+ * Encryption key loaded from environment variable and validated on first use.
  * The key must be a 32-byte (64 hex character) string.
  */
-let encryptionKey: Buffer;
+let encryptionKey: Buffer | null = null;
 
 /**
  * Initialize and validate the encryption key from environment variable.
- * This runs once when the module is loaded.
+ * This runs on first use (lazy initialization) to avoid issues with dotenv loading order.
  */
 function initializeEncryptionKey(): void {
   const keyHex = process.env.BANK_TOKEN_ENCRYPTION_KEY;
@@ -38,8 +38,15 @@ function initializeEncryptionKey(): void {
   }
 }
 
-// Initialize key at module load time (fail fast)
-initializeEncryptionKey();
+/**
+ * Get the encryption key, initializing it if needed.
+ */
+function getEncryptionKey(): Buffer {
+  if (!encryptionKey) {
+    initializeEncryptionKey();
+  }
+  return encryptionKey!;
+}
 
 /**
  * Encrypts a token using AES-256-GCM encryption.
@@ -57,7 +64,7 @@ export function encryptToken(token: string): string {
     const iv = randomBytes(IV_LENGTH);
 
     // Create cipher
-    const cipher = createCipheriv(ALGORITHM, encryptionKey, iv);
+    const cipher = createCipheriv(ALGORITHM, getEncryptionKey(), iv);
 
     // Encrypt the token
     let encrypted = cipher.update(token, 'utf8');
@@ -100,7 +107,7 @@ export function decryptToken(encryptedToken: string): string {
     }
 
     // Create decipher
-    const decipher = createDecipheriv(ALGORITHM, encryptionKey, iv);
+    const decipher = createDecipheriv(ALGORITHM, getEncryptionKey(), iv);
     decipher.setAuthTag(authTag);
 
     // Decrypt the token

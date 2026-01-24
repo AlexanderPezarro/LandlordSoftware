@@ -15,10 +15,23 @@ export const leasesService = {
    * @returns Array of leases
    */
   async getLeases(filters?: LeaseFilters): Promise<Lease[]> {
-    const params: Record<string, string> = {};
-    if (filters?.propertyId) params.property_id = filters.propertyId;
-    if (filters?.tenantId) params.tenant_id = filters.tenantId;
-    if (filters?.status) params.status = filters.status;
+    const params = new URLSearchParams();
+
+    if (filters?.propertyId) {
+      // Handle both single and array property IDs
+      const propertyIds = Array.isArray(filters.propertyId)
+        ? filters.propertyId
+        : [filters.propertyId];
+      propertyIds.forEach(id => params.append('property_id', id));
+    }
+
+    if (filters?.tenantId) {
+      params.append('tenant_id', filters.tenantId);
+    }
+
+    if (filters?.status) {
+      params.append('status', filters.status);
+    }
 
     const response = await api.get<LeasesResponse>('/leases', { params });
     return response.data.leases;

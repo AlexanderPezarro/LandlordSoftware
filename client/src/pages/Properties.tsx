@@ -108,29 +108,31 @@ export const Properties: React.FC = () => {
       setLoading(true);
       setError(null);
 
+      // Fetch all properties
       const fetchedProperties = await propertiesService.getProperties();
 
-      // Fetch active leases for each property
-      const propertiesWithLeases = await Promise.all(
-        fetchedProperties.map(async (property) => {
-          try {
-            const leases = await leasesService.getLeases({
-              propertyId: property.id,
-              status: 'Active',
-            });
-            const activeLease = leases.find((lease) => lease.status === 'Active');
-            return {
-              ...property,
-              activeLease: activeLease || null,
-            };
-          } catch (err) {
-            return {
-              ...property,
-              activeLease: null,
-            };
-          }
-        })
-      );
+      if (fetchedProperties.length === 0) {
+        setProperties([]);
+        return;
+      }
+
+      // Batch fetch all active leases for all properties in ONE call
+      const propertyIds = fetchedProperties.map(p => p.id);
+      const allLeases = await leasesService.getLeases({
+        propertyId: propertyIds,
+        status: 'Active',
+      });
+
+      // Match leases to properties client-side
+      const propertiesWithLeases = fetchedProperties.map(property => {
+        const activeLease = allLeases.find(lease =>
+          lease.propertyId === property.id && lease.status === 'Active'
+        );
+        return {
+          ...property,
+          activeLease: activeLease || null,
+        };
+      });
 
       setProperties(propertiesWithLeases);
     } catch (err) {
