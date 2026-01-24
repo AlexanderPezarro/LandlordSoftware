@@ -19,6 +19,7 @@ import monzoRouter from './routes/monzo.js';
 import bankAccountsRouter from './routes/bank-accounts.js';
 import webhooksRouter from './routes/webhooks.js';
 import matchingRulesRouter from './routes/matching-rules.js';
+import pendingTransactionsRouter from './routes/pending-transactions.js';
 
 // ES module __dirname equivalent
 const __filename = fileURLToPath(import.meta.url);
@@ -133,6 +134,9 @@ export function createApp() {
   app.use('/api/bank/monzo', monzoRouter);
   app.use('/api/bank', matchingRulesRouter);
   app.use('/api/bank/accounts', bankAccountsRouter);
+
+  // Pending transactions routes
+  app.use('/api/pending-transactions', pendingTransactionsRouter);
 
   // Serve static files from React build in production
   if (process.env.NODE_ENV === 'production') {
