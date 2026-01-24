@@ -1,16 +1,36 @@
 import { describe, it, expect } from '@jest/globals';
 import { retryWithBackoff } from '../retry.js';
 
+// Error interfaces for testing
+interface TestHttpError extends Error {
+  response: {
+    status: number;
+    headers?: Record<string, string>;
+  };
+}
+
+interface TestNetworkError extends Error {
+  code: string;
+}
+
+interface TestTimeoutError extends Error {
+  name: 'TimeoutError';
+}
+
+interface TestAbortError extends Error {
+  name: 'AbortError';
+}
+
 // Helper to create HTTP errors with specific status codes
-function createHttpError(status: number, headers: Record<string, string> = {}): any {
-  const error: any = new Error(`HTTP ${status}`);
+function createHttpError(status: number, headers: Record<string, string> = {}): TestHttpError {
+  const error = new Error(`HTTP ${status}`) as TestHttpError;
   error.response = { status, headers };
   return error;
 }
 
 // Helper to create network errors
-function createNetworkError(code: string): any {
-  const error: any = new Error(`Network error: ${code}`);
+function createNetworkError(code: string): TestNetworkError {
+  const error = new Error(`Network error: ${code}`) as TestNetworkError;
   error.code = code;
   return error;
 }
@@ -407,9 +427,7 @@ describe('retryWithBackoff', () => {
 
   describe('edge cases', () => {
     it('should respect maxDelay cap with large attempt numbers', async () => {
-      let callCount = 0;
       const fn = async () => {
-        callCount++;
         throw createNetworkError('ECONNREFUSED');
       };
 
@@ -448,7 +466,7 @@ describe('retryWithBackoff', () => {
 
     it('should handle TimeoutError', async () => {
       let callCount = 0;
-      const error: any = new Error('Timeout');
+      const error = new Error('Timeout') as TestTimeoutError;
       error.name = 'TimeoutError';
       const fn = async () => {
         callCount++;
@@ -466,7 +484,7 @@ describe('retryWithBackoff', () => {
 
     it('should handle AbortError', async () => {
       let callCount = 0;
-      const error: any = new Error('Aborted');
+      const error = new Error('Aborted') as TestAbortError;
       error.name = 'AbortError';
       const fn = async () => {
         callCount++;

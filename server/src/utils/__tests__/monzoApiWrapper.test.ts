@@ -1,10 +1,21 @@
 import { describe, it, expect } from '@jest/globals';
 import { getMonzoErrorMessage } from '../monzoApiWrapper.js';
 
+// Error interfaces for testing
+interface TestHttpError extends Error {
+  response: {
+    status: number;
+  };
+}
+
+interface TestNetworkError extends Error {
+  code: string;
+}
+
 describe('Monzo API Wrapper', () => {
   describe('getMonzoErrorMessage', () => {
     it('should return message for 401 error', () => {
-      const error: any = new Error('Unauthorized');
+      const error = new Error('Unauthorized') as TestHttpError;
       error.response = { status: 401 };
 
       expect(getMonzoErrorMessage(error)).toBe(
@@ -13,7 +24,7 @@ describe('Monzo API Wrapper', () => {
     });
 
     it('should return message for 403 error', () => {
-      const error: any = new Error('Forbidden');
+      const error = new Error('Forbidden') as TestHttpError;
       error.response = { status: 403 };
 
       expect(getMonzoErrorMessage(error)).toBe(
@@ -22,7 +33,7 @@ describe('Monzo API Wrapper', () => {
     });
 
     it('should return message for 404 error', () => {
-      const error: any = new Error('Not Found');
+      const error = new Error('Not Found') as TestHttpError;
       error.response = { status: 404 };
 
       expect(getMonzoErrorMessage(error)).toBe(
@@ -31,7 +42,7 @@ describe('Monzo API Wrapper', () => {
     });
 
     it('should return message for 429 error', () => {
-      const error: any = new Error('Too Many Requests');
+      const error = new Error('Too Many Requests') as TestHttpError;
       error.response = { status: 429 };
 
       expect(getMonzoErrorMessage(error)).toBe(
@@ -40,7 +51,7 @@ describe('Monzo API Wrapper', () => {
     });
 
     it('should return message for 500 error', () => {
-      const error: any = new Error('Internal Server Error');
+      const error = new Error('Internal Server Error') as TestHttpError;
       error.response = { status: 500 };
 
       expect(getMonzoErrorMessage(error)).toBe(
@@ -49,7 +60,7 @@ describe('Monzo API Wrapper', () => {
     });
 
     it('should return message for 502 error', () => {
-      const error: any = new Error('Bad Gateway');
+      const error = new Error('Bad Gateway') as TestHttpError;
       error.response = { status: 502 };
 
       expect(getMonzoErrorMessage(error)).toBe(
@@ -58,7 +69,7 @@ describe('Monzo API Wrapper', () => {
     });
 
     it('should return message for 503 error', () => {
-      const error: any = new Error('Service Unavailable');
+      const error = new Error('Service Unavailable') as TestHttpError;
       error.response = { status: 503 };
 
       expect(getMonzoErrorMessage(error)).toBe(
@@ -67,7 +78,7 @@ describe('Monzo API Wrapper', () => {
     });
 
     it('should return message for ECONNREFUSED error', () => {
-      const error: any = new Error('Connection refused');
+      const error = new Error('Connection refused') as TestNetworkError;
       error.code = 'ECONNREFUSED';
 
       expect(getMonzoErrorMessage(error)).toBe(
@@ -76,7 +87,7 @@ describe('Monzo API Wrapper', () => {
     });
 
     it('should return message for ETIMEDOUT error', () => {
-      const error: any = new Error('Timeout');
+      const error = new Error('Timeout') as TestNetworkError;
       error.code = 'ETIMEDOUT';
 
       expect(getMonzoErrorMessage(error)).toBe(
@@ -85,7 +96,7 @@ describe('Monzo API Wrapper', () => {
     });
 
     it('should return message for ECONNRESET error', () => {
-      const error: any = new Error('Connection reset');
+      const error = new Error('Connection reset') as TestNetworkError;
       error.code = 'ECONNRESET';
 
       expect(getMonzoErrorMessage(error)).toBe(
@@ -94,7 +105,7 @@ describe('Monzo API Wrapper', () => {
     });
 
     it('should return generic message for other HTTP errors', () => {
-      const error: any = new Error('Bad Request');
+      const error = new Error('Bad Request') as TestHttpError;
       error.response = { status: 400 };
 
       expect(getMonzoErrorMessage(error)).toBe('Request failed with status 400');
