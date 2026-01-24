@@ -1,4 +1,8 @@
 import { api } from '../api';
+import type { WebhookStatusData } from '../../../../shared/types/index';
+
+// Re-export shared types for use in components
+export type { WebhookEvent, AccountWebhookStatus, WebhookStatusData } from '../../../../shared/types/index';
 
 export interface ConnectMonzoRequest {
   syncFromDays?: number;
@@ -57,34 +61,6 @@ export interface ImportProgressUpdate {
   totalBatches?: number;
   message?: string;
   error?: string;
-}
-
-export interface WebhookEvent {
-  id: string;
-  accountId: string;
-  accountName: string;
-  status: string;
-  startedAt: string;
-  completedAt: string | null;
-  errorMessage: string | null;
-  webhookEventId: string | null;
-  transactionsFetched: number;
-}
-
-export interface AccountWebhookStatus {
-  accountId: string;
-  accountName: string;
-  lastWebhookAt: string | null;
-  lastWebhookStatus: string | null;
-  webhookId: string | null;
-}
-
-export interface WebhookStatusData {
-  lastEventTimestamp: string | null;
-  recentEvents: WebhookEvent[];
-  failedCount24h: number;
-  failedCount1h: number;
-  accountStatuses: AccountWebhookStatus[];
 }
 
 export interface GetWebhookStatusResponse {

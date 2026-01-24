@@ -2,36 +2,13 @@ import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { requireAdmin } from '../middleware/permissions.js';
 import prisma from '../db/client.js';
+import type {
+  WebhookEvent,
+  AccountWebhookStatus,
+  WebhookStatusData,
+} from '../../../shared/types/index.js';
 
 const router = Router();
-
-interface WebhookEvent {
-  id: string;
-  accountId: string;
-  accountName: string;
-  status: string;
-  startedAt: string;
-  completedAt: string | null;
-  errorMessage: string | null;
-  webhookEventId: string | null;
-  transactionsFetched: number;
-}
-
-interface AccountWebhookStatus {
-  accountId: string;
-  accountName: string;
-  lastWebhookAt: string | null;
-  lastWebhookStatus: string | null;
-  webhookId: string | null;
-}
-
-interface WebhookStatusResponse {
-  lastEventTimestamp: string | null;
-  recentEvents: WebhookEvent[];
-  failedCount24h: number;
-  failedCount1h: number;
-  accountStatuses: AccountWebhookStatus[];
-}
 
 /**
  * GET /api/bank/webhooks/status
@@ -125,30 +102,54 @@ router.get('/', requireAuth, requireAdmin(), async (_req, res) => {
       },
     });
 
-    // Get per-account webhook status
-    const accountStatuses: AccountWebhookStatus[] = await Promise.all(
-      accountsWithWebhooks.map(async (account) => {
-        const lastWebhook = await prisma.syncLog.findFirst({
-          where: {
-            bankAccountId: account.id,
-            syncType: 'webhook',
-          },
-          orderBy: {
-            startedAt: 'desc',
-          },
-        });
+    // Get per-account webhook status using a single aggregated query
+    // This avoids N+1 queries by fetching all latest webhook logs at once
+    const accountIds = accountsWithWebhooks.map((acc) => acc.id);
+    const latestWebhookLogs = await prisma.syncLog.groupBy({
+      by: ['bankAccountId'],
+      where: {
+        bankAccountId: { in: accountIds },
+        syncType: 'webhook',
+      },
+      _max: {
+        startedAt: true,
+      },
+    });
 
-        return {
-          accountId: account.id,
-          accountName: account.accountName,
-          lastWebhookAt: lastWebhook ? lastWebhook.startedAt.toISOString() : null,
-          lastWebhookStatus: lastWebhook ? lastWebhook.status : null,
-          webhookId: account.webhookId,
-        };
-      })
+    // Fetch the actual log entries for the latest events
+    const latestLogDetails = await prisma.syncLog.findMany({
+      where: {
+        syncType: 'webhook',
+        OR: latestWebhookLogs.map((log) => ({
+          bankAccountId: log.bankAccountId,
+          startedAt: log._max.startedAt!,
+        })),
+      },
+      select: {
+        bankAccountId: true,
+        status: true,
+        startedAt: true,
+      },
+    });
+
+    // Create a map for quick lookup
+    const webhookStatusMap = new Map(
+      latestLogDetails.map((log) => [log.bankAccountId, log])
     );
 
-    const responseData: WebhookStatusResponse = {
+    // Build account statuses with the fetched data
+    const accountStatuses: AccountWebhookStatus[] = accountsWithWebhooks.map((account) => {
+      const lastWebhook = webhookStatusMap.get(account.id);
+      return {
+        accountId: account.id,
+        accountName: account.accountName,
+        lastWebhookAt: lastWebhook ? lastWebhook.startedAt.toISOString() : null,
+        lastWebhookStatus: lastWebhook ? lastWebhook.status : null,
+        webhookId: account.webhookId,
+      };
+    });
+
+    const responseData: WebhookStatusData = {
       lastEventTimestamp,
       recentEvents,
       failedCount24h,

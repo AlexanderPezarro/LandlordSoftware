@@ -5,6 +5,7 @@ import prisma from '../../db/client.js';
 import authService from '../../services/auth.service.js';
 import { Roles } from '../../../../shared/types/user.types.js';
 import { encryptToken } from '../../services/encryption.js';
+import type { AccountWebhookStatus } from '../../../../shared/types/index.js';
 
 const app = createApp();
 
@@ -359,13 +360,13 @@ describe('Webhook Status Routes', () => {
       expect(response.body.success).toBe(true);
 
       const account1Status = response.body.data.accountStatuses.find(
-        (s: any) => s.accountId === testBankAccount1Id
+        (s: AccountWebhookStatus) => s.accountId === testBankAccount1Id
       );
       expect(account1Status.lastWebhookStatus).toBe('success');
       expect(account1Status.lastWebhookAt).toBeTruthy();
 
       const account2Status = response.body.data.accountStatuses.find(
-        (s: any) => s.accountId === testBankAccount2Id
+        (s: AccountWebhookStatus) => s.accountId === testBankAccount2Id
       );
       expect(account2Status.lastWebhookStatus).toBe('failed');
       expect(account2Status.lastWebhookAt).toBeTruthy();
@@ -395,7 +396,9 @@ describe('Webhook Status Routes', () => {
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
       expect(response.body.data.accountStatuses).toHaveLength(2);
-      expect(response.body.data.accountStatuses.every((s: any) => s.webhookId !== null)).toBe(true);
+      expect(
+        response.body.data.accountStatuses.every((s: AccountWebhookStatus) => s.webhookId !== null)
+      ).toBe(true);
     });
   });
 });
