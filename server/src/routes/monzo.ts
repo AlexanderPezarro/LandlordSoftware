@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
+import { requireAdmin } from '../middleware/permissions.js';
 import prisma from '../db/client.js';
 import { z } from 'zod';
 import * as monzoService from '../services/monzo.service.js';
@@ -7,6 +8,26 @@ import { encryptToken } from '../services/encryption.js';
 import { importProgressTracker, ImportProgressUpdate } from '../services/importProgressTracker.js';
 
 const router = Router();
+
+/**
+ * Map SyncLog status to ImportProgressUpdate status
+ * SyncLog uses: in_progress, success, partial, failed
+ * ImportProgressUpdate uses: fetching, completed, failed
+ */
+function mapSyncLogStatusToProgressStatus(status: string): ImportProgressUpdate['status'] {
+  switch (status) {
+    case 'in_progress':
+      return 'fetching';
+    case 'success':
+    case 'partial':
+      return 'completed';
+    case 'failed':
+      return 'failed';
+    default:
+      console.error(`Unknown sync log status: ${status}`);
+      return 'failed';
+  }
+}
 
 // Validation schema for connect request
 const ConnectRequestSchema = z.object({
@@ -187,7 +208,7 @@ router.get('/callback', async (req, res) => {
  * GET /api/bank/monzo/import-progress/:syncLogId
  * Server-Sent Events endpoint for streaming import progress updates
  */
-router.get('/import-progress/:syncLogId', async (req, res) => {
+router.get('/import-progress/:syncLogId', requireAuth, requireAdmin(), async (req, res) => {
   const { syncLogId } = req.params;
 
   // Validate syncLogId format (UUID)
@@ -221,7 +242,7 @@ router.get('/import-progress/:syncLogId', async (req, res) => {
   // Send initial status based on current sync log state
   const initialStatus: ImportProgressUpdate = {
     syncLogId,
-    status: (syncLog.status === 'in_progress' ? 'fetching' : syncLog.status) as ImportProgressUpdate['status'],
+    status: mapSyncLogStatusToProgressStatus(syncLog.status),
     transactionsFetched: syncLog.transactionsFetched,
     transactionsProcessed: 0, // We don't track this separately yet
     duplicatesSkipped: syncLog.transactionsSkipped,
@@ -242,27 +263,34 @@ router.get('/import-progress/:syncLogId', async (req, res) => {
 
   // Set up progress listener
   const progressHandler = (update: ImportProgressUpdate) => {
-    res.write(`data: ${JSON.stringify(update)}\n\n`);
+    if (!res.writableEnded) {
+      res.write(`data: ${JSON.stringify(update)}\n\n`);
 
-    // Close connection when import is complete or failed
-    if (update.status === 'completed' || update.status === 'failed') {
-      res.end();
+      // Close connection when import is complete or failed
+      if (update.status === 'completed' || update.status === 'failed') {
+        res.end();
+      }
     }
   };
 
   importProgressTracker.onProgress(syncLogId, progressHandler);
 
+  // Timeout after 5 minutes (max import time)
+  const timeoutId = setTimeout(() => {
+    importProgressTracker.offProgress(syncLogId, progressHandler);
+    if (!res.writableEnded) {
+      res.end();
+    }
+  }, 300000);
+
   // Clean up on client disconnect
   req.on('close', () => {
+    clearTimeout(timeoutId);
     importProgressTracker.offProgress(syncLogId, progressHandler);
-    res.end();
+    if (!res.writableEnded) {
+      res.end();
+    }
   });
-
-  // Timeout after 5 minutes (max import time)
-  setTimeout(() => {
-    importProgressTracker.offProgress(syncLogId, progressHandler);
-    res.end();
-  }, 300000);
 });
 
 export default router;

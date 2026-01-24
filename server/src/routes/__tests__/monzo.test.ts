@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach, jest } from '@je
 import request from 'supertest';
 import prisma from '../../db/client.js';
 import authService from '../../services/auth.service.js';
+import { Roles } from '../../../../shared/types/user.types.js';
 
 // Mock the monzo service before importing app
 const mockGenerateAuthUrl = jest.fn<(syncFromDays: number) => string>();
@@ -51,7 +52,13 @@ describe('Monzo OAuth Routes', () => {
     password: 'testPassword123',
   };
 
+  const adminUser = {
+    email: 'admin@example.com',
+    password: 'adminPassword123',
+  };
+
   let authCookie: string;
+  let adminCookie: string;
 
   beforeAll(async () => {
     // Clean database
@@ -67,6 +74,16 @@ describe('Monzo OAuth Routes', () => {
       .send(testUser);
 
     authCookie = loginResponse.headers['set-cookie'][0];
+
+    // Create admin user
+    await authService.createUser(adminUser.email, adminUser.password, Roles.ADMIN);
+
+    // Login admin to get session cookie
+    const adminLoginResponse = await request(app)
+      .post('/api/auth/login')
+      .send(adminUser);
+
+    adminCookie = adminLoginResponse.headers['set-cookie'][0];
   });
 
   afterAll(async () => {
@@ -631,9 +648,29 @@ describe('Monzo OAuth Routes', () => {
   });
 
   describe('GET /api/bank/monzo/import-progress/:syncLogId', () => {
+    it('should require authentication', async () => {
+      const response = await request(app)
+        .get('/api/bank/monzo/import-progress/00000000-0000-0000-0000-000000000000');
+
+      expect(response.status).toBe(401);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBe('Authentication required');
+    });
+
+    it('should require admin role', async () => {
+      const response = await request(app)
+        .get('/api/bank/monzo/import-progress/00000000-0000-0000-0000-000000000000')
+        .set('Cookie', authCookie);
+
+      expect(response.status).toBe(403);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toContain('Insufficient permissions');
+    });
+
     it('should return 400 for invalid sync log ID format', async () => {
       const response = await request(app)
-        .get('/api/bank/monzo/import-progress/invalid-id');
+        .get('/api/bank/monzo/import-progress/invalid-id')
+        .set('Cookie', adminCookie);
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
@@ -643,7 +680,8 @@ describe('Monzo OAuth Routes', () => {
     it('should return 404 for non-existent sync log', async () => {
       const nonExistentId = '00000000-0000-0000-0000-000000000000';
       const response = await request(app)
-        .get(`/api/bank/monzo/import-progress/${nonExistentId}`);
+        .get(`/api/bank/monzo/import-progress/${nonExistentId}`)
+        .set('Cookie', adminCookie);
 
       expect(response.status).toBe(404);
       expect(response.body.success).toBe(false);
@@ -678,6 +716,7 @@ describe('Monzo OAuth Routes', () => {
       // In a real scenario, this would be consumed by the frontend via EventSource
       const testPromise = request(app)
         .get(`/api/bank/monzo/import-progress/${syncLog.id}`)
+        .set('Cookie', adminCookie)
         .timeout(100)
         .catch(err => {
           // Expect timeout since connection stays open
@@ -716,6 +755,7 @@ describe('Monzo OAuth Routes', () => {
       // Make request to SSE endpoint
       const response = await request(app)
         .get(`/api/bank/monzo/import-progress/${syncLog.id}`)
+        .set('Cookie', adminCookie)
         .timeout(1000);
 
       // Should receive initial status and close
@@ -752,6 +792,7 @@ describe('Monzo OAuth Routes', () => {
       // Make request to SSE endpoint
       const response = await request(app)
         .get(`/api/bank/monzo/import-progress/${syncLog.id}`)
+        .set('Cookie', adminCookie)
         .timeout(1000);
 
       // Should receive initial failed status and close

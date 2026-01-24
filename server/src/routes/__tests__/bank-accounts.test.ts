@@ -87,6 +87,8 @@ describe('Bank Accounts Routes', () => {
   });
 
   beforeEach(async () => {
+    // Clean sync logs first (due to foreign key constraints)
+    await prisma.syncLog.deleteMany({});
     // Clean bank accounts before each test
     await prisma.bankAccount.deleteMany({});
   });
@@ -765,6 +767,242 @@ describe('Bank Accounts Routes', () => {
         const next = new Date(listResponse.body.accounts[i + 1].createdAt);
         expect(current.getTime()).toBeGreaterThanOrEqual(next.getTime());
       }
+    });
+  });
+
+  describe('GET /api/bank/accounts/:id/active-sync', () => {
+    it('should require authentication', async () => {
+      const account = await prisma.bankAccount.create({ data: validBankAccount });
+
+      const response = await request(app).get(`/api/bank/accounts/${account.id}/active-sync`);
+
+      expect(response.status).toBe(401);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBe('Authentication required');
+    });
+
+    it('should require admin role', async () => {
+      const account = await prisma.bankAccount.create({ data: validBankAccount });
+
+      const response = await request(app)
+        .get(`/api/bank/accounts/${account.id}/active-sync`)
+        .set('Cookie', viewerCookies);
+
+      expect(response.status).toBe(403);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toContain('Insufficient permissions');
+    });
+
+    it('should block LANDLORD role', async () => {
+      const account = await prisma.bankAccount.create({ data: validBankAccount });
+
+      const response = await request(app)
+        .get(`/api/bank/accounts/${account.id}/active-sync`)
+        .set('Cookie', landlordCookies);
+
+      expect(response.status).toBe(403);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toContain('Insufficient permissions');
+    });
+
+    it('should return 400 for invalid UUID format', async () => {
+      const response = await request(app)
+        .get('/api/bank/accounts/invalid-id/active-sync')
+        .set('Cookie', adminCookies);
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBe('Invalid bank account ID format');
+    });
+
+    it('should return 404 for non-existent account', async () => {
+      const nonExistentId = '00000000-0000-0000-0000-000000000000';
+
+      const response = await request(app)
+        .get(`/api/bank/accounts/${nonExistentId}/active-sync`)
+        .set('Cookie', adminCookies);
+
+      expect(response.status).toBe(404);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBe('Bank account not found');
+    });
+
+    it('should return 404 when no sync logs exist', async () => {
+      const account = await prisma.bankAccount.create({ data: validBankAccount });
+
+      const response = await request(app)
+        .get(`/api/bank/accounts/${account.id}/active-sync`)
+        .set('Cookie', adminCookies);
+
+      expect(response.status).toBe(404);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBe('No sync log found for this bank account');
+    });
+
+    it('should return active sync log when one exists', async () => {
+      const account = await prisma.bankAccount.create({ data: validBankAccount });
+
+      // Create in-progress sync log
+      const syncLog = await prisma.syncLog.create({
+        data: {
+          bankAccountId: account.id,
+          syncType: 'initial',
+          status: 'in_progress',
+          transactionsFetched: 50,
+          transactionsSkipped: 5,
+        },
+      });
+
+      const response = await request(app)
+        .get(`/api/bank/accounts/${account.id}/active-sync`)
+        .set('Cookie', adminCookies);
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.syncLog).toBeDefined();
+      expect(response.body.syncLog.id).toBe(syncLog.id);
+      expect(response.body.syncLog.status).toBe('in_progress');
+      expect(response.body.syncLog.syncType).toBe('initial');
+      expect(response.body.syncLog.transactionsFetched).toBe(50);
+      expect(response.body.syncLog.transactionsSkipped).toBe(5);
+    });
+
+    it('should prioritize in-progress sync over completed syncs', async () => {
+      const account = await prisma.bankAccount.create({ data: validBankAccount });
+
+      // Create older completed sync
+      await prisma.syncLog.create({
+        data: {
+          bankAccountId: account.id,
+          syncType: 'manual',
+          status: 'success',
+          transactionsFetched: 100,
+          completedAt: new Date(),
+        },
+      });
+
+      // Wait a bit to ensure different timestamps
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      // Create newer in-progress sync
+      const activeSync = await prisma.syncLog.create({
+        data: {
+          bankAccountId: account.id,
+          syncType: 'initial',
+          status: 'in_progress',
+          transactionsFetched: 25,
+        },
+      });
+
+      const response = await request(app)
+        .get(`/api/bank/accounts/${account.id}/active-sync`)
+        .set('Cookie', adminCookies);
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.syncLog.id).toBe(activeSync.id);
+      expect(response.body.syncLog.status).toBe('in_progress');
+    });
+
+    it('should return most recent completed sync if no active sync', async () => {
+      const account = await prisma.bankAccount.create({ data: validBankAccount });
+
+      // Create older completed sync
+      await prisma.syncLog.create({
+        data: {
+          bankAccountId: account.id,
+          syncType: 'manual',
+          status: 'success',
+          transactionsFetched: 50,
+          completedAt: new Date(Date.now() - 1000),
+        },
+      });
+
+      // Wait a bit
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      // Create newer completed sync
+      const recentSync = await prisma.syncLog.create({
+        data: {
+          bankAccountId: account.id,
+          syncType: 'webhook',
+          status: 'success',
+          transactionsFetched: 10,
+          completedAt: new Date(),
+        },
+      });
+
+      const response = await request(app)
+        .get(`/api/bank/accounts/${account.id}/active-sync`)
+        .set('Cookie', adminCookies);
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.syncLog.id).toBe(recentSync.id);
+      expect(response.body.syncLog.status).toBe('success');
+      expect(response.body.syncLog.syncType).toBe('webhook');
+    });
+
+    it('should include all sync log fields in response', async () => {
+      const account = await prisma.bankAccount.create({ data: validBankAccount });
+
+      const startedAt = new Date();
+      const completedAt = new Date(Date.now() + 1000);
+
+      const syncLog = await prisma.syncLog.create({
+        data: {
+          bankAccountId: account.id,
+          syncType: 'manual',
+          status: 'failed',
+          transactionsFetched: 75,
+          transactionsSkipped: 10,
+          errorMessage: 'Test error message',
+          startedAt,
+          completedAt,
+        },
+      });
+
+      const response = await request(app)
+        .get(`/api/bank/accounts/${account.id}/active-sync`)
+        .set('Cookie', adminCookies);
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.syncLog).toEqual({
+        id: syncLog.id,
+        status: 'failed',
+        syncType: 'manual',
+        startedAt: startedAt.toISOString(),
+        completedAt: completedAt.toISOString(),
+        transactionsFetched: 75,
+        transactionsSkipped: 10,
+        errorMessage: 'Test error message',
+      });
+    });
+
+    it('should handle partial sync status', async () => {
+      const account = await prisma.bankAccount.create({ data: validBankAccount });
+
+      const syncLog = await prisma.syncLog.create({
+        data: {
+          bankAccountId: account.id,
+          syncType: 'webhook',
+          status: 'partial',
+          transactionsFetched: 100,
+          transactionsSkipped: 20,
+          errorMessage: 'Some transactions failed to process',
+          completedAt: new Date(),
+        },
+      });
+
+      const response = await request(app)
+        .get(`/api/bank/accounts/${account.id}/active-sync`)
+        .set('Cookie', adminCookies);
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.syncLog.id).toBe(syncLog.id);
+      expect(response.body.syncLog.status).toBe('partial');
     });
   });
 
