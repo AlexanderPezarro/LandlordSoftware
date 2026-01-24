@@ -644,27 +644,8 @@ describe('Monzo Service - importFullHistory', () => {
       expect(result.error).toBe('Sync already in progress');
     });
 
-    it('should handle expired tokens and return error', async () => {
-      const bankAccount = await prisma.bankAccount.create({
-        data: {
-          accountId: 'acc_sync_expired',
-          accountName: 'Test Account',
-          accountType: 'current',
-          provider: 'monzo',
-          accessToken: encryptToken('test_access_token'),
-          tokenExpiresAt: new Date(Date.now() - 3600 * 1000), // Expired 1 hour ago
-          syncFromDate: new Date('2024-01-01'),
-          lastSyncAt: new Date('2024-02-01'),
-          syncEnabled: true,
-          lastSyncStatus: 'success',
-        },
-      });
-
-      const result = await monzoService.syncNewTransactions(bankAccount.id);
-
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('Access token has expired. Please reconnect your bank account.');
-    });
+    // Note: Expired token test removed - tokens are now automatically refreshed
+    // The retry logic and token refresh are tested separately in utils tests
 
     it('should handle API errors gracefully', async () => {
       const bankAccount = await prisma.bankAccount.create({

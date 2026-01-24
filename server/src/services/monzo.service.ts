@@ -4,6 +4,7 @@ import { decryptToken } from './encryption.js';
 import { processTransactions } from './transactionProcessor.js';
 import type { MonzoTransaction, MonzoTransactionsResponse } from './monzo/types.js';
 import { importProgressTracker } from './importProgressTracker.js';
+import { fetchTransactionsWithRetry, getMonzoErrorMessage } from '../utils/monzoApiWrapper.js';
 
 // Re-export types for backwards compatibility
 export type { MonzoTransaction, MonzoTransactionsResponse };
@@ -462,15 +463,6 @@ export async function syncNewTransactions(bankAccountId: string): Promise<SyncRe
       };
     }
 
-    // Check if token has expired
-    // TODO: Implement token refresh for expired tokens
-    if (bankAccount.tokenExpiresAt && bankAccount.tokenExpiresAt < new Date()) {
-      return {
-        success: false,
-        error: 'Access token has expired. Please reconnect your bank account.',
-      };
-    }
-
     // Create sync log
     const syncLog = await prisma.syncLog.create({
       data: {
@@ -481,8 +473,8 @@ export async function syncNewTransactions(bankAccountId: string): Promise<SyncRe
     });
     syncLogId = syncLog.id;
 
-    // Decrypt access token
-    const accessToken = decryptToken(bankAccount.accessToken);
+    // Decrypt access token (may be refreshed during sync)
+    let accessToken = decryptToken(bankAccount.accessToken);
 
     // Determine sync start date (lastSyncAt or syncFromDate)
     const sinceDate = bankAccount.lastSyncAt || bankAccount.syncFromDate;
@@ -499,35 +491,20 @@ export async function syncNewTransactions(bankAccountId: string): Promise<SyncRe
     let hasMore = true;
 
     while (hasMore && !timedOut) {
-      // Build request URL
-      const params = new URLSearchParams({
-        account_id: bankAccount.accountId,
-        since: sinceDate.toISOString(),
-        limit: '100',
-      });
+      // Fetch transactions with automatic retry and token refresh
+      const result = await fetchTransactionsWithRetry(
+        bankAccountId,
+        bankAccount.accountId,
+        accessToken,
+        sinceDate.toISOString(),
+        beforeTimestamp,
+        100
+      );
 
-      if (beforeTimestamp) {
-        params.append('before', beforeTimestamp);
-      }
+      // Update access token if it was refreshed
+      accessToken = result.accessToken;
 
-      const url = `https://api.monzo.com/transactions?${params.toString()}`;
-
-      // Fetch transactions
-      const response = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Monzo transactions fetch error:', errorText);
-        throw new Error(`Failed to fetch transactions: ${errorText}`);
-      }
-
-      const data = await response.json() as MonzoTransactionsResponse;
-      const transactions = data.transactions;
-
+      const transactions = result.response.transactions;
       allTransactions.push(...transactions);
       transactionsFetched += transactions.length;
 
@@ -591,6 +568,9 @@ export async function syncNewTransactions(bankAccountId: string): Promise<SyncRe
   } catch (error) {
     console.error(`Manual sync failed for bank account ${bankAccountId}:`, error);
 
+    // Get user-friendly error message
+    const errorMessage = getMonzoErrorMessage(error);
+
     // Update sync log with error
     if (syncLogId) {
       await prisma.syncLog.update({
@@ -600,7 +580,7 @@ export async function syncNewTransactions(bankAccountId: string): Promise<SyncRe
           completedAt: new Date(),
           transactionsFetched,
           transactionsSkipped: duplicatesSkipped,
-          errorMessage: error instanceof Error ? error.message : 'Unknown error',
+          errorMessage,
           errorDetails: error instanceof Error ? error.stack : undefined,
         },
       });
@@ -616,7 +596,7 @@ export async function syncNewTransactions(bankAccountId: string): Promise<SyncRe
 
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: errorMessage,
     };
   }
 }

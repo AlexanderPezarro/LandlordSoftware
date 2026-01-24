@@ -1151,22 +1151,8 @@ describe('Bank Accounts Routes', () => {
       expect(response.body.error).toBe('Sync already in progress');
     });
 
-    it('should return 401 when access token has expired', async () => {
-      const account = await prisma.bankAccount.create({
-        data: {
-          ...validBankAccount,
-          tokenExpiresAt: new Date(Date.now() - 3600 * 1000), // Expired
-        },
-      });
-
-      const response = await request(app)
-        .post(`/api/bank/accounts/${account.id}/sync`)
-        .set('Cookie', adminCookies);
-
-      expect(response.status).toBe(401);
-      expect(response.body.success).toBe(false);
-      expect(response.body.error).toBe('Access token has expired. Please reconnect your bank account.');
-    });
+    // Note: Expired token test removed - tokens are now automatically refreshed
+    // The retry logic and token refresh are tested separately in utils tests
 
     it('should return 500 for API errors', async () => {
       const account = await prisma.bankAccount.create({
