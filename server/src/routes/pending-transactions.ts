@@ -28,6 +28,280 @@ router.get('/count', requireAuth, requireAdmin(), async (_req, res) => {
   }
 });
 
+// POST /api/pending-transactions/bulk/approve - Bulk approve pending transactions
+router.post('/bulk/approve', requireAuth, requireAdmin(), async (req, res) => {
+  try {
+    const { ids } = req.body;
+    const userId = req.user!.id;
+
+    // Validate input
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'ids must be a non-empty array',
+      });
+    }
+
+    // Validate all IDs are UUIDs
+    for (const id of ids) {
+      if (!z.string().uuid().safeParse(id).success) {
+        return res.status(400).json({
+          success: false,
+          error: `Invalid pending transaction ID format: ${id}`,
+        });
+      }
+    }
+
+    // Fetch all pending transactions
+    const pendingTransactions = await prisma.pendingTransaction.findMany({
+      where: {
+        id: { in: ids },
+      },
+      include: {
+        bankTransaction: true,
+      },
+    });
+
+    // Check all exist
+    if (pendingTransactions.length !== ids.length) {
+      return res.status(404).json({
+        success: false,
+        error: 'One or more pending transactions not found',
+      });
+    }
+
+    // Validate all transactions are ready for approval
+    const errors: string[] = [];
+    for (const pt of pendingTransactions) {
+      if (pt.reviewedAt) {
+        errors.push(`Transaction ${pt.id} has already been reviewed`);
+      }
+      if (!pt.propertyId) {
+        errors.push(`Transaction ${pt.id} is missing propertyId`);
+      }
+      if (!pt.type) {
+        errors.push(`Transaction ${pt.id} is missing type`);
+      }
+      if (!pt.category) {
+        errors.push(`Transaction ${pt.id} is missing category`);
+      }
+    }
+
+    if (errors.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Cannot approve transactions',
+        details: errors,
+      });
+    }
+
+    // Approve all in a transaction
+    const results = await prisma.$transaction(async (tx) => {
+      const transactions = [];
+
+      for (const pt of pendingTransactions) {
+        // Create the Transaction record
+        const transaction = await tx.transaction.create({
+          data: {
+            propertyId: pt.propertyId!,
+            leaseId: pt.leaseId,
+            type: pt.type!,
+            category: pt.category!,
+            amount: pt.bankTransaction.amount,
+            transactionDate: pt.transactionDate,
+            description: pt.description,
+            bankTransactionId: pt.bankTransactionId,
+            isImported: true,
+            importedAt: new Date(),
+          },
+        });
+
+        // Update bank transaction to link to the new transaction
+        await tx.bankTransaction.update({
+          where: { id: pt.bankTransactionId },
+          data: {
+            transactionId: transaction.id,
+          },
+        });
+
+        // Mark pending transaction as reviewed
+        await tx.pendingTransaction.update({
+          where: { id: pt.id },
+          data: {
+            reviewedAt: new Date(),
+            reviewedBy: userId,
+          },
+        });
+
+        transactions.push(transaction);
+      }
+
+      return transactions;
+    });
+
+    return res.json({
+      success: true,
+      count: results.length,
+      transactions: results,
+      message: `Successfully approved ${results.length} transaction(s)`,
+    });
+  } catch (error) {
+    console.error('Bulk approve pending transactions error:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'An error occurred while bulk approving pending transactions',
+    });
+  }
+});
+
+// POST /api/pending-transactions/bulk/update - Bulk update pending transactions
+router.post('/bulk/update', requireAuth, requireAdmin(), async (req, res) => {
+  try {
+    const { ids, updates } = req.body;
+
+    // Validate input
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'ids must be a non-empty array',
+      });
+    }
+
+    if (!updates || typeof updates !== 'object') {
+      return res.status(400).json({
+        success: false,
+        error: 'updates must be an object',
+      });
+    }
+
+    // Validate all IDs are UUIDs
+    for (const id of ids) {
+      if (!z.string().uuid().safeParse(id).success) {
+        return res.status(400).json({
+          success: false,
+          error: `Invalid pending transaction ID format: ${id}`,
+        });
+      }
+    }
+
+    // Extract updatable fields
+    const { propertyId, leaseId, type, category } = updates;
+
+    // Validate property exists if propertyId is provided
+    if (propertyId !== undefined && propertyId !== null) {
+      const property = await prisma.property.findUnique({
+        where: { id: propertyId },
+      });
+
+      if (!property) {
+        return res.status(400).json({
+          success: false,
+          error: 'Property not found',
+        });
+      }
+    }
+
+    // Validate lease exists if leaseId is provided
+    if (leaseId !== undefined && leaseId !== null) {
+      const lease = await prisma.lease.findUnique({
+        where: { id: leaseId },
+      });
+
+      if (!lease) {
+        return res.status(400).json({
+          success: false,
+          error: 'Lease not found',
+        });
+      }
+    }
+
+    // Build update data
+    const updateData: {
+      propertyId?: string | null;
+      leaseId?: string | null;
+      type?: string | null;
+      category?: string | null;
+    } = {};
+    if (propertyId !== undefined) updateData.propertyId = propertyId;
+    if (leaseId !== undefined) updateData.leaseId = leaseId;
+    if (type !== undefined) updateData.type = type;
+    if (category !== undefined) updateData.category = category;
+
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'No valid update fields provided',
+      });
+    }
+
+    // Update all pending transactions
+    const result = await prisma.pendingTransaction.updateMany({
+      where: {
+        id: { in: ids },
+        reviewedAt: null, // Only update unreviewed transactions
+      },
+      data: updateData,
+    });
+
+    return res.json({
+      success: true,
+      count: result.count,
+      message: `Successfully updated ${result.count} transaction(s)`,
+    });
+  } catch (error) {
+    console.error('Bulk update pending transactions error:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'An error occurred while bulk updating pending transactions',
+    });
+  }
+});
+
+// POST /api/pending-transactions/bulk/reject - Bulk reject (delete) pending transactions
+router.post('/bulk/reject', requireAuth, requireAdmin(), async (req, res) => {
+  try {
+    const { ids } = req.body;
+
+    // Validate input
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'ids must be a non-empty array',
+      });
+    }
+
+    // Validate all IDs are UUIDs
+    for (const id of ids) {
+      if (!z.string().uuid().safeParse(id).success) {
+        return res.status(400).json({
+          success: false,
+          error: `Invalid pending transaction ID format: ${id}`,
+        });
+      }
+    }
+
+    // Delete only unreviewed pending transactions
+    const result = await prisma.pendingTransaction.deleteMany({
+      where: {
+        id: { in: ids },
+        reviewedAt: null, // Only delete unreviewed transactions
+      },
+    });
+
+    return res.json({
+      success: true,
+      count: result.count,
+      message: `Successfully rejected ${result.count} transaction(s)`,
+    });
+  } catch (error) {
+    console.error('Bulk reject pending transactions error:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'An error occurred while bulk rejecting pending transactions',
+    });
+  }
+});
+
 // GET /api/pending-transactions - List all pending transactions with filters
 router.get('/', requireAuth, requireAdmin(), async (req, res) => {
   try {

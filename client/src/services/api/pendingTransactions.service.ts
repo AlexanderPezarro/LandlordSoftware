@@ -73,6 +73,25 @@ export interface PendingCountResponse {
   count: number;
 }
 
+export interface BulkApproveResponse {
+  success: boolean;
+  count: number;
+  transactions: any[];
+  message: string;
+}
+
+export interface BulkUpdateResponse {
+  success: boolean;
+  count: number;
+  message: string;
+}
+
+export interface BulkRejectResponse {
+  success: boolean;
+  count: number;
+  message: string;
+}
+
 export const pendingTransactionsService = {
   /**
    * Get all pending transactions with optional filters
@@ -125,5 +144,47 @@ export const pendingTransactionsService = {
   async getPendingCount(): Promise<number> {
     const response = await api.get<PendingCountResponse>('/pending-transactions/count');
     return response.data.count;
+  },
+
+  /**
+   * Bulk approve pending transactions
+   * @param ids - Array of pending transaction IDs
+   * @returns Bulk approve response with count and transactions
+   */
+  async bulkApprovePendingTransactions(ids: string[]): Promise<BulkApproveResponse> {
+    const response = await api.post<BulkApproveResponse>(
+      '/pending-transactions/bulk/approve',
+      { ids }
+    );
+    return response.data;
+  },
+
+  /**
+   * Bulk update pending transactions
+   * @param ids - Array of pending transaction IDs
+   * @param updates - Fields to update
+   * @returns Bulk update response with count
+   */
+  async bulkUpdatePendingTransactions(
+    ids: string[],
+    updates: UpdatePendingTransactionRequest
+  ): Promise<BulkUpdateResponse> {
+    const response = await api.post<BulkUpdateResponse>(
+      '/pending-transactions/bulk/update',
+      { ids, updates }
+    );
+    return response.data;
+  },
+
+  /**
+   * Bulk reject (delete) pending transactions
+   * @param ids - Array of pending transaction IDs
+   * @returns Bulk reject response with count
+   */
+  async bulkRejectPendingTransactions(ids: string[]): Promise<BulkRejectResponse> {
+    const response = await api.post<BulkRejectResponse>('/pending-transactions/bulk/reject', {
+      ids,
+    });
+    return response.data;
   },
 };
