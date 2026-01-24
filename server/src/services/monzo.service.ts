@@ -3,6 +3,7 @@ import prisma from '../db/client.js';
 import { decryptToken } from './encryption.js';
 import { processTransactions } from './transactionProcessor.js';
 import type { MonzoTransaction, MonzoTransactionsResponse } from './monzo/types.js';
+import { importProgressTracker } from './importProgressTracker.js';
 
 // Re-export types for backwards compatibility
 export type { MonzoTransaction, MonzoTransactionsResponse };
@@ -189,8 +190,9 @@ export async function getAccountInfo(accessToken: string): Promise<{
  * of OAuth completion (Monzo API restriction).
  *
  * @param bankAccountId - Database ID of the bank account to import transactions for
+ * @returns The sync log ID for tracking progress
  */
-export async function importFullHistory(bankAccountId: string): Promise<void> {
+export async function importFullHistory(bankAccountId: string): Promise<string> {
   let syncLogId: string | undefined;
   let transactionsFetched = 0;
   let duplicatesSkipped = 0;
@@ -217,6 +219,16 @@ export async function importFullHistory(bankAccountId: string): Promise<void> {
     });
     syncLogId = syncLog.id;
 
+    // Emit initial progress
+    importProgressTracker.emitProgress({
+      syncLogId,
+      status: 'fetching',
+      transactionsFetched: 0,
+      transactionsProcessed: 0,
+      duplicatesSkipped: 0,
+      message: 'Starting import...',
+    });
+
     // Decrypt access token
     const accessToken = decryptToken(bankAccount.accessToken);
 
@@ -230,8 +242,10 @@ export async function importFullHistory(bankAccountId: string): Promise<void> {
     const allTransactions: MonzoTransaction[] = [];
     let beforeTimestamp: string | undefined;
     let hasMore = true;
+    let batchNumber = 0;
 
     while (hasMore && !timedOut) {
+      batchNumber++;
       // Build request URL
       const params = new URLSearchParams({
         account_id: bankAccount.accountId,
@@ -264,6 +278,17 @@ export async function importFullHistory(bankAccountId: string): Promise<void> {
       allTransactions.push(...transactions);
       transactionsFetched += transactions.length;
 
+      // Emit progress update after fetching batch
+      importProgressTracker.emitProgress({
+        syncLogId,
+        status: 'fetching',
+        transactionsFetched,
+        transactionsProcessed: 0,
+        duplicatesSkipped: 0,
+        currentBatch: batchNumber,
+        message: `Fetched ${transactionsFetched} transactions...`,
+      });
+
       // Check if we need to paginate
       if (transactions.length < 100) {
         hasMore = false;
@@ -275,6 +300,16 @@ export async function importFullHistory(bankAccountId: string): Promise<void> {
     }
 
     clearTimeout(timeoutHandle);
+
+    // Emit progress update before processing
+    importProgressTracker.emitProgress({
+      syncLogId,
+      status: 'processing',
+      transactionsFetched,
+      transactionsProcessed: 0,
+      duplicatesSkipped: 0,
+      message: 'Processing transactions...',
+    });
 
     // Process transactions through unified pipeline
     let processedCount = 0;
@@ -312,7 +347,19 @@ export async function importFullHistory(bankAccountId: string): Promise<void> {
       },
     });
 
+    // Emit completion progress
+    importProgressTracker.emitProgress({
+      syncLogId,
+      status: 'completed',
+      transactionsFetched,
+      transactionsProcessed: processedCount,
+      duplicatesSkipped,
+      message: `Import completed: ${processedCount} transactions processed`,
+    });
+
     console.log(`Import completed for bank account ${bankAccountId}: ${transactionsFetched} transactions fetched (${processedCount} processed, ${duplicatesSkipped} duplicates skipped), status: ${finalStatus}`);
+
+    return syncLogId;
   } catch (error) {
     console.error(`Import failed for bank account ${bankAccountId}:`, error);
 
@@ -329,6 +376,16 @@ export async function importFullHistory(bankAccountId: string): Promise<void> {
           errorDetails: error instanceof Error ? error.stack : undefined,
         },
       });
+
+      // Emit error progress
+      importProgressTracker.emitProgress({
+        syncLogId,
+        status: 'failed',
+        transactionsFetched,
+        transactionsProcessed: 0,
+        duplicatesSkipped,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
     }
 
     // Update bank account status
@@ -339,6 +396,8 @@ export async function importFullHistory(bankAccountId: string): Promise<void> {
         lastSyncStatus: 'failed',
       },
     });
+
+    throw error;
   }
 }
 

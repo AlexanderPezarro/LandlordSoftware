@@ -4,6 +4,7 @@ import prisma from '../db/client.js';
 import { z } from 'zod';
 import * as monzoService from '../services/monzo.service.js';
 import { encryptToken } from '../services/encryption.js';
+import { importProgressTracker, ImportProgressUpdate } from '../services/importProgressTracker.js';
 
 const router = Router();
 
@@ -161,18 +162,107 @@ router.get('/callback', async (req, res) => {
       },
     });
 
-    // Start background import immediately (don't await - fire and forget)
+    // Start background import (fire and forget, but capture syncLogId synchronously)
     // This must complete within 5 minutes of OAuth completion (Monzo API restriction)
-    monzoService.importFullHistory(bankAccount.id).catch((error) => {
+    // We start the import but don't await it - just redirect with the syncLogId
+    const importPromise = monzoService.importFullHistory(bankAccount.id);
+
+    // The importFullHistory function creates the syncLog synchronously at the start,
+    // but we need a way to get the syncLogId before redirecting. Let's use a different approach.
+    // For now, redirect without syncLogId and let the frontend poll for the most recent sync log
+    importPromise.catch((error) => {
       console.error('Background import failed:', error);
     });
 
-    // Redirect to settings page with success message
-    return res.redirect('/settings?success=monzo_connected');
+    // Redirect to settings page with success message and bank account ID
+    // Frontend will query for the active sync log for this bank account
+    return res.redirect(`/settings?success=monzo_connected&bankAccountId=${bankAccount.id}`);
   } catch (error) {
     console.error('Monzo callback error:', error);
     return res.redirect('/settings?error=oauth_failed');
   }
+});
+
+/**
+ * GET /api/bank/monzo/import-progress/:syncLogId
+ * Server-Sent Events endpoint for streaming import progress updates
+ */
+router.get('/import-progress/:syncLogId', async (req, res) => {
+  const { syncLogId } = req.params;
+
+  // Validate syncLogId format (UUID)
+  if (!syncLogId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(syncLogId)) {
+    res.status(400).json({
+      success: false,
+      error: 'Invalid sync log ID',
+    });
+    return;
+  }
+
+  // Verify sync log exists
+  const syncLog = await prisma.syncLog.findUnique({
+    where: { id: syncLogId },
+  });
+
+  if (!syncLog) {
+    res.status(404).json({
+      success: false,
+      error: 'Sync log not found',
+    });
+    return;
+  }
+
+  // Set SSE headers
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no'); // Disable nginx buffering
+
+  // Send initial status based on current sync log state
+  const initialStatus: ImportProgressUpdate = {
+    syncLogId,
+    status: (syncLog.status === 'in_progress' ? 'fetching' : syncLog.status) as ImportProgressUpdate['status'],
+    transactionsFetched: syncLog.transactionsFetched,
+    transactionsProcessed: 0, // We don't track this separately yet
+    duplicatesSkipped: syncLog.transactionsSkipped,
+    message: syncLog.status === 'in_progress'
+      ? 'Import in progress...'
+      : syncLog.status === 'success' || syncLog.status === 'partial'
+      ? 'Import completed'
+      : syncLog.errorMessage || 'Import failed',
+  };
+
+  res.write(`data: ${JSON.stringify(initialStatus)}\n\n`);
+
+  // If sync is already complete, send final status and close
+  if (syncLog.status !== 'in_progress') {
+    res.end();
+    return;
+  }
+
+  // Set up progress listener
+  const progressHandler = (update: ImportProgressUpdate) => {
+    res.write(`data: ${JSON.stringify(update)}\n\n`);
+
+    // Close connection when import is complete or failed
+    if (update.status === 'completed' || update.status === 'failed') {
+      res.end();
+    }
+  };
+
+  importProgressTracker.onProgress(syncLogId, progressHandler);
+
+  // Clean up on client disconnect
+  req.on('close', () => {
+    importProgressTracker.offProgress(syncLogId, progressHandler);
+    res.end();
+  });
+
+  // Timeout after 5 minutes (max import time)
+  setTimeout(() => {
+    importProgressTracker.offProgress(syncLogId, progressHandler);
+    res.end();
+  }, 300000);
 });
 
 export default router;

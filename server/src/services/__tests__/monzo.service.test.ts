@@ -228,7 +228,8 @@ describe('Monzo Service - importFullHistory', () => {
         text: async () => 'API Error',
       } as Response);
 
-      await monzoService.importFullHistory(bankAccount.id);
+      // importFullHistory now throws on error, so we need to catch it
+      await expect(monzoService.importFullHistory(bankAccount.id)).rejects.toThrow();
       await new Promise((resolve) => setTimeout(resolve, 500));
 
       const syncLog = await prisma.syncLog.findFirst({

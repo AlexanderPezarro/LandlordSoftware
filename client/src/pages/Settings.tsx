@@ -37,6 +37,7 @@ import { ApiError } from '../types/api.types';
 import ConfirmDialog from '../components/shared/ConfirmDialog';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
+import { ImportProgressDialog } from '../components/bank/ImportProgressDialog';
 
 export const Settings: React.FC = () => {
   const toast = useToast();
@@ -71,6 +72,10 @@ export const Settings: React.FC = () => {
   const [syncFromDays, setSyncFromDays] = useState(90);
   const [bankConnectLoading, setBankConnectLoading] = useState(false);
 
+  // Import progress dialog state
+  const [importProgressOpen, setImportProgressOpen] = useState(false);
+  const [importSyncLogId, setImportSyncLogId] = useState<string>('');
+
   useEffect(() => {
     fetchUsers();
 
@@ -78,9 +83,26 @@ export const Settings: React.FC = () => {
     const params = new URLSearchParams(window.location.search);
     const success = params.get('success');
     const error = params.get('error');
+    const bankAccountId = params.get('bankAccountId');
 
     if (success === 'monzo_connected') {
       toast.success('Monzo account connected successfully');
+
+      // If we have a bank account ID, fetch the active sync log and show progress
+      if (bankAccountId) {
+        bankService
+          .getActiveSyncLog(bankAccountId)
+          .then((syncLog) => {
+            if (syncLog.status === 'in_progress') {
+              setImportSyncLogId(syncLog.id);
+              setImportProgressOpen(true);
+            }
+          })
+          .catch((err) => {
+            console.error('Failed to fetch sync log:', err);
+          });
+      }
+
       // Clean up URL
       window.history.replaceState({}, '', '/settings');
     } else if (error) {
@@ -573,6 +595,15 @@ export const Settings: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Import Progress Dialog */}
+      {importSyncLogId && (
+        <ImportProgressDialog
+          open={importProgressOpen}
+          syncLogId={importSyncLogId}
+          onClose={() => setImportProgressOpen(false)}
+        />
+      )}
     </Container>
   );
 };

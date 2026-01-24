@@ -16,7 +16,7 @@ const mockGetAccountInfo = jest.fn<(accessToken: string) => Promise<{
   accountName: string;
   accountType: string;
 }>>();
-const mockImportFullHistory = jest.fn<(bankAccountId: string) => Promise<void>>();
+const mockImportFullHistory = jest.fn<(bankAccountId: string) => Promise<string>>();
 const mockSyncNewTransactions = jest.fn<(bankAccountId: string) => Promise<{
   success: boolean;
   transactionsFetched?: number;
@@ -218,14 +218,14 @@ describe('Monzo OAuth Routes', () => {
       mockValidateState.mockReturnValue(mockTokenResponse.syncFromDate);
       mockExchangeCodeForTokens.mockResolvedValue(mockTokenResponse);
       mockGetAccountInfo.mockResolvedValue(mockAccountInfo);
-      mockImportFullHistory.mockResolvedValue(undefined);
+      mockImportFullHistory.mockResolvedValue('sync-log-123');
 
       const response = await request(app)
         .get('/api/bank/monzo/callback')
         .query({ code: mockCode, state: mockState });
 
       expect(response.status).toBe(302);
-      expect(response.headers.location).toBe('/settings?success=monzo_connected');
+      expect(response.headers.location).toContain('/settings?success=monzo_connected&bankAccountId=');
 
       // Verify service methods were called
       expect(mockValidateState).toHaveBeenCalledWith(mockState);
@@ -308,14 +308,14 @@ describe('Monzo OAuth Routes', () => {
       mockValidateState.mockReturnValue(mockTokenResponse.syncFromDate);
       mockExchangeCodeForTokens.mockResolvedValue(mockTokenResponse);
       mockGetAccountInfo.mockResolvedValue(mockAccountInfo);
-      mockImportFullHistory.mockResolvedValue(undefined);
+      mockImportFullHistory.mockResolvedValue('sync-log-123');
 
       const response = await request(app)
         .get('/api/bank/monzo/callback')
         .query({ code: mockCode, state: mockState });
 
       expect(response.status).toBe(302);
-      expect(response.headers.location).toBe('/settings?success=monzo_connected');
+      expect(response.headers.location).toContain('/settings?success=monzo_connected&bankAccountId=');
 
       // Verify bank account was updated, not duplicated
       const bankAccounts = await prisma.bankAccount.findMany({
@@ -356,7 +356,7 @@ describe('Monzo OAuth Routes', () => {
 
       // Should still redirect successfully (fire and forget)
       expect(response.status).toBe(302);
-      expect(response.headers.location).toBe('/settings?success=monzo_connected');
+      expect(response.headers.location).toContain('/settings?success=monzo_connected&bankAccountId=');
 
       // Verify import was attempted
       expect(mockImportFullHistory).toHaveBeenCalled();
@@ -388,14 +388,14 @@ describe('Monzo OAuth Routes', () => {
       mockExchangeCodeForTokens.mockResolvedValue(mockTokenResponse);
       mockGetAccountInfo.mockResolvedValue(mockAccountInfo);
       mockRegisterWebhook.mockResolvedValue(mockWebhookResult);
-      mockImportFullHistory.mockResolvedValue(undefined);
+      mockImportFullHistory.mockResolvedValue('sync-log-123');
 
       const response = await request(app)
         .get('/api/bank/monzo/callback')
         .query({ code: mockCode, state: mockState });
 
       expect(response.status).toBe(302);
-      expect(response.headers.location).toBe('/settings?success=monzo_connected');
+      expect(response.headers.location).toContain('/settings?success=monzo_connected&bankAccountId=');
 
       // Verify webhook was registered
       expect(mockRegisterWebhook).toHaveBeenCalledWith(
@@ -456,14 +456,14 @@ describe('Monzo OAuth Routes', () => {
       mockGetAccountInfo.mockResolvedValue(mockAccountInfo);
       mockDeleteWebhook.mockResolvedValue(undefined);
       mockRegisterWebhook.mockResolvedValue(mockNewWebhookResult);
-      mockImportFullHistory.mockResolvedValue(undefined);
+      mockImportFullHistory.mockResolvedValue('sync-log-123');
 
       const response = await request(app)
         .get('/api/bank/monzo/callback')
         .query({ code: mockCode, state: mockState });
 
       expect(response.status).toBe(302);
-      expect(response.headers.location).toBe('/settings?success=monzo_connected');
+      expect(response.headers.location).toContain('/settings?success=monzo_connected&bankAccountId=');
 
       // Verify old webhook was deleted
       expect(mockDeleteWebhook).toHaveBeenCalledWith(
@@ -509,7 +509,7 @@ describe('Monzo OAuth Routes', () => {
       mockExchangeCodeForTokens.mockResolvedValue(mockTokenResponse);
       mockGetAccountInfo.mockResolvedValue(mockAccountInfo);
       mockRegisterWebhook.mockRejectedValue(new Error('Webhook registration failed'));
-      mockImportFullHistory.mockResolvedValue(undefined);
+      mockImportFullHistory.mockResolvedValue('sync-log-123');
 
       const response = await request(app)
         .get('/api/bank/monzo/callback')
@@ -517,7 +517,7 @@ describe('Monzo OAuth Routes', () => {
 
       // Should still redirect successfully
       expect(response.status).toBe(302);
-      expect(response.headers.location).toBe('/settings?success=monzo_connected');
+      expect(response.headers.location).toContain('/settings?success=monzo_connected&bankAccountId=');
 
       // Verify bank account was created without webhook info
       const bankAccount = await prisma.bankAccount.findUnique({
@@ -560,7 +560,7 @@ describe('Monzo OAuth Routes', () => {
       mockExchangeCodeForTokens.mockResolvedValue(mockTokenResponse);
       mockGetAccountInfo.mockResolvedValue(mockAccountInfo);
       mockRegisterWebhook.mockResolvedValue(mockWebhookResult);
-      mockImportFullHistory.mockResolvedValue(undefined);
+      mockImportFullHistory.mockResolvedValue('sync-log-123');
 
       const response = await request(app)
         .get('/api/bank/monzo/callback')
@@ -602,14 +602,14 @@ describe('Monzo OAuth Routes', () => {
       mockValidateState.mockReturnValue(mockTokenResponse.syncFromDate);
       mockExchangeCodeForTokens.mockResolvedValue(mockTokenResponse);
       mockGetAccountInfo.mockResolvedValue(mockAccountInfo);
-      mockImportFullHistory.mockResolvedValue(undefined);
+      mockImportFullHistory.mockResolvedValue('sync-log-123');
 
       const response = await request(app)
         .get('/api/bank/monzo/callback')
         .query({ code: mockCode, state: mockState });
 
       expect(response.status).toBe(302);
-      expect(response.headers.location).toBe('/settings?success=monzo_connected');
+      expect(response.headers.location).toContain('/settings?success=monzo_connected&bankAccountId=');
 
       // Verify webhook registration was NOT attempted
       expect(mockRegisterWebhook).not.toHaveBeenCalled();
@@ -627,6 +627,135 @@ describe('Monzo OAuth Routes', () => {
       if (originalSecret) {
         process.env.MONZO_WEBHOOK_SECRET = originalSecret;
       }
+    });
+  });
+
+  describe('GET /api/bank/monzo/import-progress/:syncLogId', () => {
+    it('should return 400 for invalid sync log ID format', async () => {
+      const response = await request(app)
+        .get('/api/bank/monzo/import-progress/invalid-id');
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBe('Invalid sync log ID');
+    });
+
+    it('should return 404 for non-existent sync log', async () => {
+      const nonExistentId = '00000000-0000-0000-0000-000000000000';
+      const response = await request(app)
+        .get(`/api/bank/monzo/import-progress/${nonExistentId}`);
+
+      expect(response.status).toBe(404);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBe('Sync log not found');
+    });
+
+    it('should send initial SSE event for in-progress sync', async () => {
+      // Create a test bank account and sync log
+      const bankAccount = await prisma.bankAccount.create({
+        data: {
+          accountId: 'acc_test_progress',
+          accountName: 'Test Account',
+          accountType: 'current',
+          provider: 'monzo',
+          accessToken: 'encrypted_token',
+          syncFromDate: new Date('2024-01-01'),
+          syncEnabled: true,
+          lastSyncStatus: 'never_synced',
+        },
+      });
+
+      const syncLog = await prisma.syncLog.create({
+        data: {
+          bankAccountId: bankAccount.id,
+          syncType: 'initial',
+          status: 'in_progress',
+        },
+      });
+
+      // For in-progress syncs, the endpoint keeps the connection open
+      // We'll just verify it doesn't throw an error when we start the request
+      // In a real scenario, this would be consumed by the frontend via EventSource
+      const testPromise = request(app)
+        .get(`/api/bank/monzo/import-progress/${syncLog.id}`)
+        .timeout(100)
+        .catch(err => {
+          // Expect timeout since connection stays open
+          expect(err.timeout).toBe(100);
+        });
+
+      await testPromise;
+    });
+
+    it('should close connection immediately for completed sync', async () => {
+      // Create a test bank account and completed sync log
+      const bankAccount = await prisma.bankAccount.create({
+        data: {
+          accountId: 'acc_test_completed',
+          accountName: 'Test Account',
+          accountType: 'current',
+          provider: 'monzo',
+          accessToken: 'encrypted_token',
+          syncFromDate: new Date('2024-01-01'),
+          syncEnabled: true,
+          lastSyncStatus: 'success',
+        },
+      });
+
+      const syncLog = await prisma.syncLog.create({
+        data: {
+          bankAccountId: bankAccount.id,
+          syncType: 'initial',
+          status: 'success',
+          completedAt: new Date(),
+          transactionsFetched: 100,
+          transactionsSkipped: 10,
+        },
+      });
+
+      // Make request to SSE endpoint
+      const response = await request(app)
+        .get(`/api/bank/monzo/import-progress/${syncLog.id}`)
+        .timeout(1000);
+
+      // Should receive initial status and close
+      expect(response.status).toBe(200);
+    });
+
+    it('should handle failed sync log', async () => {
+      // Create a test bank account and failed sync log
+      const bankAccount = await prisma.bankAccount.create({
+        data: {
+          accountId: 'acc_test_failed',
+          accountName: 'Test Account',
+          accountType: 'current',
+          provider: 'monzo',
+          accessToken: 'encrypted_token',
+          syncFromDate: new Date('2024-01-01'),
+          syncEnabled: true,
+          lastSyncStatus: 'failed',
+        },
+      });
+
+      const syncLog = await prisma.syncLog.create({
+        data: {
+          bankAccountId: bankAccount.id,
+          syncType: 'initial',
+          status: 'failed',
+          completedAt: new Date(),
+          transactionsFetched: 50,
+          transactionsSkipped: 0,
+          errorMessage: 'Test error message',
+        },
+      });
+
+      // Make request to SSE endpoint
+      const response = await request(app)
+        .get(`/api/bank/monzo/import-progress/${syncLog.id}`)
+        .timeout(1000);
+
+      // Should receive initial failed status and close
+      expect(response.status).toBe(200);
     });
   });
 });

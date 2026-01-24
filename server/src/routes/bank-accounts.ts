@@ -284,4 +284,67 @@ router.post('/:id/sync', requireAuth, requireAdmin(), async (req, res) => {
   }
 });
 
+// GET /api/bank/accounts/:id/active-sync - Get active or most recent sync log for a bank account
+router.get('/:id/active-sync', requireAuth, requireAdmin(), async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Validate UUID format
+    if (!z.string().uuid().safeParse(id).success) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid bank account ID format',
+      });
+    }
+
+    // Check if bank account exists
+    const existingAccount = await prisma.bankAccount.findUnique({
+      where: { id },
+    });
+
+    if (!existingAccount) {
+      return res.status(404).json({
+        success: false,
+        error: 'Bank account not found',
+      });
+    }
+
+    // Find the most recent sync log, prioritizing in-progress syncs
+    const syncLog = await prisma.syncLog.findFirst({
+      where: { bankAccountId: id },
+      orderBy: [
+        { status: 'asc' }, // in_progress comes before success/failed alphabetically
+        { startedAt: 'desc' },
+      ],
+    });
+
+    if (!syncLog) {
+      return res.status(404).json({
+        success: false,
+        error: 'No sync log found for this bank account',
+      });
+    }
+
+    return res.json({
+      success: true,
+      syncLog: {
+        id: syncLog.id,
+        status: syncLog.status,
+        syncType: syncLog.syncType,
+        startedAt: syncLog.startedAt,
+        completedAt: syncLog.completedAt,
+        transactionsFetched: syncLog.transactionsFetched,
+        transactionsSkipped: syncLog.transactionsSkipped,
+        errorMessage: syncLog.errorMessage,
+      },
+    });
+  } catch (error) {
+    console.error('Get active sync error:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'An error occurred while fetching sync status',
+    });
+  }
+});
+
 export default router;
