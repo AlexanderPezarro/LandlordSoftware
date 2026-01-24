@@ -537,11 +537,11 @@ describe('Tenants Routes', () => {
       expect(response.body.error).toBe('Authentication required');
     });
 
-    it('should soft delete tenant by changing status to Former', async () => {
+    it('should archive tenant (soft delete) when archive=true query param is used', async () => {
       const tenant = await prisma.tenant.create({ data: validTenant });
 
       const response = await request(app)
-        .delete(`/api/tenants/${tenant.id}`)
+        .delete(`/api/tenants/${tenant.id}?archive=true`)
         .set('Cookie', authCookies);
 
       expect(response.status).toBe(200);
@@ -555,6 +555,105 @@ describe('Tenants Routes', () => {
       });
       expect(stillExists).not.toBeNull();
       expect(stillExists!.status).toBe('Former');
+    });
+
+    it('should permanently delete tenant (hard delete) when no archive param', async () => {
+      const tenant = await prisma.tenant.create({ data: validTenant });
+
+      const response = await request(app)
+        .delete(`/api/tenants/${tenant.id}`)
+        .set('Cookie', authCookies);
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.tenant.id).toBe(tenant.id);
+
+      // Verify tenant no longer exists in database
+      const stillExists = await prisma.tenant.findUnique({
+        where: { id: tenant.id },
+      });
+      expect(stillExists).toBeNull();
+    });
+
+    it('should cascade delete tenant leases when permanently deleting', async () => {
+      const tenant = await prisma.tenant.create({ data: validTenant });
+      const property = await prisma.property.create({
+        data: {
+          name: 'Test Property',
+          street: '123 Test St',
+          city: 'London',
+          county: 'Greater London',
+          postcode: 'SW1A 1AA',
+          propertyType: 'Flat',
+          status: 'Available',
+        },
+      });
+
+      // Create lease for tenant
+      const lease = await prisma.lease.create({
+        data: {
+          propertyId: property.id,
+          tenantId: tenant.id,
+          startDate: new Date('2024-01-01'),
+          monthlyRent: 1000,
+          securityDepositAmount: 1500,
+          status: 'Active',
+        },
+      });
+
+      // Permanently delete tenant
+      const response = await request(app)
+        .delete(`/api/tenants/${tenant.id}`)
+        .set('Cookie', authCookies);
+
+      expect(response.status).toBe(200);
+
+      // Verify tenant is deleted
+      const tenantExists = await prisma.tenant.findUnique({
+        where: { id: tenant.id },
+      });
+      expect(tenantExists).toBeNull();
+
+      // Verify lease is also deleted (cascaded)
+      const leaseExists = await prisma.lease.findUnique({
+        where: { id: lease.id },
+      });
+      expect(leaseExists).toBeNull();
+    });
+
+    it('should delete tenant documents when permanently deleting', async () => {
+      const tenant = await prisma.tenant.create({ data: validTenant });
+
+      // Create document for tenant
+      const document = await prisma.document.create({
+        data: {
+          entityType: 'tenant',
+          entityId: tenant.id,
+          fileName: 'test.pdf',
+          filePath: '/uploads/test.pdf',
+          fileType: 'application/pdf',
+          fileSize: 1024,
+        },
+      });
+
+      // Permanently delete tenant
+      const response = await request(app)
+        .delete(`/api/tenants/${tenant.id}`)
+        .set('Cookie', authCookies);
+
+      expect(response.status).toBe(200);
+
+      // Verify tenant is deleted
+      const tenantExists = await prisma.tenant.findUnique({
+        where: { id: tenant.id },
+      });
+      expect(tenantExists).toBeNull();
+
+      // Verify document is also deleted
+      const documentExists = await prisma.document.findUnique({
+        where: { id: document.id },
+      });
+      expect(documentExists).toBeNull();
     });
 
     it('should return 404 for non-existent tenant', async () => {
@@ -579,13 +678,13 @@ describe('Tenants Routes', () => {
       expect(response.body.error).toBe('Invalid tenant ID format');
     });
 
-    it('should allow deleting already deleted tenant', async () => {
+    it('should allow archiving already archived tenant', async () => {
       const tenant = await prisma.tenant.create({
         data: { ...validTenant, status: 'Former' },
       });
 
       const response = await request(app)
-        .delete(`/api/tenants/${tenant.id}`)
+        .delete(`/api/tenants/${tenant.id}?archive=true`)
         .set('Cookie', authCookies);
 
       expect(response.status).toBe(200);
@@ -866,7 +965,7 @@ describe('Tenants Routes', () => {
   });
 
   describe('Integration scenarios', () => {
-    it('should create, read, update, and delete a tenant', async () => {
+    it('should create, read, update, and archive a tenant', async () => {
       // Create
       const createResponse = await request(app)
         .post('/api/tenants')
@@ -891,13 +990,13 @@ describe('Tenants Routes', () => {
       expect(updateResponse.status).toBe(200);
       expect(updateResponse.body.tenant.status).toBe('Prospective');
 
-      // Delete
-      const deleteResponse = await request(app)
-        .delete(`/api/tenants/${tenantId}`)
+      // Archive (soft delete)
+      const archiveResponse = await request(app)
+        .delete(`/api/tenants/${tenantId}?archive=true`)
         .set('Cookie', authCookies);
 
-      expect(deleteResponse.status).toBe(200);
-      expect(deleteResponse.body.tenant.status).toBe('Former');
+      expect(archiveResponse.status).toBe(200);
+      expect(archiveResponse.body.tenant.status).toBe('Former');
 
       // Verify still accessible
       const finalReadResponse = await request(app).get(`/api/tenants/${tenantId}`);

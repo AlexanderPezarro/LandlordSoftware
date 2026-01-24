@@ -53,7 +53,17 @@ export const propertiesService = {
   },
 
   /**
-   * Delete a property (soft delete - sets status to 'For Sale')
+   * Archive a property (soft delete - sets status to 'For Sale')
+   * @param id - Property ID
+   * @returns Archived property
+   */
+  async archiveProperty(id: string): Promise<Property> {
+    const response = await api.delete<PropertyResponse>(`/properties/${id}?archive=true`);
+    return response.data.property;
+  },
+
+  /**
+   * Permanently delete a property and all related data
    * @param id - Property ID
    * @returns Deleted property
    */

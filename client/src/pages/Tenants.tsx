@@ -21,7 +21,6 @@ import { leasesService } from '../services/api/leases.service';
 import type { Tenant, CreateTenantRequest, UpdateTenantRequest, Property } from '../types/api.types';
 import { ApiError } from '../types/api.types';
 import TenantCard from '../components/shared/TenantCard';
-import ConfirmDialog from '../components/shared/ConfirmDialog';
 import { useToast } from '../contexts/ToastContext';
 
 type TenantStatus = 'Prospective' | 'Active' | 'Former';
@@ -242,13 +241,18 @@ export const Tenants: React.FC = () => {
     setTenantToDelete(null);
   };
 
-  const handleDeleteConfirm = async () => {
+  const handleDeleteConfirm = async (archive: boolean) => {
     if (!tenantToDelete) return;
 
     try {
       setDeleteLoading(true);
-      await tenantsService.deleteTenant(tenantToDelete.id);
-      toast.success('Tenant deleted successfully');
+      if (archive) {
+        await tenantsService.archiveTenant(tenantToDelete.id);
+        toast.success('Tenant archived successfully');
+      } else {
+        await tenantsService.deleteTenant(tenantToDelete.id);
+        toast.success('Tenant permanently deleted');
+      }
       setDeleteDialogOpen(false);
       setTenantToDelete(null);
       await fetchTenants();
@@ -487,14 +491,43 @@ export const Tenants: React.FC = () => {
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
-      <ConfirmDialog
-        open={deleteDialogOpen}
-        title="Delete Tenant"
-        message={`Are you sure you want to delete ${tenantToDelete?.firstName} ${tenantToDelete?.lastName}? This will change their status to 'Former'.`}
-        onConfirm={handleDeleteConfirm}
-        onCancel={handleDeleteCancel}
-        loading={deleteLoading}
-      />
+      <Dialog open={deleteDialogOpen} onClose={handleDeleteCancel} maxWidth="sm" fullWidth>
+        <DialogTitle>Delete Tenant</DialogTitle>
+        <DialogContent>
+          <Typography>
+            What would you like to do with {tenantToDelete?.firstName} {tenantToDelete?.lastName}?
+          </Typography>
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+              <strong>Archive:</strong> Changes status to 'Former' and preserves all data
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              <strong>Permanently Delete:</strong> Removes tenant and all related data (leases, etc.)
+            </Typography>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDeleteCancel} disabled={deleteLoading}>
+            Cancel
+          </Button>
+          <Button
+            onClick={() => handleDeleteConfirm(true)}
+            color="warning"
+            variant="outlined"
+            disabled={deleteLoading}
+          >
+            Archive
+          </Button>
+          <Button
+            onClick={() => handleDeleteConfirm(false)}
+            color="error"
+            variant="contained"
+            disabled={deleteLoading}
+          >
+            {deleteLoading ? <CircularProgress size={24} /> : 'Permanently Delete'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

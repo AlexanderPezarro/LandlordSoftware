@@ -575,11 +575,11 @@ describe('Properties Routes', () => {
       expect(response.body.error).toBe('Authentication required');
     });
 
-    it('should soft delete property by changing status', async () => {
+    it('should archive property (soft delete) when archive=true query param is used', async () => {
       const property = await prisma.property.create({ data: validProperty });
 
       const response = await request(app)
-        .delete(`/api/properties/${property.id}`)
+        .delete(`/api/properties/${property.id}?archive=true`)
         .set('Cookie', authCookies);
 
       expect(response.status).toBe(200);
@@ -593,6 +593,171 @@ describe('Properties Routes', () => {
       });
       expect(stillExists).not.toBeNull();
       expect(stillExists!.status).toBe('For Sale');
+    });
+
+    it('should permanently delete property (hard delete) when no archive param', async () => {
+      const property = await prisma.property.create({ data: validProperty });
+
+      const response = await request(app)
+        .delete(`/api/properties/${property.id}`)
+        .set('Cookie', authCookies);
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.property.id).toBe(property.id);
+
+      // Verify property no longer exists in database
+      const stillExists = await prisma.property.findUnique({
+        where: { id: property.id },
+      });
+      expect(stillExists).toBeNull();
+    });
+
+    it('should cascade delete property leases when permanently deleting', async () => {
+      const property = await prisma.property.create({ data: validProperty });
+      const tenant = await prisma.tenant.create({
+        data: {
+          firstName: 'John',
+          lastName: 'Doe',
+          email: 'john@example.com',
+          phone: '07700900123',
+          status: 'Active',
+        },
+      });
+
+      // Create lease for property
+      const lease = await prisma.lease.create({
+        data: {
+          propertyId: property.id,
+          tenantId: tenant.id,
+          startDate: new Date('2024-01-01'),
+          monthlyRent: 1000,
+          securityDepositAmount: 1500,
+          status: 'Active',
+        },
+      });
+
+      // Permanently delete property
+      const response = await request(app)
+        .delete(`/api/properties/${property.id}`)
+        .set('Cookie', authCookies);
+
+      expect(response.status).toBe(200);
+
+      // Verify property is deleted
+      const propertyExists = await prisma.property.findUnique({
+        where: { id: property.id },
+      });
+      expect(propertyExists).toBeNull();
+
+      // Verify lease is also deleted (cascaded)
+      const leaseExists = await prisma.lease.findUnique({
+        where: { id: lease.id },
+      });
+      expect(leaseExists).toBeNull();
+    });
+
+    it('should cascade delete property transactions when permanently deleting', async () => {
+      const property = await prisma.property.create({ data: validProperty });
+
+      // Create transaction for property
+      const transaction = await prisma.transaction.create({
+        data: {
+          propertyId: property.id,
+          type: 'Income',
+          category: 'Rent',
+          amount: 1000,
+          transactionDate: new Date('2024-01-01'),
+          description: 'Monthly rent',
+        },
+      });
+
+      // Permanently delete property
+      const response = await request(app)
+        .delete(`/api/properties/${property.id}`)
+        .set('Cookie', authCookies);
+
+      expect(response.status).toBe(200);
+
+      // Verify property is deleted
+      const propertyExists = await prisma.property.findUnique({
+        where: { id: property.id },
+      });
+      expect(propertyExists).toBeNull();
+
+      // Verify transaction is also deleted (cascaded)
+      const transactionExists = await prisma.transaction.findUnique({
+        where: { id: transaction.id },
+      });
+      expect(transactionExists).toBeNull();
+    });
+
+    it('should cascade delete property events when permanently deleting', async () => {
+      const property = await prisma.property.create({ data: validProperty });
+
+      // Create event for property
+      const event = await prisma.event.create({
+        data: {
+          propertyId: property.id,
+          eventType: 'Maintenance',
+          title: 'Fix heating',
+          scheduledDate: new Date('2024-02-01'),
+        },
+      });
+
+      // Permanently delete property
+      const response = await request(app)
+        .delete(`/api/properties/${property.id}`)
+        .set('Cookie', authCookies);
+
+      expect(response.status).toBe(200);
+
+      // Verify property is deleted
+      const propertyExists = await prisma.property.findUnique({
+        where: { id: property.id },
+      });
+      expect(propertyExists).toBeNull();
+
+      // Verify event is also deleted (cascaded)
+      const eventExists = await prisma.event.findUnique({
+        where: { id: event.id },
+      });
+      expect(eventExists).toBeNull();
+    });
+
+    it('should delete property documents when permanently deleting', async () => {
+      const property = await prisma.property.create({ data: validProperty });
+
+      // Create document for property
+      const document = await prisma.document.create({
+        data: {
+          entityType: 'property',
+          entityId: property.id,
+          fileName: 'test.pdf',
+          filePath: '/uploads/test.pdf',
+          fileType: 'application/pdf',
+          fileSize: 1024,
+        },
+      });
+
+      // Permanently delete property
+      const response = await request(app)
+        .delete(`/api/properties/${property.id}`)
+        .set('Cookie', authCookies);
+
+      expect(response.status).toBe(200);
+
+      // Verify property is deleted
+      const propertyExists = await prisma.property.findUnique({
+        where: { id: property.id },
+      });
+      expect(propertyExists).toBeNull();
+
+      // Verify document is also deleted
+      const documentExists = await prisma.document.findUnique({
+        where: { id: document.id },
+      });
+      expect(documentExists).toBeNull();
     });
 
     it('should return 404 for non-existent property', async () => {
@@ -617,13 +782,13 @@ describe('Properties Routes', () => {
       expect(response.body.error).toBe('Invalid property ID format');
     });
 
-    it('should allow deleting already deleted property', async () => {
+    it('should allow archiving already archived property', async () => {
       const property = await prisma.property.create({
         data: { ...validProperty, status: 'For Sale' },
       });
 
       const response = await request(app)
-        .delete(`/api/properties/${property.id}`)
+        .delete(`/api/properties/${property.id}?archive=true`)
         .set('Cookie', authCookies);
 
       expect(response.status).toBe(200);
@@ -633,7 +798,7 @@ describe('Properties Routes', () => {
   });
 
   describe('Integration scenarios', () => {
-    it('should create, read, update, and delete a property', async () => {
+    it('should create, read, update, and archive a property', async () => {
       // Create
       const createResponse = await request(app)
         .post('/api/properties')
@@ -658,13 +823,13 @@ describe('Properties Routes', () => {
       expect(updateResponse.status).toBe(200);
       expect(updateResponse.body.property.status).toBe('Occupied');
 
-      // Delete
-      const deleteResponse = await request(app)
-        .delete(`/api/properties/${propertyId}`)
+      // Archive (soft delete)
+      const archiveResponse = await request(app)
+        .delete(`/api/properties/${propertyId}?archive=true`)
         .set('Cookie', authCookies);
 
-      expect(deleteResponse.status).toBe(200);
-      expect(deleteResponse.body.property.status).toBe('For Sale');
+      expect(archiveResponse.status).toBe(200);
+      expect(archiveResponse.body.property.status).toBe('For Sale');
 
       // Verify still accessible
       const finalReadResponse = await request(app).get(`/api/properties/${propertyId}`);
