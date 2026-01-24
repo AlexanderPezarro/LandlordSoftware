@@ -59,6 +59,39 @@ export interface ImportProgressUpdate {
   error?: string;
 }
 
+export interface WebhookEvent {
+  id: string;
+  accountId: string;
+  accountName: string;
+  status: string;
+  startedAt: string;
+  completedAt: string | null;
+  errorMessage: string | null;
+  webhookEventId: string | null;
+  transactionsFetched: number;
+}
+
+export interface AccountWebhookStatus {
+  accountId: string;
+  accountName: string;
+  lastWebhookAt: string | null;
+  lastWebhookStatus: string | null;
+  webhookId: string | null;
+}
+
+export interface WebhookStatusData {
+  lastEventTimestamp: string | null;
+  recentEvents: WebhookEvent[];
+  failedCount24h: number;
+  failedCount1h: number;
+  accountStatuses: AccountWebhookStatus[];
+}
+
+export interface GetWebhookStatusResponse {
+  success: boolean;
+  data: WebhookStatusData;
+}
+
 export const bankService = {
   /**
    * Get all connected bank accounts
@@ -121,5 +154,14 @@ export const bankService = {
     return () => {
       eventSource.close();
     };
+  },
+
+  /**
+   * Get webhook health status across all bank accounts
+   * @returns Webhook status data including recent events and failure counts
+   */
+  async getWebhookStatus(): Promise<WebhookStatusData> {
+    const response = await api.get<GetWebhookStatusResponse>('/bank/webhooks/status');
+    return response.data.data;
   },
 };

@@ -18,6 +18,7 @@ import usersRouter from './routes/users.js';
 import monzoRouter from './routes/monzo.js';
 import bankAccountsRouter from './routes/bank-accounts.js';
 import webhooksRouter from './routes/webhooks.js';
+import webhookStatusRouter from './routes/webhook-status.js';
 import matchingRulesRouter from './routes/matching-rules.js';
 import pendingTransactionsRouter from './routes/pending-transactions.js';
 
@@ -130,6 +131,7 @@ export function createApp() {
   app.use('/api/users', usersRouter);
 
   // Bank integration routes
+  app.use('/api/bank/webhooks/status', webhookStatusRouter);
   app.use('/api/bank/webhooks', webhooksRouter);
   app.use('/api/bank/monzo', monzoRouter);
   app.use('/api/bank', matchingRulesRouter);

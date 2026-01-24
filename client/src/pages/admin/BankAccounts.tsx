@@ -25,6 +25,7 @@ import { ApiError } from '../../types/api.types';
 import { useToast } from '../../contexts/ToastContext';
 import BankAccountsList from '../../components/bank/BankAccountsList';
 import { ImportProgressDialog } from '../../components/bank/ImportProgressDialog';
+import { WebhookStatusWidget } from '../../components/bank/WebhookStatusWidget';
 
 export const BankAccounts: React.FC = () => {
   const toast = useToast();
@@ -163,6 +164,9 @@ export const BankAccounts: React.FC = () => {
             Connect New Account
           </Button>
         </Box>
+
+        {/* Webhook Status Widget - Only show if there are accounts */}
+        {accounts.length > 0 && <WebhookStatusWidget />}
 
         {accounts.length === 0 ? (
           <Box sx={{ textAlign: 'center', py: 8 }}>
