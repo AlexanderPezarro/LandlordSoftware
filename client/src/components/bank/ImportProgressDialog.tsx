@@ -31,7 +31,6 @@ export const ImportProgressDialog: React.FC<ImportProgressDialogProps> = ({
   onClose,
 }) => {
   const [progress, setProgress] = useState<ImportProgressUpdate | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open || !syncLogId) {

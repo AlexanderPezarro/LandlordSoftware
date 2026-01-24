@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Card,
@@ -8,6 +9,7 @@ import {
   Chip,
   IconButton,
   Tooltip,
+  Button,
 } from '@mui/material';
 import {
   Settings as SettingsIcon,
@@ -16,6 +18,7 @@ import {
   Error as ErrorIcon,
   Warning as WarningIcon,
   Schedule as ScheduleIcon,
+  Rule as RuleIcon,
 } from '@mui/icons-material';
 import type { BankAccount } from '../../services/api/bank.service';
 
@@ -24,6 +27,8 @@ interface BankAccountsListProps {
 }
 
 const BankAccountsList: React.FC<BankAccountsListProps> = ({ accounts }) => {
+  const navigate = useNavigate();
+
   const getStatusColor = (status: string): 'success' | 'error' | 'warning' | 'default' => {
     switch (status.toLowerCase()) {
       case 'synced':
@@ -193,7 +198,14 @@ const BankAccountsList: React.FC<BankAccountsListProps> = ({ accounts }) => {
               </Box>
             </CardContent>
 
-            <CardActions sx={{ justifyContent: 'flex-end', pt: 0, px: 2, pb: 2 }}>
+            <CardActions sx={{ justifyContent: 'space-between', pt: 0, px: 2, pb: 2 }}>
+              <Button
+                size="small"
+                startIcon={<RuleIcon />}
+                onClick={() => navigate(`/admin/bank-accounts/${account.id}/rules`)}
+              >
+                Rules
+              </Button>
               <Tooltip title="Settings (Coming soon)">
                 <span>
                   <IconButton
