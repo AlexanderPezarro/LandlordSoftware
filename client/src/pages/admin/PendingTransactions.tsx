@@ -137,6 +137,10 @@ export const PendingTransactions: React.FC = () => {
     field: 'propertyId' | 'type' | 'category',
     value: string | null
   ) => {
+    // Store original value for revert on failure
+    const originalTx = pendingTransactions.find((tx) => tx.id === id);
+    const originalValue = originalTx?.[field];
+
     try {
       setSavingRows((prev) => ({ ...prev, [id]: true }));
 
@@ -155,6 +159,11 @@ export const PendingTransactions: React.FC = () => {
       console.error('Error updating pending transaction:', err);
       const errorMessage = err instanceof ApiError ? err.message : 'Failed to update';
       toast.error(errorMessage);
+
+      // Revert to original value on failure
+      setPendingTransactions((prev) =>
+        prev.map((tx) => (tx.id === id ? { ...tx, [field]: originalValue } : tx))
+      );
     } finally {
       setSavingRows((prev) => ({ ...prev, [id]: false }));
     }

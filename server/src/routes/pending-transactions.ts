@@ -3,6 +3,7 @@ import { requireAuth } from '../middleware/auth.js';
 import { requireAdmin } from '../middleware/permissions.js';
 import prisma from '../db/client.js';
 import { z } from 'zod';
+import { bulkIdsSchema, bulkUpdateSchema } from '../../../shared/validation/index.js';
 
 const router = Router();
 
@@ -31,26 +32,17 @@ router.get('/count', requireAuth, requireAdmin(), async (_req, res) => {
 // POST /api/pending-transactions/bulk/approve - Bulk approve pending transactions
 router.post('/bulk/approve', requireAuth, requireAdmin(), async (req, res) => {
   try {
-    const { ids } = req.body;
-    const userId = req.user!.id;
-
-    // Validate input
-    if (!Array.isArray(ids) || ids.length === 0) {
+    // Validate input using Zod schema
+    const validation = bulkIdsSchema.safeParse(req.body);
+    if (!validation.success) {
       return res.status(400).json({
         success: false,
-        error: 'ids must be a non-empty array',
+        error: validation.error.issues[0].message,
       });
     }
 
-    // Validate all IDs are UUIDs
-    for (const id of ids) {
-      if (!z.string().uuid().safeParse(id).success) {
-        return res.status(400).json({
-          success: false,
-          error: `Invalid pending transaction ID format: ${id}`,
-        });
-      }
-    }
+    const { ids } = validation.data;
+    const userId = req.user!.id;
 
     // Fetch all pending transactions
     const pendingTransactions = await prisma.pendingTransaction.findMany({
@@ -157,35 +149,30 @@ router.post('/bulk/approve', requireAuth, requireAdmin(), async (req, res) => {
 // POST /api/pending-transactions/bulk/update - Bulk update pending transactions
 router.post('/bulk/update', requireAuth, requireAdmin(), async (req, res) => {
   try {
-    const { ids, updates } = req.body;
-
-    // Validate input
-    if (!Array.isArray(ids) || ids.length === 0) {
+    // Validate input using Zod schema
+    const validation = bulkUpdateSchema.safeParse(req.body);
+    if (!validation.success) {
       return res.status(400).json({
         success: false,
-        error: 'ids must be a non-empty array',
+        error: validation.error.issues[0].message,
       });
     }
 
-    if (!updates || typeof updates !== 'object') {
-      return res.status(400).json({
-        success: false,
-        error: 'updates must be an object',
-      });
-    }
-
-    // Validate all IDs are UUIDs
-    for (const id of ids) {
-      if (!z.string().uuid().safeParse(id).success) {
-        return res.status(400).json({
-          success: false,
-          error: `Invalid pending transaction ID format: ${id}`,
-        });
-      }
-    }
-
-    // Extract updatable fields
+    const { ids, updates } = validation.data;
     const { propertyId, leaseId, type, category } = updates;
+
+    // Pre-validate that transactions haven't been reviewed
+    const pendingTransactions = await prisma.pendingTransaction.findMany({
+      where: { id: { in: ids } },
+    });
+
+    const alreadyReviewed = pendingTransactions.filter((pt) => pt.reviewedAt);
+    if (alreadyReviewed.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: `Cannot update ${alreadyReviewed.length} transaction(s) that have already been reviewed`,
+      });
+    }
 
     // Validate property exists if propertyId is provided
     if (propertyId !== undefined && propertyId !== null) {
@@ -213,6 +200,16 @@ router.post('/bulk/update', requireAuth, requireAdmin(), async (req, res) => {
           error: 'Lease not found',
         });
       }
+
+      // If both leaseId and propertyId are provided, validate the relationship
+      if (propertyId !== undefined && propertyId !== null) {
+        if (lease.propertyId !== propertyId) {
+          return res.status(400).json({
+            success: false,
+            error: 'Lease does not belong to the specified property',
+          });
+        }
+      }
     }
 
     // Build update data
@@ -226,13 +223,6 @@ router.post('/bulk/update', requireAuth, requireAdmin(), async (req, res) => {
     if (leaseId !== undefined) updateData.leaseId = leaseId;
     if (type !== undefined) updateData.type = type;
     if (category !== undefined) updateData.category = category;
-
-    if (Object.keys(updateData).length === 0) {
-      return res.status(400).json({
-        success: false,
-        error: 'No valid update fields provided',
-      });
-    }
 
     // Update all pending transactions
     const result = await prisma.pendingTransaction.updateMany({
@@ -260,24 +250,28 @@ router.post('/bulk/update', requireAuth, requireAdmin(), async (req, res) => {
 // POST /api/pending-transactions/bulk/reject - Bulk reject (delete) pending transactions
 router.post('/bulk/reject', requireAuth, requireAdmin(), async (req, res) => {
   try {
-    const { ids } = req.body;
-
-    // Validate input
-    if (!Array.isArray(ids) || ids.length === 0) {
+    // Validate input using Zod schema
+    const validation = bulkIdsSchema.safeParse(req.body);
+    if (!validation.success) {
       return res.status(400).json({
         success: false,
-        error: 'ids must be a non-empty array',
+        error: validation.error.issues[0].message,
       });
     }
 
-    // Validate all IDs are UUIDs
-    for (const id of ids) {
-      if (!z.string().uuid().safeParse(id).success) {
-        return res.status(400).json({
-          success: false,
-          error: `Invalid pending transaction ID format: ${id}`,
-        });
-      }
+    const { ids } = validation.data;
+
+    // Pre-validate that transactions haven't been reviewed
+    const pendingTransactions = await prisma.pendingTransaction.findMany({
+      where: { id: { in: ids } },
+    });
+
+    const alreadyReviewed = pendingTransactions.filter((pt) => pt.reviewedAt);
+    if (alreadyReviewed.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: `Cannot reject ${alreadyReviewed.length} transaction(s) that have already been reviewed`,
+      });
     }
 
     // Delete only unreviewed pending transactions

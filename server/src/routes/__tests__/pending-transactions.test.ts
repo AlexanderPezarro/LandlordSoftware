@@ -988,7 +988,7 @@ describe('Pending Transactions Routes', () => {
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
-      expect(response.body.error).toContain('non-empty array');
+      expect(response.body.error).toContain('At least one ID is required');
     });
   });
 
@@ -1065,7 +1065,7 @@ describe('Pending Transactions Routes', () => {
       }
     });
 
-    it('should skip reviewed transactions', async () => {
+    it('should reject if any transaction is already reviewed', async () => {
       const bankTx1 = await prisma.bankTransaction.create({
         data: {
           bankAccountId: testBankAccountId,
@@ -1116,14 +1116,15 @@ describe('Pending Transactions Routes', () => {
           },
         });
 
-      expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(response.body.count).toBe(1); // Only unreviewed updated
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toContain('already been reviewed');
 
+      // Verify neither was updated
       const pending1 = await prisma.pendingTransaction.findUnique({
         where: { id: pendingTx1.id },
       });
-      expect(pending1?.type).toBe('Income');
+      expect(pending1?.type).toBeNull(); // Should not be updated
 
       const pending2 = await prisma.pendingTransaction.findUnique({
         where: { id: pendingTx2.id },
@@ -1158,7 +1159,7 @@ describe('Pending Transactions Routes', () => {
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
-      expect(response.body.error).toContain('No valid update fields');
+      expect(response.body.error).toContain('At least one field must be provided for update');
     });
   });
 
@@ -1225,7 +1226,7 @@ describe('Pending Transactions Routes', () => {
       }
     });
 
-    it('should skip reviewed transactions when deleting', async () => {
+    it('should reject if any transaction is already reviewed', async () => {
       const bankTx1 = await prisma.bankTransaction.create({
         data: {
           bankAccountId: testBankAccountId,
@@ -1271,14 +1272,15 @@ describe('Pending Transactions Routes', () => {
         .set('Cookie', adminCookies)
         .send({ ids: [pendingTx1.id, pendingTx2.id] });
 
-      expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(response.body.count).toBe(1); // Only unreviewed deleted
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toContain('already been reviewed');
 
+      // Verify neither was deleted
       const pending1 = await prisma.pendingTransaction.findUnique({
         where: { id: pendingTx1.id },
       });
-      expect(pending1).toBeNull(); // Should be deleted
+      expect(pending1).not.toBeNull(); // Should not be deleted
 
       const pending2 = await prisma.pendingTransaction.findUnique({
         where: { id: pendingTx2.id },
@@ -1294,7 +1296,7 @@ describe('Pending Transactions Routes', () => {
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
-      expect(response.body.error).toContain('non-empty array');
+      expect(response.body.error).toContain('At least one ID is required');
     });
   });
 });

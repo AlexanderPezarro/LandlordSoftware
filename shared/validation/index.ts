@@ -131,3 +131,11 @@ export {
   type ReorderRules,
   type TestRule,
 } from './matchingRule.validation.js';
+
+// PendingTransaction Validation
+export {
+  bulkIdsSchema,
+  bulkUpdateSchema,
+  type BulkIds,
+  type BulkUpdate,
+} from './pendingTransaction.validation.js';
