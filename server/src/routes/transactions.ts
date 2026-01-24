@@ -7,6 +7,7 @@ import {
   TransactionQueryParamsSchema,
 } from '../../../shared/validation/transaction.validation.js';
 import { z } from 'zod';
+import transactionAuditService from '../services/transactionAudit.service.js';
 
 const router = Router();
 
@@ -595,6 +596,14 @@ router.put('/:id', requireAuth, async (req, res) => {
       }
     }
 
+    // Create audit logs before updating
+    await transactionAuditService.createAuditLogs(
+      id,
+      (req as any).session.userId,
+      existingTransaction,
+      updateData
+    );
+
     // Update transaction
     const transaction = await prisma.transaction.update({
       where: { id },
@@ -653,6 +662,35 @@ router.delete('/:id', requireAuth, async (req, res) => {
     return res.status(500).json({
       success: false,
       error: 'An error occurred while deleting transaction',
+    });
+  }
+});
+
+// GET /api/transactions/:id/audit-log - Get audit log for a transaction
+router.get('/:id/audit-log', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Validate UUID format
+    if (!z.string().uuid().safeParse(id).success) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid transaction ID format',
+      });
+    }
+
+    // Get audit logs (no need to check if transaction exists - audit logs may exist after deletion)
+    const auditLogs = await transactionAuditService.getAuditLogs(id);
+
+    return res.json({
+      success: true,
+      auditLogs,
+    });
+  } catch (error) {
+    console.error('Get audit log error:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'An error occurred while fetching audit log',
     });
   }
 });
