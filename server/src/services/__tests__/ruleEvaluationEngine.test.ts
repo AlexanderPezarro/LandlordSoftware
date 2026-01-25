@@ -1027,4 +1027,374 @@ describe('Rule Evaluation Engine', () => {
       expect(result.matchedRules).toEqual(['rule_001', 'rule_002', 'rule_003']);
     });
   });
+
+  describe('Invalid/Unrecognized values', () => {
+    it('should handle invalid matchType gracefully', () => {
+      const transaction = createMockTransaction({
+        description: 'Test Transaction',
+      });
+      const rule = createMockRule({
+        conditions: JSON.stringify({
+          operator: 'AND',
+          rules: [{ field: 'description', matchType: 'invalidType', value: 'test' }],
+        }),
+        propertyId: 'prop_001',
+      });
+
+      const result = evaluateRules(transaction, [rule]);
+
+      // Should not match with invalid matchType
+      expect(result.propertyId).toBeUndefined();
+      expect(result.matchedRules).toEqual([]);
+    });
+
+    it('should handle invalid field gracefully', () => {
+      const transaction = createMockTransaction({
+        description: 'Test Transaction',
+      });
+      const rule = createMockRule({
+        conditions: JSON.stringify({
+          operator: 'AND',
+          rules: [{ field: 'invalidField', matchType: 'contains', value: 'test' }],
+        }),
+        propertyId: 'prop_001',
+      });
+
+      const result = evaluateRules(transaction, [rule]);
+
+      // Should not match with invalid field
+      expect(result.propertyId).toBeUndefined();
+      expect(result.matchedRules).toEqual([]);
+    });
+
+    it('should handle invalid string matchType in evaluateStringMatch', () => {
+      const transaction = createMockTransaction({
+        description: 'Test Transaction',
+      });
+      const rule = createMockRule({
+        conditions: JSON.stringify({
+          operator: 'AND',
+          rules: [{ field: 'description', matchType: 'invalidStringMatch', value: 'test' }],
+        }),
+        propertyId: 'prop_001',
+      });
+
+      const result = evaluateRules(transaction, [rule]);
+
+      // Should not match with invalid matchType
+      expect(result.propertyId).toBeUndefined();
+      expect(result.matchedRules).toEqual([]);
+    });
+
+    it('should handle invalid numeric matchType in evaluateNumericMatch', () => {
+      const transaction = createMockTransaction({
+        amount: 100.00,
+      });
+      const rule = createMockRule({
+        conditions: JSON.stringify({
+          operator: 'AND',
+          rules: [{ field: 'amount', matchType: 'invalidNumericMatch', value: 50 }],
+        }),
+        propertyId: 'prop_001',
+      });
+
+      const result = evaluateRules(transaction, [rule]);
+
+      // Should not match with invalid matchType
+      expect(result.propertyId).toBeUndefined();
+      expect(result.matchedRules).toEqual([]);
+    });
+  });
+
+  describe('OR operator with empty rules', () => {
+    it('should return false for OR operator with empty rules array', () => {
+      const transaction = createMockTransaction();
+      const rule = createMockRule({
+        conditions: JSON.stringify({
+          operator: 'OR',
+          rules: [],
+        }),
+        propertyId: 'prop_001',
+      });
+
+      const result = evaluateRules(transaction, [rule]);
+
+      // Empty rules array with OR should not match
+      expect(result.propertyId).toBeUndefined();
+      expect(result.matchedRules).toEqual([]);
+    });
+  });
+
+  describe('Combined AND/OR with all match types', () => {
+    it('should handle OR with all string match types', () => {
+      const transaction = createMockTransaction({
+        description: 'Payment received',
+        counterpartyName: 'John Doe',
+        reference: 'RENT-2024',
+        merchant: null,
+      });
+
+      const rule = createMockRule({
+        conditions: JSON.stringify({
+          operator: 'OR',
+          rules: [
+            { field: 'description', matchType: 'equals', value: 'no match' },
+            { field: 'counterpartyName', matchType: 'startsWith', value: 'john' },
+            { field: 'reference', matchType: 'endsWith', value: '2025' },
+          ],
+        }),
+        propertyId: 'prop_001',
+      });
+
+      const result = evaluateRules(transaction, [rule]);
+
+      // Should match because counterpartyName starts with 'john'
+      expect(result.propertyId).toBe('prop_001');
+      expect(result.matchedRules).toEqual(['rule_test_001']);
+    });
+
+    it('should handle AND with mixed string and numeric conditions', () => {
+      const transaction = createMockTransaction({
+        description: 'Large Rent Payment',
+        amount: 2500.00,
+      });
+
+      const rule = createMockRule({
+        conditions: JSON.stringify({
+          operator: 'AND',
+          rules: [
+            { field: 'description', matchType: 'startsWith', value: 'large' },
+            { field: 'description', matchType: 'endsWith', value: 'payment' },
+            { field: 'description', matchType: 'contains', value: 'rent' },
+            { field: 'amount', matchType: 'greaterThan', value: 2000 },
+          ],
+        }),
+        propertyId: 'prop_001',
+        type: 'INCOME',
+        category: 'rent_received',
+      });
+
+      const result = evaluateRules(transaction, [rule]);
+
+      expect(result.isFullyMatched).toBe(true);
+      expect(result.propertyId).toBe('prop_001');
+      expect(result.type).toBe('INCOME');
+      expect(result.category).toBe('rent_received');
+    });
+  });
+
+  describe('Additional edge cases for complete coverage', () => {
+    it('should handle case sensitivity with all string match types', () => {
+      const transaction = createMockTransaction({
+        description: 'Coffee Shop',
+      });
+
+      // Test case-sensitive equals
+      const ruleEquals = createMockRule({
+        id: 'rule_equals',
+        conditions: JSON.stringify({
+          operator: 'AND',
+          rules: [{ field: 'description', matchType: 'equals', value: 'Coffee Shop', caseSensitive: true }],
+        }),
+        propertyId: 'prop_001',
+      });
+
+      const resultEquals = evaluateRules(transaction, [ruleEquals]);
+      expect(resultEquals.propertyId).toBe('prop_001');
+
+      // Test case-sensitive startsWith
+      const ruleStartsWith = createMockRule({
+        id: 'rule_starts',
+        conditions: JSON.stringify({
+          operator: 'AND',
+          rules: [{ field: 'description', matchType: 'startsWith', value: 'Coffee', caseSensitive: true }],
+        }),
+        type: 'EXPENSE',
+      });
+
+      const resultStartsWith = evaluateRules(transaction, [ruleStartsWith]);
+      expect(resultStartsWith.type).toBe('EXPENSE');
+
+      // Test case-sensitive endsWith
+      const ruleEndsWith = createMockRule({
+        id: 'rule_ends',
+        conditions: JSON.stringify({
+          operator: 'AND',
+          rules: [{ field: 'description', matchType: 'endsWith', value: 'Shop', caseSensitive: true }],
+        }),
+        category: 'retail',
+      });
+
+      const resultEndsWith = evaluateRules(transaction, [ruleEndsWith]);
+      expect(resultEndsWith.category).toBe('retail');
+    });
+
+    it('should handle boundary values for numeric comparisons', () => {
+      const transaction = createMockTransaction({
+        amount: 0.01,
+      });
+
+      // Test boundary: amount exactly 0.01, greaterThan 0
+      const ruleGT = createMockRule({
+        conditions: JSON.stringify({
+          operator: 'AND',
+          rules: [{ field: 'amount', matchType: 'greaterThan', value: 0 }],
+        }),
+        type: 'INCOME',
+      });
+
+      const resultGT = evaluateRules(transaction, [ruleGT]);
+      expect(resultGT.type).toBe('INCOME');
+
+      // Test boundary: amount exactly 0.01, lessThan 1
+      const ruleLT = createMockRule({
+        conditions: JSON.stringify({
+          operator: 'AND',
+          rules: [{ field: 'amount', matchType: 'lessThan', value: 1 }],
+        }),
+        category: 'small_transaction',
+      });
+
+      const resultLT = evaluateRules(transaction, [ruleLT]);
+      expect(resultLT.category).toBe('small_transaction');
+    });
+
+    it('should handle negative amounts with comparisons', () => {
+      const transaction = createMockTransaction({
+        amount: -500.00,
+      });
+
+      const rules = [
+        createMockRule({
+          id: 'rule_001',
+          priority: 0,
+          conditions: JSON.stringify({
+            operator: 'AND',
+            rules: [
+              { field: 'amount', matchType: 'lessThan', value: 0 },
+              { field: 'amount', matchType: 'greaterThan', value: -1000 },
+            ],
+          }),
+          type: 'EXPENSE',
+          category: 'moderate_expense',
+        }),
+      ];
+
+      const result = evaluateRules(transaction, rules);
+      expect(result.type).toBe('EXPENSE');
+      expect(result.category).toBe('moderate_expense');
+    });
+
+    it('should handle empty string values in matching', () => {
+      const transaction = createMockTransaction({
+        description: '',
+      });
+
+      const rule = createMockRule({
+        conditions: JSON.stringify({
+          operator: 'AND',
+          rules: [{ field: 'description', matchType: 'equals', value: '' }],
+        }),
+        propertyId: 'prop_001',
+      });
+
+      const result = evaluateRules(transaction, [rule]);
+      expect(result.propertyId).toBe('prop_001');
+    });
+
+    it('should handle whitespace in string matching', () => {
+      const transaction = createMockTransaction({
+        description: '  Rent Payment  ',
+      });
+
+      const rule = createMockRule({
+        conditions: JSON.stringify({
+          operator: 'AND',
+          rules: [{ field: 'description', matchType: 'contains', value: 'rent payment' }],
+        }),
+        propertyId: 'prop_001',
+      });
+
+      const result = evaluateRules(transaction, [rule]);
+      expect(result.propertyId).toBe('prop_001');
+    });
+
+    it('should handle multiple conditions with OR where all match', () => {
+      const transaction = createMockTransaction({
+        description: 'Coffee Shop Payment',
+      });
+
+      const rule = createMockRule({
+        conditions: JSON.stringify({
+          operator: 'OR',
+          rules: [
+            { field: 'description', matchType: 'contains', value: 'coffee' },
+            { field: 'description', matchType: 'contains', value: 'payment' },
+          ],
+        }),
+        propertyId: 'prop_001',
+      });
+
+      const result = evaluateRules(transaction, [rule]);
+      // Should still match even though both conditions are true
+      expect(result.propertyId).toBe('prop_001');
+    });
+
+    it('should handle rules with only some fields set', () => {
+      const transaction = createMockTransaction({
+        description: 'Test',
+      });
+
+      const rules = [
+        createMockRule({
+          id: 'rule_001',
+          priority: 0,
+          conditions: JSON.stringify({
+            operator: 'AND',
+            rules: [{ field: 'description', matchType: 'contains', value: 'test' }],
+          }),
+          propertyId: 'prop_001',
+          type: null,
+          category: null,
+        }),
+        createMockRule({
+          id: 'rule_002',
+          priority: 1,
+          conditions: JSON.stringify({
+            operator: 'AND',
+            rules: [{ field: 'description', matchType: 'contains', value: 'test' }],
+          }),
+          propertyId: null,
+          type: 'EXPENSE',
+          category: null,
+        }),
+      ];
+
+      const result = evaluateRules(transaction, rules);
+      expect(result.propertyId).toBe('prop_001');
+      expect(result.type).toBe('EXPENSE');
+      expect(result.category).toBeUndefined();
+      expect(result.isFullyMatched).toBe(false);
+    });
+
+    it('should handle decimal amounts in comparisons', () => {
+      const transaction = createMockTransaction({
+        amount: 123.45,
+      });
+
+      const rule = createMockRule({
+        conditions: JSON.stringify({
+          operator: 'AND',
+          rules: [
+            { field: 'amount', matchType: 'greaterThan', value: 123.44 },
+            { field: 'amount', matchType: 'lessThan', value: 123.46 },
+          ],
+        }),
+        category: 'precise_amount',
+      });
+
+      const result = evaluateRules(transaction, [rule]);
+      expect(result.category).toBe('precise_amount');
+    });
+  });
 });
