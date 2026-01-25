@@ -4,11 +4,11 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  CircularProgress,
+  FormHelperText,
   SelectChangeEvent,
 } from '@mui/material';
-import { PropertySelectorProps } from '../../types/component.types';
 import { useProperties } from '../../contexts/PropertiesContext';
+import type { PropertySelectorProps } from '../../types/component.types';
 
 const PropertySelector: React.FC<PropertySelectorProps> = ({
   value,
@@ -16,6 +16,7 @@ const PropertySelector: React.FC<PropertySelectorProps> = ({
   includeAllOption = true,
   disabled = false,
 }) => {
+  // Use context instead of local state and fetch
   const { properties, loading, error } = useProperties();
 
   const handleChange = (event: SelectChangeEvent) => {
@@ -23,7 +24,7 @@ const PropertySelector: React.FC<PropertySelectorProps> = ({
   };
 
   return (
-    <FormControl fullWidth size="small">
+    <FormControl fullWidth size="small" error={!!error}>
       <InputLabel id="property-selector-label">Property</InputLabel>
       <Select
         labelId="property-selector-label"
@@ -36,19 +37,14 @@ const PropertySelector: React.FC<PropertySelectorProps> = ({
         {includeAllOption && (
           <MenuItem value="all">All Properties</MenuItem>
         )}
+        {/* Empty string is a valid value that parent components may pass.
+            Display a placeholder when includeAllOption is false and value is empty. */}
         {!includeAllOption && value === '' && (
           <MenuItem value="" disabled>
             Select a property
           </MenuItem>
         )}
-        {loading ? (
-          <MenuItem disabled>
-            <CircularProgress size={20} sx={{ mr: 1 }} />
-            Loading properties...
-          </MenuItem>
-        ) : error ? (
-          <MenuItem disabled>Failed to load properties</MenuItem>
-        ) : properties.length === 0 ? (
+        {properties.length === 0 ? (
           <MenuItem disabled>No properties available</MenuItem>
         ) : (
           properties.map((property) => (
@@ -58,6 +54,7 @@ const PropertySelector: React.FC<PropertySelectorProps> = ({
           ))
         )}
       </Select>
+      {error && <FormHelperText>{error}</FormHelperText>}
     </FormControl>
   );
 };

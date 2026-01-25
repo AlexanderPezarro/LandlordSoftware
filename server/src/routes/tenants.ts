@@ -92,8 +92,8 @@ router.get('/:id', requireAuth, async (req, res) => {
   }
 });
 
-// POST /api/tenants - Create tenant (requires write permission)
-router.post('/', requireAuth, requireWrite(), async (req, res) => {
+// POST /api/tenants - Create tenant (requires auth + write permission)
+router.post('/', requireAuth, requireWrite, async (req, res) => {
   try {
     // Validate request body
     const validationResult = CreateTenantSchema.safeParse(req.body);
@@ -125,8 +125,8 @@ router.post('/', requireAuth, requireWrite(), async (req, res) => {
   }
 });
 
-// PUT /api/tenants/:id - Update tenant (requires write permission)
-router.put('/:id', requireAuth, requireWrite(), async (req, res) => {
+// PUT /api/tenants/:id - Update tenant (requires auth + write permission)
+router.put('/:id', requireAuth, requireWrite, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -185,8 +185,8 @@ router.put('/:id', requireAuth, requireWrite(), async (req, res) => {
   }
 });
 
-// DELETE /api/tenants/:id - Soft delete to 'Former' status (requires write permission)
-router.delete('/:id', requireAuth, requireWrite(), async (req, res) => {
+// DELETE /api/tenants/:id - Soft delete to 'Former' status (requires auth + write permission)
+router.delete('/:id', requireAuth, requireWrite, async (req, res) => {
   try {
     const { id } = req.params;
 

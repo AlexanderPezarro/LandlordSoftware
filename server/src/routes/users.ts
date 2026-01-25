@@ -10,7 +10,7 @@ import { CreateUserSchema, UpdateUserRoleSchema } from '../../../shared/validati
 const router = Router();
 
 // GET /api/users - List all users
-router.get('/', requireAuth, requireAdmin(), async (_req, res) => {
+router.get('/', requireAuth, requireAdmin, async (_req, res) => {
   try {
     const users = await prisma.user.findMany({
       select: { id: true, email: true, role: true, createdAt: true },
@@ -27,7 +27,7 @@ router.get('/', requireAuth, requireAdmin(), async (_req, res) => {
 });
 
 // POST /api/users - Create new user
-router.post('/', requireAuth, requireAdmin(), async (req, res) => {
+router.post('/', requireAuth, requireAdmin, async (req, res) => {
   try {
     const result = CreateUserSchema.safeParse(req.body);
     if (!result.success) {
@@ -57,7 +57,7 @@ router.post('/', requireAuth, requireAdmin(), async (req, res) => {
 });
 
 // DELETE /api/users/:id - Delete user
-router.delete('/:id', requireAuth, requireAdmin(), async (req, res) => {
+router.delete('/:id', requireAuth, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -91,7 +91,7 @@ router.delete('/:id', requireAuth, requireAdmin(), async (req, res) => {
 });
 
 // PUT /api/users/:id/role - Change user role
-router.put('/:id/role', requireAuth, requireAdmin(), async (req, res) => {
+router.put('/:id/role', requireAuth, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
 

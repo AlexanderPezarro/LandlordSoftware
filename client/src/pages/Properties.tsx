@@ -111,6 +111,7 @@ export const Properties: React.FC = () => {
       // Fetch all properties
       const fetchedProperties = await propertiesService.getProperties();
 
+      // If no properties, no need to fetch leases
       if (fetchedProperties.length === 0) {
         setProperties([]);
         return;
@@ -125,8 +126,8 @@ export const Properties: React.FC = () => {
 
       // Match leases to properties client-side
       const propertiesWithLeases = fetchedProperties.map(property => {
-        const activeLease = allLeases.find(lease =>
-          lease.propertyId === property.id && lease.status === 'Active'
+        const activeLease = allLeases.find(
+          lease => lease.propertyId === property.id && lease.status === 'Active'
         );
         return {
           ...property,

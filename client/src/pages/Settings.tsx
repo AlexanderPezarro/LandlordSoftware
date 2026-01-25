@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Typography,
@@ -7,6 +7,16 @@ import {
   Paper,
   TextField,
   CircularProgress,
+  Divider,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  FormHelperText,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
   Alert,
   Table,
   TableBody,
@@ -15,16 +25,6 @@ import {
   TableHead,
   TableRow,
   IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Divider,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  FormHelperText,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -34,10 +34,10 @@ import {
 import { usersService, UserListItem } from '../services/api/users.service';
 import { bankService } from '../services/api/bank.service';
 import { ApiError } from '../types/api.types';
-import ConfirmDialog from '../components/shared/ConfirmDialog';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
 import { ImportProgressDialog } from '../components/bank/ImportProgressDialog';
+import ConfirmDialog from '../components/shared/ConfirmDialog';
 
 export const Settings: React.FC = () => {
   const toast = useToast();
@@ -305,7 +305,7 @@ export const Settings: React.FC = () => {
         </Typography>
 
         {/* Change Password Section */}
-        <Paper sx={{ p: 3, mb: 4 }}>
+        <Paper sx={{ p: 3 }}>
           <Typography variant="h6" gutterBottom>
             Change Password
           </Typography>

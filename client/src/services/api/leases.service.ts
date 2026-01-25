@@ -19,10 +19,13 @@ export const leasesService = {
 
     if (filters?.propertyId) {
       // Handle both single and array property IDs
-      const propertyIds = Array.isArray(filters.propertyId)
-        ? filters.propertyId
-        : [filters.propertyId];
-      propertyIds.forEach(id => params.append('property_id', id));
+      if (Array.isArray(filters.propertyId)) {
+        filters.propertyId.forEach(id => {
+          params.append('property_id', id);
+        });
+      } else {
+        params.append('property_id', filters.propertyId);
+      }
     }
 
     if (filters?.tenantId) {
@@ -33,7 +36,7 @@ export const leasesService = {
       params.append('status', filters.status);
     }
 
-    const response = await api.get<LeasesResponse>('/leases', { params });
+    const response = await api.get<LeasesResponse>(`/leases?${params.toString()}`);
     return response.data.leases;
   },
 

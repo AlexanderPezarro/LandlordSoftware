@@ -50,6 +50,9 @@ RUN apt-get update -qq && \
 # Copy built application
 COPY --from=build /app /app
 
+# Make entrypoint executable
+RUN chmod +x /app/docker-entrypoint.js
+
 # Setup sqlite3 on a separate volume
 RUN mkdir -p /data
 VOLUME /data

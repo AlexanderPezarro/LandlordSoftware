@@ -143,7 +143,7 @@ describe('Permissions Middleware', () => {
   describe('requireWrite', () => {
     it('should allow ADMIN users', () => {
       mockReq.user = { id: '1', role: Roles.ADMIN };
-      const middleware = requireWrite();
+      const middleware = requireWrite;
       middleware(mockReq as Request, mockRes as Response, mockNext);
 
       expect(mockNext).toHaveBeenCalled();
@@ -152,7 +152,7 @@ describe('Permissions Middleware', () => {
 
     it('should allow LANDLORD users', () => {
       mockReq.user = { id: '2', role: Roles.LANDLORD };
-      const middleware = requireWrite();
+      const middleware = requireWrite;
       middleware(mockReq as Request, mockRes as Response, mockNext);
 
       expect(mockNext).toHaveBeenCalled();
@@ -161,7 +161,7 @@ describe('Permissions Middleware', () => {
 
     it('should block VIEWER users', () => {
       mockReq.user = { id: '3', role: Roles.VIEWER };
-      const middleware = requireWrite();
+      const middleware = requireWrite;
       middleware(mockReq as Request, mockRes as Response, mockNext);
 
       expect(statusMock).toHaveBeenCalledWith(403);
@@ -173,7 +173,7 @@ describe('Permissions Middleware', () => {
     });
 
     it('should return 401 for unauthenticated users', () => {
-      const middleware = requireWrite();
+      const middleware = requireWrite;
       middleware(mockReq as Request, mockRes as Response, mockNext);
 
       expect(statusMock).toHaveBeenCalledWith(401);
@@ -188,7 +188,7 @@ describe('Permissions Middleware', () => {
   describe('requireAdmin', () => {
     it('should allow ADMIN users', () => {
       mockReq.user = { id: '1', role: Roles.ADMIN };
-      const middleware = requireAdmin();
+      const middleware = requireAdmin;
       middleware(mockReq as Request, mockRes as Response, mockNext);
 
       expect(mockNext).toHaveBeenCalled();
@@ -197,7 +197,7 @@ describe('Permissions Middleware', () => {
 
     it('should block LANDLORD users', () => {
       mockReq.user = { id: '2', role: Roles.LANDLORD };
-      const middleware = requireAdmin();
+      const middleware = requireAdmin;
       middleware(mockReq as Request, mockRes as Response, mockNext);
 
       expect(statusMock).toHaveBeenCalledWith(403);
@@ -210,7 +210,7 @@ describe('Permissions Middleware', () => {
 
     it('should block VIEWER users', () => {
       mockReq.user = { id: '3', role: Roles.VIEWER };
-      const middleware = requireAdmin();
+      const middleware = requireAdmin;
       middleware(mockReq as Request, mockRes as Response, mockNext);
 
       expect(statusMock).toHaveBeenCalledWith(403);
@@ -222,7 +222,7 @@ describe('Permissions Middleware', () => {
     });
 
     it('should return 401 for unauthenticated users', () => {
-      const middleware = requireAdmin();
+      const middleware = requireAdmin;
       middleware(mockReq as Request, mockRes as Response, mockNext);
 
       expect(statusMock).toHaveBeenCalledWith(401);

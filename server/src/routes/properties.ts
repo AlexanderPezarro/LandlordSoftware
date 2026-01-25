@@ -96,8 +96,8 @@ router.get('/:id', requireAuth, async (req, res) => {
   }
 });
 
-// POST /api/properties - Create property (requires auth and write permission)
-router.post('/', requireAuth, requireWrite(), async (req, res) => {
+// POST /api/properties - Create property (requires auth + write permission)
+router.post('/', requireAuth, requireWrite, async (req, res) => {
   try {
     // Validate request body
     const validationResult = CreatePropertySchema.safeParse(req.body);
@@ -129,8 +129,8 @@ router.post('/', requireAuth, requireWrite(), async (req, res) => {
   }
 });
 
-// PUT /api/properties/:id - Update property (requires auth and write permission)
-router.put('/:id', requireAuth, requireWrite(), async (req, res) => {
+// PUT /api/properties/:id - Update property (requires auth + write permission)
+router.put('/:id', requireAuth, requireWrite, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -189,8 +189,8 @@ router.put('/:id', requireAuth, requireWrite(), async (req, res) => {
   }
 });
 
-// DELETE /api/properties/:id - Soft delete via status change (requires auth and write permission)
-router.delete('/:id', requireAuth, requireWrite(), async (req, res) => {
+// DELETE /api/properties/:id - Soft delete via status change (requires auth + write permission)
+router.delete('/:id', requireAuth, requireWrite, async (req, res) => {
   try {
     const { id } = req.params;
 
