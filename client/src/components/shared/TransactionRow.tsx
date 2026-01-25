@@ -28,22 +28,28 @@ const TransactionRow: React.FC<TransactionRowProps> = ({ transaction, onEdit, on
       <TableCell>{transaction.category}</TableCell>
       <TableCell>{formatAmount(transaction.amount, transaction.type)}</TableCell>
       <TableCell>
-        <Box sx={{ display: 'flex', gap: 0.5 }}>
-          <IconButton
-            size="small"
-            onClick={() => onEdit(transaction)}
-            aria-label="Edit transaction"
-          >
-            <EditIcon fontSize="small" />
-          </IconButton>
-          <IconButton
-            size="small"
-            onClick={() => onDelete(transaction)}
-            aria-label="Delete transaction"
-          >
-            <DeleteIcon fontSize="small" />
-          </IconButton>
-        </Box>
+        {(onEdit || onDelete) && (
+          <Box sx={{ display: 'flex', gap: 0.5 }}>
+            {onEdit && (
+              <IconButton
+                size="small"
+                onClick={() => onEdit(transaction)}
+                aria-label="Edit transaction"
+              >
+                <EditIcon fontSize="small" />
+              </IconButton>
+            )}
+            {onDelete && (
+              <IconButton
+                size="small"
+                onClick={() => onDelete(transaction)}
+                aria-label="Delete transaction"
+              >
+                <DeleteIcon fontSize="small" />
+              </IconButton>
+            )}
+          </Box>
+        )}
       </TableCell>
     </TableRow>
   );

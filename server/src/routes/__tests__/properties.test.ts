@@ -3,6 +3,7 @@ import request from 'supertest';
 import { createApp } from '../../app.js';
 import prisma from '../../db/client.js';
 import authService from '../../services/auth.service.js';
+import { Roles } from '../../../../shared/types/user.types.js';
 
 const app = createApp();
 
@@ -13,7 +14,25 @@ describe('Properties Routes', () => {
     password: 'testPassword123',
   };
 
+  const viewerUser = {
+    email: 'viewer@example.com',
+    password: 'viewerPassword123',
+  };
+
+  const landlordUser = {
+    email: 'landlord@example.com',
+    password: 'landlordPassword123',
+  };
+
+  const adminUser = {
+    email: 'admin@example.com',
+    password: 'adminPassword123',
+  };
+
   let authCookies: string[];
+  let viewerCookies: string[];
+  let landlordCookies: string[];
+  let adminCookies: string[];
 
   // Valid property data
   const validProperty = {
@@ -34,7 +53,7 @@ describe('Properties Routes', () => {
     await prisma.property.deleteMany({});
     await prisma.user.deleteMany({});
 
-    // Create test user and login
+    // Create test user and login (default LANDLORD role)
     await authService.createUser(testUser.email, testUser.password);
 
     const loginResponse = await request(app).post('/api/auth/login').send({
@@ -43,6 +62,36 @@ describe('Properties Routes', () => {
     });
 
     authCookies = [loginResponse.headers['set-cookie']];
+
+    // Create viewer user and login
+    await authService.createUser(viewerUser.email, viewerUser.password, Roles.VIEWER);
+
+    const viewerLoginResponse = await request(app).post('/api/auth/login').send({
+      email: viewerUser.email,
+      password: viewerUser.password,
+    });
+
+    viewerCookies = [viewerLoginResponse.headers['set-cookie']];
+
+    // Create landlord user and login
+    await authService.createUser(landlordUser.email, landlordUser.password, Roles.LANDLORD);
+
+    const landlordLoginResponse = await request(app).post('/api/auth/login').send({
+      email: landlordUser.email,
+      password: landlordUser.password,
+    });
+
+    landlordCookies = [landlordLoginResponse.headers['set-cookie']];
+
+    // Create admin user and login
+    await authService.createUser(adminUser.email, adminUser.password, Roles.ADMIN);
+
+    const adminLoginResponse = await request(app).post('/api/auth/login').send({
+      email: adminUser.email,
+      password: adminUser.password,
+    });
+
+    adminCookies = [adminLoginResponse.headers['set-cookie']];
   });
 
   afterAll(async () => {
@@ -235,11 +284,60 @@ describe('Properties Routes', () => {
         expect(response.body.property.postcode).toBe(postcode);
       }
     });
+
+    it('should block VIEWER role from creating properties', async () => {
+      const response = await request(app)
+        .post('/api/properties')
+        .set('Cookie', viewerCookies)
+        .send(validProperty);
+
+      expect(response.status).toBe(403);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toContain('Insufficient permissions');
+    });
+
+    it('should allow LANDLORD role to create properties', async () => {
+      const response = await request(app)
+        .post('/api/properties')
+        .set('Cookie', landlordCookies)
+        .send(validProperty);
+
+      expect(response.status).toBe(201);
+      expect(response.body.success).toBe(true);
+      expect(response.body.property).toMatchObject({
+        name: validProperty.name,
+        street: validProperty.street,
+      });
+    });
+
+    it('should allow ADMIN role to create properties', async () => {
+      const response = await request(app)
+        .post('/api/properties')
+        .set('Cookie', adminCookies)
+        .send(validProperty);
+
+      expect(response.status).toBe(201);
+      expect(response.body.success).toBe(true);
+      expect(response.body.property).toMatchObject({
+        name: validProperty.name,
+        street: validProperty.street,
+      });
+    });
   });
 
   describe('GET /api/properties', () => {
-    it('should return empty array when no properties exist', async () => {
+    it('should require authentication', async () => {
       const response = await request(app).get('/api/properties');
+
+      expect(response.status).toBe(401);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBe('Authentication required');
+    });
+
+    it('should return empty array when no properties exist', async () => {
+      const response = await request(app)
+        .get('/api/properties')
+        .set('Cookie', authCookies);
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -257,7 +355,9 @@ describe('Properties Routes', () => {
         },
       });
 
-      const response = await request(app).get('/api/properties');
+      const response = await request(app)
+        .get('/api/properties')
+        .set('Cookie', authCookies);
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -276,6 +376,7 @@ describe('Properties Routes', () => {
 
       const response = await request(app)
         .get('/api/properties')
+        .set('Cookie', authCookies)
         .query({ status: 'Available' });
 
       expect(response.status).toBe(200);
@@ -292,6 +393,7 @@ describe('Properties Routes', () => {
 
       const response = await request(app)
         .get('/api/properties')
+        .set('Cookie', authCookies)
         .query({ propertyType: 'House' });
 
       expect(response.status).toBe(200);
@@ -308,6 +410,7 @@ describe('Properties Routes', () => {
 
       const response = await request(app)
         .get('/api/properties')
+        .set('Cookie', authCookies)
         .query({ search: 'Sunny' });
 
       expect(response.status).toBe(200);
@@ -324,6 +427,7 @@ describe('Properties Routes', () => {
 
       const response = await request(app)
         .get('/api/properties')
+        .set('Cookie', authCookies)
         .query({ search: 'Oak' });
 
       expect(response.status).toBe(200);
@@ -340,6 +444,7 @@ describe('Properties Routes', () => {
 
       const response = await request(app)
         .get('/api/properties')
+        .set('Cookie', authCookies)
         .query({ search: 'Manchester' });
 
       expect(response.status).toBe(200);
@@ -366,6 +471,7 @@ describe('Properties Routes', () => {
 
       const response = await request(app)
         .get('/api/properties')
+        .set('Cookie', authCookies)
         .query({ status: 'Available', propertyType: 'Flat', search: 'Sunny' });
 
       expect(response.status).toBe(200);
@@ -377,6 +483,7 @@ describe('Properties Routes', () => {
     it('should reject invalid query parameters - invalid status', async () => {
       const response = await request(app)
         .get('/api/properties')
+        .set('Cookie', authCookies)
         .query({ status: 'InvalidStatus' });
 
       expect(response.status).toBe(400);
@@ -387,6 +494,7 @@ describe('Properties Routes', () => {
     it('should reject invalid query parameters - invalid propertyType', async () => {
       const response = await request(app)
         .get('/api/properties')
+        .set('Cookie', authCookies)
         .query({ propertyType: 'InvalidType' });
 
       expect(response.status).toBe(400);
@@ -396,10 +504,22 @@ describe('Properties Routes', () => {
   });
 
   describe('GET /api/properties/:id', () => {
-    it('should return property by id', async () => {
+    it('should require authentication', async () => {
       const property = await prisma.property.create({ data: validProperty });
 
       const response = await request(app).get(`/api/properties/${property.id}`);
+
+      expect(response.status).toBe(401);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBe('Authentication required');
+    });
+
+    it('should return property by id', async () => {
+      const property = await prisma.property.create({ data: validProperty });
+
+      const response = await request(app)
+        .get(`/api/properties/${property.id}`)
+        .set('Cookie', authCookies);
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -409,7 +529,9 @@ describe('Properties Routes', () => {
 
     it('should return 404 for non-existent property', async () => {
       const nonExistentId = '00000000-0000-0000-0000-000000000000';
-      const response = await request(app).get(`/api/properties/${nonExistentId}`);
+      const response = await request(app)
+        .get(`/api/properties/${nonExistentId}`)
+        .set('Cookie', authCookies);
 
       expect(response.status).toBe(404);
       expect(response.body.success).toBe(false);
@@ -417,7 +539,9 @@ describe('Properties Routes', () => {
     });
 
     it('should return 400 for invalid UUID format', async () => {
-      const response = await request(app).get('/api/properties/invalid-id');
+      const response = await request(app)
+        .get('/api/properties/invalid-id')
+        .set('Cookie', authCookies);
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
@@ -562,6 +686,45 @@ describe('Properties Routes', () => {
       const updatedAt = new Date(response.body.property.updatedAt);
       expect(updatedAt.getTime()).toBeGreaterThan(originalUpdatedAt.getTime());
     });
+
+    it('should block VIEWER role from updating properties', async () => {
+      const property = await prisma.property.create({ data: validProperty });
+
+      const response = await request(app)
+        .put(`/api/properties/${property.id}`)
+        .set('Cookie', viewerCookies)
+        .send({ name: 'Updated Name' });
+
+      expect(response.status).toBe(403);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toContain('Insufficient permissions');
+    });
+
+    it('should allow LANDLORD role to update properties', async () => {
+      const property = await prisma.property.create({ data: validProperty });
+
+      const response = await request(app)
+        .put(`/api/properties/${property.id}`)
+        .set('Cookie', landlordCookies)
+        .send({ name: 'Updated by Landlord' });
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.property.name).toBe('Updated by Landlord');
+    });
+
+    it('should allow ADMIN role to update properties', async () => {
+      const property = await prisma.property.create({ data: validProperty });
+
+      const response = await request(app)
+        .put(`/api/properties/${property.id}`)
+        .set('Cookie', adminCookies)
+        .send({ name: 'Updated by Admin' });
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.property.name).toBe('Updated by Admin');
+    });
   });
 
   describe('DELETE /api/properties/:id', () => {
@@ -630,6 +793,42 @@ describe('Properties Routes', () => {
       expect(response.body.success).toBe(true);
       expect(response.body.property.status).toBe('For Sale');
     });
+
+    it('should block VIEWER role from deleting properties', async () => {
+      const property = await prisma.property.create({ data: validProperty });
+
+      const response = await request(app)
+        .delete(`/api/properties/${property.id}`)
+        .set('Cookie', viewerCookies);
+
+      expect(response.status).toBe(403);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toContain('Insufficient permissions');
+    });
+
+    it('should allow LANDLORD role to delete properties', async () => {
+      const property = await prisma.property.create({ data: validProperty });
+
+      const response = await request(app)
+        .delete(`/api/properties/${property.id}`)
+        .set('Cookie', landlordCookies);
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.property.status).toBe('For Sale');
+    });
+
+    it('should allow ADMIN role to delete properties', async () => {
+      const property = await prisma.property.create({ data: validProperty });
+
+      const response = await request(app)
+        .delete(`/api/properties/${property.id}`)
+        .set('Cookie', adminCookies);
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.property.status).toBe('For Sale');
+    });
   });
 
   describe('Integration scenarios', () => {
@@ -644,7 +843,9 @@ describe('Properties Routes', () => {
       const propertyId = createResponse.body.property.id;
 
       // Read single
-      const readResponse = await request(app).get(`/api/properties/${propertyId}`);
+      const readResponse = await request(app)
+        .get(`/api/properties/${propertyId}`)
+        .set('Cookie', authCookies);
 
       expect(readResponse.status).toBe(200);
       expect(readResponse.body.property.id).toBe(propertyId);
@@ -667,7 +868,9 @@ describe('Properties Routes', () => {
       expect(deleteResponse.body.property.status).toBe('For Sale');
 
       // Verify still accessible
-      const finalReadResponse = await request(app).get(`/api/properties/${propertyId}`);
+      const finalReadResponse = await request(app)
+        .get(`/api/properties/${propertyId}`)
+        .set('Cookie', authCookies);
       expect(finalReadResponse.status).toBe(200);
       expect(finalReadResponse.body.property.status).toBe('For Sale');
     });
@@ -687,7 +890,9 @@ describe('Properties Routes', () => {
       }
 
       // List all
-      const listResponse = await request(app).get('/api/properties');
+      const listResponse = await request(app)
+        .get('/api/properties')
+        .set('Cookie', authCookies);
       expect(listResponse.status).toBe(200);
       expect(listResponse.body.properties).toHaveLength(5);
 
@@ -726,7 +931,9 @@ describe('Properties Routes', () => {
       expect(response2.body.property.id).not.toBe(response1.body.property.id);
 
       // Verify both exist in database
-      const listResponse = await request(app).get('/api/properties');
+      const listResponse = await request(app)
+        .get('/api/properties')
+        .set('Cookie', authCookies);
       expect(listResponse.status).toBe(200);
       expect(listResponse.body.properties).toHaveLength(2);
     });
@@ -738,6 +945,7 @@ describe('Properties Routes', () => {
       // Attempt SQL injection in search parameter
       const response = await request(app)
         .get('/api/properties')
+        .set('Cookie', authCookies)
         .query({ search: "' OR '1'='1" });
 
       expect(response.status).toBe(200);

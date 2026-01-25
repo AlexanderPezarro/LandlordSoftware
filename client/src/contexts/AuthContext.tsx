@@ -8,6 +8,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   isAdmin: () => boolean;
+  canWrite: () => boolean;
   login: (credentials: LoginRequest) => Promise<AuthResponse>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
@@ -102,11 +103,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return user?.role === 'ADMIN';
   }, [user]);
 
+  const canWrite = useCallback(() => {
+    return user?.role === 'ADMIN' || user?.role === 'LANDLORD';
+  }, [user]);
+
   const value: AuthContextType = {
     user,
     isAuthenticated: user !== null,
     isLoading,
     isAdmin,
+    canWrite,
     login,
     logout,
     checkAuth,

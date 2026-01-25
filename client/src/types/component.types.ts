@@ -22,8 +22,8 @@ export interface TenantCardProps {
 // TransactionRow Types
 export interface TransactionRowProps {
   transaction: Transaction;
-  onEdit: (transaction: Transaction) => void;
-  onDelete: (transaction: Transaction) => void;
+  onEdit?: (transaction: Transaction) => void;
+  onDelete?: (transaction: Transaction) => void;
 }
 
 // EventBadge Types

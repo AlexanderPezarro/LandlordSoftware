@@ -1,9 +1,9 @@
 ---
-name: writing-plans
+name: create-implementation-tree
 description: Use when you have a spec or requirements for a multi-step task, before touching code
 ---
 
-# Writing Plans
+# Creating implementation trees
 
 ## Overview
 
@@ -11,7 +11,7 @@ Create comprehensive beads for an implementation tree assuming the engineer has 
 
 Assume they are a skilled developer, but know almost nothing about our toolset or problem domain. Assume they don't know good test design very well.
 
-**Announce at start:** "I'm using the writing-plans skill to create the implementation tree as beads."
+**Announce at start:** "I'm using the create-implementation-tree skill to create the implementation tree as beads."
 
 **Context:** This should be run in a dedicated worktree (created by brainstorming skill).
 
@@ -164,7 +164,7 @@ bd dep add beads-abc123 beads-def456
 
 **Beads created. Ready for implementation.**
 
-Use **superpowers:subagent-driven-development** to execute:
+Use **subagent-driven-development** to execute:
 
 - Finds ready beads with `bd ready`
 - Dispatches implementer per bead
@@ -176,10 +176,10 @@ Use **superpowers:subagent-driven-development** to execute:
 
 **Required before this skill:**
 
-- **superpowers:brainstorming** - Creates design doc this skill uses
+- **brainstorming** - Creates design doc this skill uses
 - **superpowers:using-git-worktrees** - Creates isolated workspace
 
 **Used after this skill:**
 
-- **superpowers:subagent-driven-development** - Executes the beads
+- **subagent-driven-development** - Executes the beads
 - **superpowers:dispatching-parallel-agents** - Creates beads in parallel efficiently
