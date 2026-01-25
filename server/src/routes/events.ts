@@ -106,8 +106,8 @@ router.get('/:id', requireAuth, async (req, res) => {
   }
 });
 
-// POST /api/events - Create event (requires write permission)
-router.post('/', requireAuth, requireWrite(), async (req, res) => {
+// POST /api/events - Create event (requires auth + write permission)
+router.post('/', requireAuth, requireWrite, async (req, res) => {
   try {
     // Validate request body
     const validationResult = CreateEventSchema.safeParse(req.body);
@@ -139,8 +139,8 @@ router.post('/', requireAuth, requireWrite(), async (req, res) => {
   }
 });
 
-// PUT /api/events/:id - Update event (requires write permission)
-router.put('/:id', requireAuth, requireWrite(), async (req, res) => {
+// PUT /api/events/:id - Update event (requires auth + write permission)
+router.put('/:id', requireAuth, requireWrite, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -199,8 +199,8 @@ router.put('/:id', requireAuth, requireWrite(), async (req, res) => {
   }
 });
 
-// PATCH /api/events/:id/complete - Mark event as completed (requires write permission)
-router.patch('/:id/complete', requireAuth, requireWrite(), async (req, res) => {
+// PATCH /api/events/:id/complete - Mark event as completed (requires auth + write permission)
+router.patch('/:id/complete', requireAuth, requireWrite, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -246,8 +246,8 @@ router.patch('/:id/complete', requireAuth, requireWrite(), async (req, res) => {
   }
 });
 
-// DELETE /api/events/:id - Hard delete event (requires write permission)
-router.delete('/:id', requireAuth, requireWrite(), async (req, res) => {
+// DELETE /api/events/:id - Hard delete event (requires auth + write permission)
+router.delete('/:id', requireAuth, requireWrite, async (req, res) => {
   try {
     const { id } = req.params;
 

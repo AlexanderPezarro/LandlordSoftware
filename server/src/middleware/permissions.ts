@@ -35,7 +35,7 @@ export const requireRole = (requiredRole: Role) => {
 };
 
 // Require LANDLORD or ADMIN (no VIEWER)
-export const requireWrite = () => requireRole(Roles.LANDLORD);
+export const requireWrite = requireRole(Roles.LANDLORD);
 
 // Require ADMIN only
-export const requireAdmin = () => requireRole(Roles.ADMIN);
+export const requireAdmin = requireRole(Roles.ADMIN);
