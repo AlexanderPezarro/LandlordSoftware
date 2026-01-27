@@ -17,6 +17,7 @@ import transactionsRouter from './routes/transactions.js';
 import usersRouter from './routes/users.js';
 import propertyOwnershipRouter from './routes/propertyOwnership.routes.js';
 import settlementRouter from './routes/settlement.routes.js';
+import reportRouter from './routes/report.routes.js';
 
 // ES module __dirname equivalent
 const __filename = fileURLToPath(import.meta.url);
@@ -113,6 +114,9 @@ export function createApp() {
 
   // Settlement routes
   app.use('/api', settlementRouter);
+
+  // Report routes
+  app.use('/api', reportRouter);
 
   // Events routes
   app.use('/api/events', eventsRouter);
