@@ -230,6 +230,12 @@ export interface Transaction {
   lease?: Lease;
 }
 
+export interface TransactionSplit {
+  userId: string;
+  percentage: number;
+  amount: number;
+}
+
 export interface CreateTransactionRequest {
   propertyId: string;
   leaseId?: string | null;
@@ -238,6 +244,8 @@ export interface CreateTransactionRequest {
   amount: number;
   transactionDate: string;
   description?: string | null;
+  paidByUserId?: string | null;
+  splits?: TransactionSplit[];
 }
 
 export interface UpdateTransactionRequest {
@@ -248,6 +256,8 @@ export interface UpdateTransactionRequest {
   amount?: number;
   transactionDate?: string;
   description?: string | null;
+  paidByUserId?: string | null;
+  splits?: TransactionSplit[];
 }
 
 export interface TransactionFilters {
