@@ -3,11 +3,12 @@ import { requireAuth } from '../middleware/auth.js';
 import { requireWrite } from '../middleware/permissions.js';
 import prisma from '../db/client.js';
 import {
-  CreateTransactionSchema,
-  UpdateTransactionSchema,
   TransactionQueryParamsSchema,
+  TransactionWithSplitsSchema,
+  UpdateTransactionWithSplitsSchema,
 } from '../../../shared/validation/transaction.validation.js';
 import { z } from 'zod';
+import transactionService from '../services/transaction.service.js';
 
 const router = Router();
 
@@ -78,6 +79,22 @@ router.get('/', async (req, res) => {
       include: {
         property: true,
         lease: true,
+        splits: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                email: true,
+              },
+            },
+          },
+        },
+        paidBy: {
+          select: {
+            id: true,
+            email: true,
+          },
+        },
       },
       orderBy: { transactionDate: 'desc' },
     });
@@ -412,6 +429,22 @@ router.get('/:id', async (req, res) => {
       include: {
         property: true,
         lease: true,
+        splits: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                email: true,
+              },
+            },
+          },
+        },
+        paidBy: {
+          select: {
+            id: true,
+            email: true,
+          },
+        },
       },
     });
 
@@ -438,8 +471,8 @@ router.get('/:id', async (req, res) => {
 // POST /api/transactions - Create transaction (requires auth + write permission)
 router.post('/', requireAuth, requireWrite, async (req, res) => {
   try {
-    // Validate request body
-    const validationResult = CreateTransactionSchema.safeParse(req.body);
+    // Try to validate with TransactionWithSplitsSchema first (supports paidByUserId and splits)
+    const validationResult = TransactionWithSplitsSchema.safeParse(req.body);
 
     if (!validationResult.success) {
       return res.status(400).json({
@@ -483,10 +516,8 @@ router.post('/', requireAuth, requireWrite, async (req, res) => {
       }
     }
 
-    // Create transaction
-    const transaction = await prisma.transaction.create({
-      data: transactionData,
-    });
+    // Create transaction using service (handles splits and paidByUserId)
+    const transaction = await transactionService.createTransaction(transactionData);
 
     return res.status(201).json({
       success: true,
@@ -494,6 +525,17 @@ router.post('/', requireAuth, requireWrite, async (req, res) => {
     });
   } catch (error) {
     console.error('Create transaction error:', error);
+
+    // Handle specific error messages from service
+    if (error instanceof Error &&
+        (error.message.includes('not a property owner') ||
+         error.message.includes('paidByUserId must be a property owner'))) {
+      return res.status(400).json({
+        success: false,
+        error: error.message,
+      });
+    }
+
     return res.status(500).json({
       success: false,
       error: 'An error occurred while creating transaction',
@@ -514,11 +556,8 @@ router.put('/:id', requireAuth, requireWrite, async (req, res) => {
       });
     }
 
-    // Validate request body with id
-    const validationResult = UpdateTransactionSchema.safeParse({
-      id,
-      ...req.body,
-    });
+    // Use UpdateTransactionWithSplitsSchema for updates
+    const validationResult = UpdateTransactionWithSplitsSchema.safeParse(req.body);
 
     if (!validationResult.success) {
       return res.status(400).json({
@@ -539,11 +578,18 @@ router.put('/:id', requireAuth, requireWrite, async (req, res) => {
       });
     }
 
-    // Extract id from validated data and use rest for update
-    const { id: _, ...updateData } = validationResult.data;
+    const updateData = validationResult.data;
 
-    // Validate type/category match when only one is updated
-    if (updateData.type && !updateData.category) {
+    // Validate type/category match
+    if (updateData.type && updateData.category) {
+      // Both type and category are being updated, validate they match
+      if (!validateTypeCategoryMatch(updateData.type, updateData.category)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Category must match the transaction type',
+        });
+      }
+    } else if (updateData.type && !updateData.category) {
       // Only type is being updated, validate against existing category
       if (!validateTypeCategoryMatch(updateData.type, existingTransaction.category)) {
         return res.status(400).json({
@@ -596,11 +642,8 @@ router.put('/:id', requireAuth, requireWrite, async (req, res) => {
       }
     }
 
-    // Update transaction
-    const transaction = await prisma.transaction.update({
-      where: { id },
-      data: updateData,
-    });
+    // Update transaction using service (handles splits and paidByUserId)
+    const transaction = await transactionService.updateTransaction(id, updateData);
 
     return res.json({
       success: true,
@@ -608,6 +651,17 @@ router.put('/:id', requireAuth, requireWrite, async (req, res) => {
     });
   } catch (error) {
     console.error('Update transaction error:', error);
+
+    // Handle specific error messages from service
+    if (error instanceof Error &&
+        (error.message.includes('not a property owner') ||
+         error.message.includes('paidByUserId must be a property owner'))) {
+      return res.status(400).json({
+        success: false,
+        error: error.message,
+      });
+    }
+
     return res.status(500).json({
       success: false,
       error: 'An error occurred while updating transaction',

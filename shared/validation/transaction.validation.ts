@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { TransactionSplitsArraySchema } from './transactionSplit.validation.js';
 
 // Transaction Type Enum
 export const TransactionTypeSchema = z.enum(['Income', 'Expense']);
@@ -145,6 +146,52 @@ export const TransactionQueryParamsSchema = z.object({
   to_date: z.coerce.date().optional(),
 });
 
+// Transaction with splits schema (for create with paidByUserId and splits)
+export const TransactionWithSplitsSchema = z
+  .object({
+    ...baseTransactionSchema,
+    paidByUserId: z.string().uuid('Invalid user ID').nullable().optional(),
+    splits: TransactionSplitsArraySchema.optional(),
+  })
+  .refine(
+    (data) => {
+      // Validate that category matches the transaction type
+      if (data.type === 'Income') {
+        return ['Rent', 'Security Deposit', 'Late Fee', 'Lease Fee'].includes(data.category);
+      } else if (data.type === 'Expense') {
+        return [
+          'Maintenance',
+          'Repair',
+          'Utilities',
+          'Insurance',
+          'Property Tax',
+          'Management Fee',
+          'Legal Fee',
+          'Transport',
+          'Other',
+        ].includes(data.category);
+      }
+      return true;
+    },
+    {
+      message: 'Category must match the transaction type',
+      path: ['category'],
+    }
+  );
+
+// Update schema for transactions with splits (without refinements, so partial() works)
+export const UpdateTransactionWithSplitsSchema = z.object({
+  propertyId: z.string().uuid('Invalid property ID').optional(),
+  leaseId: z.string().uuid('Invalid lease ID').optional().nullable(),
+  type: TransactionTypeSchema.optional(),
+  category: TransactionCategorySchema.optional(),
+  amount: z.number().positive('Transaction amount must be positive').optional(),
+  transactionDate: z.coerce.date().optional(),
+  description: z.string().min(1, 'Description is required').optional(),
+  paidByUserId: z.string().uuid('Invalid user ID').nullable().optional(),
+  splits: TransactionSplitsArraySchema.optional(),
+});
+
 // Inferred TypeScript types
 export type TransactionType = z.infer<typeof TransactionTypeSchema>;
 export type IncomeCategory = z.infer<typeof IncomeCategorySchema>;
@@ -154,3 +201,5 @@ export type CreateTransaction = z.infer<typeof CreateTransactionSchema>;
 export type UpdateTransaction = z.infer<typeof UpdateTransactionSchema>;
 export type Transaction = z.infer<typeof TransactionSchema>;
 export type TransactionQueryParams = z.infer<typeof TransactionQueryParamsSchema>;
+export type TransactionWithSplits = z.infer<typeof TransactionWithSplitsSchema>;
+export type UpdateTransactionWithSplits = z.infer<typeof UpdateTransactionWithSplitsSchema>;

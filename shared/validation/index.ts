@@ -45,6 +45,8 @@ export {
   CreateTransactionSchema,
   UpdateTransactionSchema,
   TransactionSchema,
+  TransactionWithSplitsSchema,
+  UpdateTransactionWithSplitsSchema,
   type TransactionType,
   type IncomeCategory,
   type ExpenseCategory,
@@ -52,6 +54,8 @@ export {
   type CreateTransaction,
   type UpdateTransaction,
   type Transaction,
+  type TransactionWithSplits,
+  type UpdateTransactionWithSplits,
 } from './transaction.validation.js';
 
 // Event Validation
