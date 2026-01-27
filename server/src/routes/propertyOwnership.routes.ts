@@ -162,10 +162,7 @@ router.delete('/:id/owners/:userId', requireAuth, requireWrite, async (req, res)
 
     await propertyOwnershipService.removeOwner(propertyId, userId);
 
-    return res.json({
-      success: true,
-      message: 'Owner removed successfully',
-    });
+    return res.status(204).send();
   } catch (error) {
     console.error('Remove owner error:', error);
 

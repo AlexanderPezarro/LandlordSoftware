@@ -545,9 +545,7 @@ describe('Property Ownership Routes', () => {
         .delete(`/api/properties/${testProperty.id}/owners/${testUser1.id}`)
         .set('Cookie', authCookies);
 
-      expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(response.body.message).toBe('Owner removed successfully');
+      expect(response.status).toBe(204);
 
       // Verify deletion
       const ownership = await prisma.propertyOwnership.findUnique({
@@ -690,8 +688,7 @@ describe('Property Ownership Routes', () => {
         .delete(`/api/properties/${testProperty.id}/owners/${testUser1.id}`)
         .set('Cookie', authCookies);
 
-      expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
+      expect(response.status).toBe(204);
 
       // Verify only second owner remains
       const ownerships = await prisma.propertyOwnership.findMany({
