@@ -105,3 +105,31 @@ export {
   type Role,
   type ChangePassword,
 } from './user.validation.js';
+
+// Property Ownership Validation
+export {
+  PropertyOwnershipCreateSchema,
+  PropertyOwnershipUpdateSchema,
+  validateOwnershipSum,
+} from './propertyOwnership.validation.js';
+export type {
+  PropertyOwnershipCreate,
+  PropertyOwnershipUpdate,
+} from './propertyOwnership.validation.js';
+
+// Transaction Split Validation
+export {
+  TransactionSplitSchema,
+  TransactionSplitsArraySchema,
+} from './transactionSplit.validation.js';
+export type { TransactionSplit } from './transactionSplit.validation.js';
+
+// Settlement Validation
+export {
+  SettlementCreateSchema,
+  SettlementUpdateSchema,
+} from './settlement.validation.js';
+export type {
+  SettlementCreate,
+  SettlementUpdate,
+} from './settlement.validation.js';
