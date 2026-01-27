@@ -95,7 +95,9 @@ export const OwnershipSection: React.FC<OwnershipSectionProps> = ({
               key={index}
               userId={owner.userId}
               percentage={owner.percentage}
-              users={users}
+              users={users.filter(
+                (u) => u.id === owner.userId || !owners.some((o) => o.userId === u.id)
+              )}
               onUserChange={(userId) => handleUserChange(index, userId)}
               onPercentageChange={(percentage) => handlePercentageChange(index, percentage)}
               onRemove={() => handleRemoveOwner(index)}
