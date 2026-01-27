@@ -12,6 +12,7 @@ import {
   MenuItem,
   Alert,
   Box,
+  SelectChangeEvent,
 } from '@mui/material';
 import { settlementService } from '../../services/api/settlement.service';
 import { useToast } from '../../contexts/ToastContext';
@@ -76,18 +77,21 @@ export const SettlementForm: React.FC<SettlementFormProps> = ({
       toast.success('Settlement recorded successfully');
       onSuccess();
       onClose();
-    } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Failed to record settlement');
+    } catch (error) {
+      const apiError = error as { response?: { data?: { error: string } } };
+      toast.error(apiError.response?.data?.error || 'Failed to record settlement');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement> | SelectChangeEvent<string>
+  ) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
-      [name as string]: value,
+      [name as string]: value as string,
     });
   };
 
@@ -104,7 +108,7 @@ export const SettlementForm: React.FC<SettlementFormProps> = ({
               <Select
                 name="fromUserId"
                 value={formData.fromUserId}
-                onChange={handleChange as any}
+                onChange={handleChange}
                 label="From (Payer)"
               >
                 {owners.map((owner) => (
@@ -124,7 +128,7 @@ export const SettlementForm: React.FC<SettlementFormProps> = ({
               <Select
                 name="toUserId"
                 value={formData.toUserId}
-                onChange={handleChange as any}
+                onChange={handleChange}
                 label="To (Recipient)"
               >
                 {owners.map((owner) => (
