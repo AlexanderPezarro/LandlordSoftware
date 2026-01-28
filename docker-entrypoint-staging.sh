@@ -1,8 +1,11 @@
 #!/bin/sh
 set -e
 
+# Create Tailscale directories on persistent volume
+mkdir -p /data/tailscale /var/run/tailscale
+
 echo "[staging] Starting Tailscale daemon..."
-tailscaled --state=/var/lib/tailscale/tailscaled.state --socket=/var/run/tailscale/tailscaled.sock &
+tailscaled --state=/data/tailscale/tailscaled.state --socket=/var/run/tailscale/tailscaled.sock &
 
 # Wait for daemon to be ready
 sleep 5
