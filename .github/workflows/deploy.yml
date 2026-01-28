@@ -1,0 +1,62 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-base:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Set up Flyctl
+        uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Authenticate with Fly registry
+        run: flyctl auth docker
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      - name: Build and push base image
+        run: |
+          docker build --platform linux/amd64 \
+            -t registry.fly.io/landlordsoftware-base:latest \
+            -t registry.fly.io/landlordsoftware-base:${{ github.sha }} \
+            -f Dockerfile.base .
+          docker push registry.fly.io/landlordsoftware-base:latest
+          docker push registry.fly.io/landlordsoftware-base:${{ github.sha }}
+
+  deploy-staging:
+    needs: build-base
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Flyctl
+        uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Deploy to staging
+        run: flyctl deploy --config fly.staging.toml --dockerfile Dockerfile.staging
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+  deploy-production:
+    needs: deploy-staging
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://landlordsoftware.fly.dev
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Flyctl
+        uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Deploy to production
+        run: flyctl deploy --config fly.toml --dockerfile Dockerfile.production
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

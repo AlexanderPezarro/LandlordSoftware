@@ -1,16 +1,16 @@
-# fly.toml app configuration file generated for landlordsoftware on 2026-01-17T13:23:56Z
+# fly.toml app configuration file for staging environment
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'landlordsoftware'
+app = 'landlordsoftware-staging'
 primary_region = 'lhr'
 
 [build]
-  dockerfile = "Dockerfile.production"
+  dockerfile = "Dockerfile.staging"
 
 [[mounts]]
-  source = 'data'
+  source = 'landlordsoftware_staging_data'
   destination = '/data'
   auto_extend_size_threshold = 80
   auto_extend_size_increment = '1GB'

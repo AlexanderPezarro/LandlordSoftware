@@ -1,0 +1,19 @@
+# syntax = docker/dockerfile:1
+
+# Staging Dockerfile - extends base image with Tailscale
+
+FROM tailscale/tailscale:stable AS tailscale
+FROM registry.fly.io/landlordsoftware-base:latest
+
+# Copy Tailscale binaries
+COPY --from=tailscale /usr/local/bin/tailscaled /usr/local/bin/tailscaled
+COPY --from=tailscale /usr/local/bin/tailscale /usr/local/bin/tailscale
+
+# Create Tailscale directories
+RUN mkdir -p /var/run/tailscale /var/cache/tailscale /var/lib/tailscale
+
+# Copy staging entrypoint
+COPY docker-entrypoint-staging.sh /app/docker-entrypoint-staging.sh
+RUN chmod +x /app/docker-entrypoint-staging.sh
+
+ENTRYPOINT ["/app/docker-entrypoint-staging.sh"]
