@@ -68,7 +68,8 @@ jobs:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 
   deploy-production:
-    needs: deploy-staging
+    needs: [check-changes, build-base, deploy-staging]
+    if: always() && needs.check-changes.result == 'success' && needs.deploy-staging.result == 'success'
     runs-on: ubuntu-latest
     environment:
       name: production
