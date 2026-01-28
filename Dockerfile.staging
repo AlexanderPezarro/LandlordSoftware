@@ -5,6 +5,11 @@
 FROM tailscale/tailscale:stable AS tailscale
 FROM registry.fly.io/landlordsoftware-base:latest
 
+# Install CA certificates for HTTPS verification
+RUN apt-get update -qq && \
+    apt-get install --no-install-recommends -y ca-certificates && \
+    rm -rf /var/lib/apt/lists /var/cache/apt/archives
+
 # Copy Tailscale binaries
 COPY --from=tailscale /usr/local/bin/tailscaled /usr/local/bin/tailscaled
 COPY --from=tailscale /usr/local/bin/tailscale /usr/local/bin/tailscale
