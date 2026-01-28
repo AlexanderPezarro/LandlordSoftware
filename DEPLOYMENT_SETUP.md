@@ -414,6 +414,55 @@ flyctl logs --app landlordsoftware
 
 ---
 
+## Base Image Build Optimization
+
+The workflow is optimized to skip base image rebuilds when only application code changes.
+
+### When Base Image Rebuilds
+
+The base image rebuilds ONLY when these files change:
+- `package.json` or `package-lock.json` (server dependencies)
+- `client/package.json` or `client/package-lock.json` (client dependencies)
+- `prisma/schema.prisma` (database schema - requires Prisma client regeneration)
+- `Dockerfile.base` (build configuration)
+
+### When Base Image is Skipped
+
+Application code changes skip the base build:
+- `server/src/**` files (server code)
+- `client/src/**` files (client code)
+- `prisma/migrations/**` files (migrations run at startup, not build time)
+- Documentation changes
+- Configuration changes
+
+### Performance Impact
+
+- **With dependency changes:** ~8-10 min (full base image build)
+- **Without dependency changes:** ~2-3 min (uses existing base image)
+
+Most commits are application code changes, so you'll see significant time savings.
+
+### Checking Build Status
+
+In GitHub Actions, look for the `check-changes` job output:
+- "✓ Base image rebuild required - dependencies changed" → Base will rebuild
+- "✓ Skipping base image rebuild - no dependency changes" → Uses existing base
+
+### Manual Base Image Rebuild
+
+If you need to force a base image rebuild:
+
+```bash
+# Local rebuild and push
+flyctl auth docker
+docker build --platform linux/amd64 -t registry.fly.io/landlordsoftware-base:latest -f Dockerfile.base .
+docker push registry.fly.io/landlordsoftware-base:latest
+```
+
+Or make a trivial change to `Dockerfile.base` (add a comment) and push.
+
+---
+
 ## Next Steps
 
 After completing this setup:
