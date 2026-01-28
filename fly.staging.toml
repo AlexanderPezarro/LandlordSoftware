@@ -16,13 +16,8 @@ primary_region = 'lhr'
   auto_extend_size_increment = '1GB'
   auto_extend_size_limit = '10GB'
 
-[http_service]
-  internal_port = 3000
-  force_https = true
-  auto_stop_machines = 'stop'
-  auto_start_machines = true
-  min_machines_running = 0
-  processes = ['app']
+# No [http_service] - app is only accessible via Tailscale Serve
+# This prevents public internet access to staging
 
 [[vm]]
   memory = '512mb'
