@@ -13,11 +13,8 @@ sleep 5
 echo "[staging] Connecting to Tailnet..."
 tailscale up --authkey=${TAILSCALE_AUTHKEY} --hostname=landlordsoftware-staging
 
-echo "[staging] Exposing app via Tailscale Serve..."
-tailscale serve https / http://localhost:3000 &
-
-# Wait for Tailscale to be fully up
-sleep 2
+echo "[staging] Configuring Tailscale Serve..."
+tailscale serve https:443 / http://localhost:3000
 
 echo "[staging] Running database migrations..."
 npx prisma migrate deploy
