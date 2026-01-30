@@ -67,6 +67,30 @@ jobs:
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 
+      - name: Wait for staging deployment
+        run: sleep 10
+
+      - name: Health check staging
+        run: |
+          echo "Running health checks on staging..."
+          SUCCESS=0
+          for i in {1..5}; do
+            echo "Attempt $i/5..."
+            if curl -f -s -o /dev/null -w "%{http_code}" https://landlordsoftware-staging.fly.dev | grep -q "200"; then
+              echo "✓ Success"
+              SUCCESS=1
+              break
+            else
+              echo "✗ Failed, retrying in 5s..."
+              sleep 5
+            fi
+          done
+          if [ $SUCCESS -eq 0 ]; then
+            echo "Health check failed - staging is not responding"
+            exit 1
+          fi
+          echo "✓ Staging health check passed"
+
   deploy-production:
     needs: [check-changes, build-base, deploy-staging]
     if: always() && needs.check-changes.result == 'success' && needs.deploy-staging.result == 'success'
@@ -84,3 +108,27 @@ jobs:
         run: flyctl deploy --config fly.toml --dockerfile Dockerfile.production
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      - name: Wait for production deployment
+        run: sleep 10
+
+      - name: Health check production
+        run: |
+          echo "Running health checks on production..."
+          SUCCESS=0
+          for i in {1..5}; do
+            echo "Attempt $i/5..."
+            if curl -f -s -o /dev/null -w "%{http_code}" https://landlordsoftware.fly.dev | grep -q "200"; then
+              echo "✓ Success"
+              SUCCESS=1
+              break
+            else
+              echo "✗ Failed, retrying in 5s..."
+              sleep 5
+            fi
+          done
+          if [ $SUCCESS -eq 0 ]; then
+            echo "Health check failed - production is not responding"
+            exit 1
+          fi
+          echo "✓ Production health check passed"
