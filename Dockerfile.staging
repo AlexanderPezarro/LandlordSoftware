@@ -1,24 +1,12 @@
 # syntax = docker/dockerfile:1
 
-# Staging Dockerfile - extends base image with Tailscale
+# Staging Dockerfile - extends base image
 
-FROM tailscale/tailscale:stable AS tailscale
 FROM registry.fly.io/landlordsoftware-base:latest
 
-# Install CA certificates for HTTPS verification
-RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y ca-certificates && \
-    rm -rf /var/lib/apt/lists /var/cache/apt/archives
+# Copy production entrypoint (staging uses same entrypoint as production)
+COPY docker-entrypoint.js /app/docker-entrypoint.js
+RUN chmod +x /app/docker-entrypoint.js
 
-# Copy Tailscale binaries
-COPY --from=tailscale /usr/local/bin/tailscaled /usr/local/bin/tailscaled
-COPY --from=tailscale /usr/local/bin/tailscale /usr/local/bin/tailscale
-
-# Create Tailscale directories
-RUN mkdir -p /var/run/tailscale /var/cache/tailscale /var/lib/tailscale
-
-# Copy staging entrypoint
-COPY docker-entrypoint-staging.sh /app/docker-entrypoint-staging.sh
-RUN chmod +x /app/docker-entrypoint-staging.sh
-
-ENTRYPOINT ["/app/docker-entrypoint-staging.sh"]
+ENTRYPOINT ["/app/docker-entrypoint.js"]
+CMD ["npm", "run", "start"]
