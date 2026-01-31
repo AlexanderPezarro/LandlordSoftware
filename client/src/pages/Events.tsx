@@ -35,6 +35,7 @@ import PropertySelector from '../components/shared/PropertySelector';
 import DateRangePicker from '../components/shared/DateRangePicker';
 import ConfirmDialog from '../components/shared/ConfirmDialog';
 import EventBadge from '../components/shared/EventBadge';
+import { useAuth } from '../contexts/AuthContext';
 
 const locales = {
   'en-GB': enGB,
@@ -74,6 +75,7 @@ const EventComponent: React.FC<EventComponentProps> = ({ event }) => {
 export const Events: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const { canWrite } = useAuth();
 
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
@@ -288,14 +290,16 @@ export const Events: React.FC = () => {
           <Typography variant="h4" component="h1">
             Events Calendar
           </Typography>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleCreateEvent}
-            size={isMobile ? 'small' : 'medium'}
-          >
-            New Event
-          </Button>
+          {canWrite() && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleCreateEvent}
+              size={isMobile ? 'small' : 'medium'}
+            >
+              New Event
+            </Button>
+          )}
         </Box>
 
         {error && (
@@ -455,9 +459,9 @@ export const Events: React.FC = () => {
             setSelectedEvent(null);
           }}
           onSave={handleSaveEvent}
-          onDelete={handleDeleteClick}
-          onToggleComplete={handleToggleComplete}
-          onEdit={handleEditEvent}
+          onDelete={canWrite() ? handleDeleteClick : undefined}
+          onToggleComplete={canWrite() ? handleToggleComplete : undefined}
+          onEdit={canWrite() ? handleEditEvent : undefined}
         />
 
         <ConfirmDialog

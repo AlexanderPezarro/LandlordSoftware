@@ -33,6 +33,8 @@ import { ApiError } from '../types/api.types';
 import PropertyCard from '../components/shared/PropertyCard';
 import ConfirmDialog from '../components/shared/ConfirmDialog';
 import { useToast } from '../contexts/ToastContext';
+import { useAuth } from '../contexts/AuthContext';
+import { useProperties } from '../contexts/PropertiesContext';
 import type { PropertyWithLease } from '../types/component.types';
 
 type PropertyStatus = 'Available' | 'Occupied' | 'Under Maintenance' | 'For Sale';
@@ -72,6 +74,8 @@ export const Properties: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const { canWrite } = useAuth();
+  const { refetch: refetchPropertiesContext } = useProperties();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -236,6 +240,7 @@ export const Properties: React.FC = () => {
 
       handleCloseDialog();
       await fetchProperties();
+      await refetchPropertiesContext();
     } catch (err) {
       console.error('Error saving property:', err);
       const errorMessage = err instanceof ApiError ? err.message : 'Failed to save property';
@@ -264,6 +269,7 @@ export const Properties: React.FC = () => {
       setDeleteDialogOpen(false);
       setPropertyToDelete(null);
       await fetchProperties();
+      await refetchPropertiesContext();
     } catch (err) {
       console.error('Error deleting property:', err);
       const errorMessage = err instanceof ApiError ? err.message : 'Failed to delete property';
@@ -364,14 +370,16 @@ export const Properties: React.FC = () => {
           <Typography variant="h4" component="h1">
             Properties
           </Typography>
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<AddIcon />}
-            onClick={() => handleOpenDialog('create')}
-          >
-            Add Property
-          </Button>
+          {canWrite() && (
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<AddIcon />}
+              onClick={() => handleOpenDialog('create')}
+            >
+              Add Property
+            </Button>
+          )}
         </Box>
 
         {/* Search and Filters */}
@@ -443,14 +451,16 @@ export const Properties: React.FC = () => {
             <Typography variant="h6" color="text.secondary" gutterBottom>
               No properties found
             </Typography>
-            <Button
-              variant="outlined"
-              startIcon={<AddIcon />}
-              onClick={() => handleOpenDialog('create')}
-              sx={{ mt: 2 }}
-            >
-              Add First Property
-            </Button>
+            {canWrite() && (
+              <Button
+                variant="outlined"
+                startIcon={<AddIcon />}
+                onClick={() => handleOpenDialog('create')}
+                sx={{ mt: 2 }}
+              >
+                Add First Property
+              </Button>
+            )}
           </Box>
         ) : (
           <Box
@@ -469,8 +479,8 @@ export const Properties: React.FC = () => {
                 key={property.id}
                 property={property}
                 onClick={() => handlePropertyClick(property)}
-                onEdit={(e) => handleEditClick(property, e)}
-                onDelete={(e) => handleDeleteClick(property, e)}
+                onEdit={canWrite() ? (e) => handleEditClick(property, e) : undefined}
+                onDelete={canWrite() ? (e) => handleDeleteClick(property, e) : undefined}
               />
             ))}
           </Box>

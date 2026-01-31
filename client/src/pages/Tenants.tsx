@@ -23,6 +23,7 @@ import { ApiError } from '../types/api.types';
 import TenantCard from '../components/shared/TenantCard';
 import ConfirmDialog from '../components/shared/ConfirmDialog';
 import { useToast } from '../contexts/ToastContext';
+import { useAuth } from '../contexts/AuthContext';
 
 type TenantStatus = 'Prospective' | 'Active' | 'Former';
 
@@ -61,6 +62,7 @@ function a11yProps(index: number) {
 
 export const Tenants: React.FC = () => {
   const toast = useToast();
+  const { canWrite } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tenants, setTenants] = useState<TenantWithProperty[]>([]);
@@ -317,7 +319,7 @@ export const Tenants: React.FC = () => {
             key={tenant.id}
             tenant={tenant}
             currentProperty={tenant.currentProperty}
-            onClick={() => handleOpenDialog('edit', tenant)}
+            onClick={canWrite() ? () => handleOpenDialog('edit', tenant) : undefined}
           />
         ))}
       </Box>
@@ -354,14 +356,16 @@ export const Tenants: React.FC = () => {
           <Typography variant="h4" component="h1">
             Tenants
           </Typography>
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<AddIcon />}
-            onClick={() => handleOpenDialog('create')}
-          >
-            Add Tenant
-          </Button>
+          {canWrite() && (
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<AddIcon />}
+              onClick={() => handleOpenDialog('create')}
+            >
+              Add Tenant
+            </Button>
+          )}
         </Box>
 
         <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
@@ -471,7 +475,7 @@ export const Tenants: React.FC = () => {
           <Button onClick={handleCloseDialog} color="inherit">
             Cancel
           </Button>
-          {dialogMode === 'edit' && selectedTenant && (
+          {canWrite() && dialogMode === 'edit' && selectedTenant && (
             <Button
               onClick={() => handleDeleteClick(selectedTenant)}
               color="error"
@@ -480,9 +484,11 @@ export const Tenants: React.FC = () => {
               Delete
             </Button>
           )}
-          <Button onClick={handleSubmit} variant="contained" color="primary">
-            {dialogMode === 'create' ? 'Create' : 'Save'}
-          </Button>
+          {canWrite() && (
+            <Button onClick={handleSubmit} variant="contained" color="primary">
+              {dialogMode === 'create' ? 'Create' : 'Save'}
+            </Button>
+          )}
         </DialogActions>
       </Dialog>
 
