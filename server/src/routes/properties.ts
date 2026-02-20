@@ -8,7 +8,7 @@ import { z } from 'zod';
 const router = Router();
 
 // GET /api/properties - List properties with filtering
-router.get('/', async (req, res) => {
+router.get('/', requireAuth, async (req, res) => {
   try {
     // Validate query parameters
     const validationResult = PropertyQueryParamsSchema.safeParse(req.query);
@@ -60,7 +60,7 @@ router.get('/', async (req, res) => {
 });
 
 // GET /api/properties/:id - Get single property
-router.get('/:id', async (req, res) => {
+router.get('/:id', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
 

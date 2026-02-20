@@ -105,3 +105,37 @@ export {
   type Role,
   type ChangePassword,
 } from './user.validation.js';
+
+// BankAccount Validation
+export {
+  SyncStatusSchema,
+  UpdateBankAccountSchema,
+  BankAccountResponseSchema,
+  type SyncStatus,
+  type UpdateBankAccount,
+  type BankAccountResponse,
+} from './bankAccount.validation.js';
+
+// MatchingRule Validation
+export {
+  TransactionTypeSchema as MatchingRuleTransactionTypeSchema,
+  CreateMatchingRuleSchema,
+  UpdateMatchingRuleSchema,
+  MatchingRuleSchema,
+  ReorderRulesSchema,
+  TestRuleSchema,
+  type TransactionType as MatchingRuleTransactionType,
+  type CreateMatchingRule,
+  type UpdateMatchingRule,
+  type MatchingRule,
+  type ReorderRules,
+  type TestRule,
+} from './matchingRule.validation.js';
+
+// PendingTransaction Validation
+export {
+  bulkIdsSchema,
+  bulkUpdateSchema,
+  type BulkIds,
+  type BulkUpdate,
+} from './pendingTransaction.validation.js';
