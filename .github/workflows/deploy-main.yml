@@ -56,9 +56,6 @@ jobs:
     needs: [check-changes, build-base]
     if: always() && needs.check-changes.result == 'success' && (needs.build-base.result == 'success' || needs.build-base.result == 'skipped')
     runs-on: ubuntu-latest
-    environment:
-      name: production
-      url: https://landlordsoftware.fly.dev
     steps:
       - uses: actions/checkout@v4
 
