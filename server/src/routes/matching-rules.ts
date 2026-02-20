@@ -16,7 +16,7 @@ import type { BankTransaction } from '@prisma/client';
 const router = Router();
 
 // GET /api/bank/accounts/:accountId/rules - List all rules for a bank account
-router.get('/accounts/:accountId/rules', requireAuth, requireAdmin(), async (req, res) => {
+router.get('/accounts/:accountId/rules', requireAuth, requireAdmin, async (req, res) => {
   try {
     const { accountId } = req.params;
 
@@ -62,7 +62,7 @@ router.get('/accounts/:accountId/rules', requireAuth, requireAdmin(), async (req
 });
 
 // POST /api/bank/accounts/:accountId/rules - Create a new rule for a bank account
-router.post('/accounts/:accountId/rules', requireAuth, requireAdmin(), async (req, res) => {
+router.post('/accounts/:accountId/rules', requireAuth, requireAdmin, async (req, res) => {
   try {
     const { accountId } = req.params;
 
@@ -135,7 +135,7 @@ router.post('/accounts/:accountId/rules', requireAuth, requireAdmin(), async (re
 });
 
 // GET /api/bank/rules/:id - Get a single rule by ID
-router.get('/rules/:id', requireAuth, requireAdmin(), async (req, res) => {
+router.get('/rules/:id', requireAuth, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -172,7 +172,7 @@ router.get('/rules/:id', requireAuth, requireAdmin(), async (req, res) => {
 });
 
 // PUT /api/bank/rules/:id - Update a rule
-router.put('/rules/:id', requireAuth, requireAdmin(), async (req, res) => {
+router.put('/rules/:id', requireAuth, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -248,7 +248,7 @@ router.put('/rules/:id', requireAuth, requireAdmin(), async (req, res) => {
 });
 
 // DELETE /api/bank/rules/:id - Delete a rule
-router.delete('/rules/:id', requireAuth, requireAdmin(), async (req, res) => {
+router.delete('/rules/:id', requireAuth, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -307,7 +307,7 @@ router.delete('/rules/:id', requireAuth, requireAdmin(), async (req, res) => {
 });
 
 // POST /api/bank/rules/reorder - Reorder rules
-router.post('/rules/reorder', requireAuth, requireAdmin(), async (req, res) => {
+router.post('/rules/reorder', requireAuth, requireAdmin, async (req, res) => {
   try {
     // Validate request body
     const validationResult = ReorderRulesSchema.safeParse(req.body);
@@ -367,7 +367,7 @@ router.post('/rules/reorder', requireAuth, requireAdmin(), async (req, res) => {
 });
 
 // POST /api/bank/rules/:id/test - Test a rule against sample transaction
-router.post('/rules/:id/test', requireAuth, requireAdmin(), async (req, res) => {
+router.post('/rules/:id/test', requireAuth, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
 
