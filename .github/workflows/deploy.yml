@@ -1,0 +1,134 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  check-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      rebuild-base: ${{ steps.changes.outputs.rebuild }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check for dependency changes
+        id: changes
+        run: |
+          if git diff --name-only HEAD^ HEAD | grep -qE '^(package(-lock)?\.json|client/package(-lock)?\.json|prisma/schema\.prisma|Dockerfile\.base)$'; then
+            echo "rebuild=true" >> $GITHUB_OUTPUT
+            echo "✓ Base image rebuild required - dependencies changed"
+          else
+            echo "rebuild=false" >> $GITHUB_OUTPUT
+            echo "✓ Skipping base image rebuild - no dependency changes"
+          fi
+
+  build-base:
+    needs: check-changes
+    if: needs.check-changes.outputs.rebuild-base == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Set up Flyctl
+        uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Authenticate with Fly registry
+        run: flyctl auth docker
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      - name: Build and push base image
+        run: |
+          docker build --platform linux/amd64 \
+            -t registry.fly.io/landlordsoftware-base:latest \
+            -t registry.fly.io/landlordsoftware-base:${{ github.sha }} \
+            -f Dockerfile.base .
+          docker push registry.fly.io/landlordsoftware-base:latest
+          docker push registry.fly.io/landlordsoftware-base:${{ github.sha }}
+
+  deploy-staging:
+    needs: [check-changes, build-base]
+    if: always() && needs.check-changes.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Flyctl
+        uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Deploy to staging
+        run: flyctl deploy --config fly.staging.toml --dockerfile Dockerfile.staging
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      - name: Wait for staging deployment
+        run: sleep 10
+
+      - name: Health check staging
+        run: |
+          echo "Running health checks on staging..."
+          SUCCESS=0
+          for i in {1..5}; do
+            echo "Attempt $i/5..."
+            if curl -f -s -o /dev/null -w "%{http_code}" https://landlordsoftware-staging.fly.dev | grep -q "200"; then
+              echo "✓ Success"
+              SUCCESS=1
+              break
+            else
+              echo "✗ Failed, retrying in 5s..."
+              sleep 5
+            fi
+          done
+          if [ $SUCCESS -eq 0 ]; then
+            echo "Health check failed - staging is not responding"
+            exit 1
+          fi
+          echo "✓ Staging health check passed"
+
+  deploy-production:
+    needs: [check-changes, build-base, deploy-staging]
+    if: always() && needs.check-changes.result == 'success' && needs.deploy-staging.result == 'success'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://landlordsoftware.fly.dev
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Flyctl
+        uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Deploy to production
+        run: flyctl deploy --config fly.toml --dockerfile Dockerfile.production
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      - name: Wait for production deployment
+        run: sleep 10
+
+      - name: Health check production
+        run: |
+          echo "Running health checks on production..."
+          SUCCESS=0
+          for i in {1..5}; do
+            echo "Attempt $i/5..."
+            if curl -f -s -o /dev/null -w "%{http_code}" https://landlordsoftware.fly.dev | grep -q "200"; then
+              echo "✓ Success"
+              SUCCESS=1
+              break
+            else
+              echo "✗ Failed, retrying in 5s..."
+              sleep 5
+            fi
+          done
+          if [ $SUCCESS -eq 0 ]; then
+            echo "Health check failed - production is not responding"
+            exit 1
+          fi
+          echo "✓ Production health check passed"
