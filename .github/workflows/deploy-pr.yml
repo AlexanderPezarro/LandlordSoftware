@@ -1,0 +1,219 @@
+name: Deploy PR Preview
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+
+concurrency:
+  group: pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+env:
+  APP_NAME: landlordsoftware-pr-${{ github.event.pull_request.number }}
+  VOLUME_NAME: pr_${{ github.event.pull_request.number }}_data
+  FLY_REGION: lhr
+
+jobs:
+  check-changes:
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    outputs:
+      rebuild-base: ${{ steps.changes.outputs.rebuild }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for dependency changes
+        id: changes
+        run: |
+          BASE_SHA=${{ github.event.pull_request.base.sha }}
+          HEAD_SHA=${{ github.event.pull_request.head.sha }}
+          if git diff --name-only "$BASE_SHA" "$HEAD_SHA" | grep -qE '^(package(-lock)?\.json|client/package(-lock)?\.json|prisma/schema\.prisma|Dockerfile\.base)$'; then
+            echo "rebuild=true" >> $GITHUB_OUTPUT
+            echo "✓ Base image rebuild required - dependencies changed"
+          else
+            echo "rebuild=false" >> $GITHUB_OUTPUT
+            echo "✓ Skipping base image rebuild - no dependency changes"
+          fi
+
+  build-base:
+    needs: check-changes
+    if: needs.check-changes.outputs.rebuild-base == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Set up Flyctl
+        uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Authenticate with Fly registry
+        run: flyctl auth docker
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      - name: Build and push base image
+        run: |
+          docker build --platform linux/amd64 \
+            -t registry.fly.io/landlordsoftware-base:latest \
+            -t registry.fly.io/landlordsoftware-base:${{ github.sha }} \
+            -f Dockerfile.base .
+          docker push registry.fly.io/landlordsoftware-base:latest
+          docker push registry.fly.io/landlordsoftware-base:${{ github.sha }}
+
+  deploy-preview:
+    needs: [check-changes, build-base]
+    if: always() && needs.check-changes.result == 'success' && (needs.build-base.result == 'success' || needs.build-base.result == 'skipped') && github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Flyctl
+        uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Check if app exists
+        id: app-check
+        run: |
+          if flyctl apps list | grep -q "${{ env.APP_NAME }}"; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "✓ App ${{ env.APP_NAME }} already exists"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "✓ App ${{ env.APP_NAME }} does not exist yet"
+          fi
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      - name: Create Fly app
+        if: steps.app-check.outputs.exists == 'false'
+        run: flyctl apps create "${{ env.APP_NAME }}" --org personal
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      - name: Create volume
+        if: steps.app-check.outputs.exists == 'false'
+        run: flyctl volumes create "${{ env.VOLUME_NAME }}" --app "${{ env.APP_NAME }}" --region "${{ env.FLY_REGION }}" --size 1 --yes
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      - name: Generate fly config
+        run: |
+          sed -e "s/APP_NAME_PLACEHOLDER/${{ env.APP_NAME }}/g" \
+              -e "s/VOLUME_NAME_PLACEHOLDER/${{ env.VOLUME_NAME }}/g" \
+              fly.preview.toml > fly.pr.toml
+
+      - name: Deploy preview
+        run: flyctl deploy --config fly.pr.toml --dockerfile Dockerfile.app --app "${{ env.APP_NAME }}"
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      - name: Wait for app to be ready
+        if: steps.app-check.outputs.exists == 'false'
+        run: |
+          PREVIEW_URL="https://${{ env.APP_NAME }}.fly.dev"
+          echo "Waiting for app to be ready at $PREVIEW_URL..."
+          for i in {1..12}; do
+            if curl -f -s -o /dev/null "$PREVIEW_URL"; then
+              echo "✓ App is ready"
+              break
+            fi
+            echo "Waiting for app to start (attempt $i/12)..."
+            sleep 10
+          done
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      - name: Seed database
+        if: steps.app-check.outputs.exists == 'false'
+        run: flyctl ssh console --app "${{ env.APP_NAME }}" --command "npm run db:seed"
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      - name: Wait for deployment
+        run: sleep 10
+
+      - name: Health check
+        run: |
+          PREVIEW_URL="https://${{ env.APP_NAME }}.fly.dev"
+          echo "Running health checks on $PREVIEW_URL..."
+          SUCCESS=0
+          for i in {1..5}; do
+            echo "Attempt $i/5..."
+            if curl -f -s -o /dev/null -w "%{http_code}" "$PREVIEW_URL" | grep -q "200"; then
+              echo "✓ Success"
+              SUCCESS=1
+              break
+            else
+              echo "✗ Failed, retrying in 5s..."
+              sleep 5
+            fi
+          done
+          if [ $SUCCESS -eq 0 ]; then
+            echo "Health check failed - preview is not responding"
+            exit 1
+          fi
+          echo "✓ Preview health check passed"
+
+      - name: Comment on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const appName = '${{ env.APP_NAME }}';
+            const previewUrl = `https://${appName}.fly.dev`;
+            const marker = '<!-- fly-preview-comment -->';
+
+            const body = [
+              marker,
+              '**Preview deployment ready!**',
+              '',
+              '| | |',
+              '|---|---|',
+              `| **URL** | ${previewUrl} |`,
+              `| **App** | \`${appName}\` |`,
+              `| **Commit** | \`${context.sha.substring(0, 7)}\` |`,
+            ].join('\n');
+
+            // Find existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const existing = comments.find(c => c.body.includes(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
+  destroy-preview:
+    if: github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Flyctl
+        uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Destroy preview app
+        run: |
+          if flyctl apps list | grep -q "${{ env.APP_NAME }}"; then
+            flyctl apps destroy "${{ env.APP_NAME }}" --yes
+            echo "✓ Destroyed ${{ env.APP_NAME }}"
+          else
+            echo "✓ App ${{ env.APP_NAME }} does not exist, skipping"
+          fi
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

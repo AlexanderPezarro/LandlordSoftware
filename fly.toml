@@ -7,7 +7,7 @@ app = 'landlordsoftware'
 primary_region = 'lhr'
 
 [build]
-  dockerfile = "Dockerfile.production"
+  dockerfile = "Dockerfile.app"
 
 [[mounts]]
   source = 'data'
@@ -27,4 +27,3 @@ primary_region = 'lhr'
 [[vm]]
   memory = '512mb'
   cpus = 1
-  memory_mb = 512

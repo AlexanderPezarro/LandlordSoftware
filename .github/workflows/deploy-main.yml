@@ -1,4 +1,4 @@
-name: Deploy
+name: Deploy to Production
 
 on:
   push:
@@ -52,48 +52,9 @@ jobs:
           docker push registry.fly.io/landlordsoftware-base:latest
           docker push registry.fly.io/landlordsoftware-base:${{ github.sha }}
 
-  deploy-staging:
-    needs: [check-changes, build-base]
-    if: always() && needs.check-changes.result == 'success'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Flyctl
-        uses: superfly/flyctl-actions/setup-flyctl@master
-
-      - name: Deploy to staging
-        run: flyctl deploy --config fly.staging.toml --dockerfile Dockerfile.staging
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
-
-      - name: Wait for staging deployment
-        run: sleep 10
-
-      - name: Health check staging
-        run: |
-          echo "Running health checks on staging..."
-          SUCCESS=0
-          for i in {1..5}; do
-            echo "Attempt $i/5..."
-            if curl -f -s -o /dev/null -w "%{http_code}" https://landlordsoftware-staging.fly.dev | grep -q "200"; then
-              echo "✓ Success"
-              SUCCESS=1
-              break
-            else
-              echo "✗ Failed, retrying in 5s..."
-              sleep 5
-            fi
-          done
-          if [ $SUCCESS -eq 0 ]; then
-            echo "Health check failed - staging is not responding"
-            exit 1
-          fi
-          echo "✓ Staging health check passed"
-
   deploy-production:
-    needs: [check-changes, build-base, deploy-staging]
-    if: always() && needs.check-changes.result == 'success' && needs.deploy-staging.result == 'success'
+    needs: [check-changes, build-base]
+    if: always() && needs.check-changes.result == 'success' && (needs.build-base.result == 'success' || needs.build-base.result == 'skipped')
     runs-on: ubuntu-latest
     environment:
       name: production
@@ -105,14 +66,14 @@ jobs:
         uses: superfly/flyctl-actions/setup-flyctl@master
 
       - name: Deploy to production
-        run: flyctl deploy --config fly.toml --dockerfile Dockerfile.production
+        run: flyctl deploy --config fly.toml --dockerfile Dockerfile.app
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 
-      - name: Wait for production deployment
+      - name: Wait for deployment
         run: sleep 10
 
-      - name: Health check production
+      - name: Health check
         run: |
           echo "Running health checks on production..."
           SUCCESS=0
