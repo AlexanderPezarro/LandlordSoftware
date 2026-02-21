@@ -30,6 +30,14 @@ const mockRegisterWebhook = jest.fn<(accessToken: string, accountId: string, web
   webhookUrl: string;
 }>>();
 const mockDeleteWebhook = jest.fn<(accessToken: string, webhookId: string) => Promise<void>>();
+const mockStorePendingConnection = jest.fn<(accessToken: string, refreshToken: string | undefined, expiresIn: number, syncFromDate: Date) => string>();
+const mockGetPendingConnection = jest.fn<(pendingId: string) => {
+  accessToken: string;
+  refreshToken: string | undefined;
+  expiresIn: number;
+  syncFromDate: Date;
+}>();
+const mockDeletePendingConnection = jest.fn<(pendingId: string) => void>();
 
 jest.unstable_mockModule('../../services/monzo.service.js', () => ({
   generateAuthUrl: mockGenerateAuthUrl,
@@ -40,6 +48,9 @@ jest.unstable_mockModule('../../services/monzo.service.js', () => ({
   syncNewTransactions: mockSyncNewTransactions,
   registerWebhook: mockRegisterWebhook,
   deleteWebhook: mockDeleteWebhook,
+  storePendingConnection: mockStorePendingConnection,
+  getPendingConnection: mockGetPendingConnection,
+  deletePendingConnection: mockDeletePendingConnection,
 }));
 
 // Import app after mocking
@@ -217,53 +228,39 @@ describe('Monzo OAuth Routes', () => {
       expect(response.headers.location).toContain('/settings?error=access_denied');
     });
 
-    it('should exchange code for tokens and save bank account', async () => {
+    it('should exchange code for tokens and store pending connection', async () => {
       const mockState = 'valid_state';
       const mockCode = 'auth_code_123';
+      const mockSyncFromDate = new Date('2024-01-01');
       const mockTokenResponse = {
         access_token: 'access_token_123',
         refresh_token: 'refresh_token_123',
         expires_in: 3600,
-        syncFromDate: new Date('2024-01-01'),
-      };
-      const mockAccountInfo = {
-        accountId: 'acc_123',
-        accountName: 'Current Account',
-        accountType: 'current',
       };
 
-      mockValidateState.mockReturnValue(mockTokenResponse.syncFromDate);
+      mockValidateState.mockReturnValue(mockSyncFromDate);
       mockExchangeCodeForTokens.mockResolvedValue(mockTokenResponse);
-      mockGetAccountInfo.mockResolvedValue(mockAccountInfo);
-      mockImportFullHistory.mockResolvedValue('sync-log-123');
+      mockStorePendingConnection.mockReturnValue('pending_id_abc');
 
       const response = await request(app)
         .get('/api/bank/monzo/callback')
         .query({ code: mockCode, state: mockState });
 
       expect(response.status).toBe(302);
-      expect(response.headers.location).toContain('/settings?success=monzo_connected&bankAccountId=');
+      expect(response.headers.location).toBe('/settings?pending_approval=monzo&pendingId=pending_id_abc');
 
-      // Verify service methods were called
       expect(mockValidateState).toHaveBeenCalledWith(mockState);
       expect(mockExchangeCodeForTokens).toHaveBeenCalledWith(mockCode);
-      expect(mockGetAccountInfo).toHaveBeenCalledWith(mockTokenResponse.access_token);
+      expect(mockStorePendingConnection).toHaveBeenCalledWith(
+        mockTokenResponse.access_token,
+        mockTokenResponse.refresh_token,
+        mockTokenResponse.expires_in,
+        mockSyncFromDate
+      );
 
-      // Verify bank account was created
-      const bankAccount = await prisma.bankAccount.findUnique({
-        where: { accountId: mockAccountInfo.accountId },
-      });
-
-      expect(bankAccount).toBeTruthy();
-      expect(bankAccount?.accountName).toBe(mockAccountInfo.accountName);
-      expect(bankAccount?.provider).toBe('monzo');
-      expect(bankAccount?.syncEnabled).toBe(true);
-      expect(bankAccount?.lastSyncStatus).toBe('never_synced');
-      // Access token should be encrypted (not plaintext)
-      expect(bankAccount?.accessToken).not.toBe(mockTokenResponse.access_token);
-
-      // Verify import was triggered (fire and forget)
-      expect(mockImportFullHistory).toHaveBeenCalledWith(bankAccount!.id);
+      // Should NOT call getAccountInfo or importFullHistory
+      expect(mockGetAccountInfo).not.toHaveBeenCalled();
+      expect(mockImportFullHistory).not.toHaveBeenCalled();
     });
 
     it('should handle invalid state parameter', async () => {
@@ -292,107 +289,129 @@ describe('Monzo OAuth Routes', () => {
       expect(response.status).toBe(302);
       expect(response.headers.location).toContain('/settings?error=');
     });
+  });
 
-    it('should handle duplicate account connection gracefully', async () => {
-      const mockState = 'valid_state';
-      const mockCode = 'auth_code_123';
-      const mockTokenResponse = {
-        access_token: 'access_token_123',
-        refresh_token: 'refresh_token_123',
-        expires_in: 3600,
+  describe('POST /api/bank/monzo/complete-connection', () => {
+    it('should require authentication', async () => {
+      const response = await request(app)
+        .post('/api/bank/monzo/complete-connection')
+        .send({ pendingId: 'test' });
+
+      expect(response.status).toBe(401);
+    });
+
+    it('should require admin role', async () => {
+      const response = await request(app)
+        .post('/api/bank/monzo/complete-connection')
+        .set('Cookie', authCookie)
+        .send({ pendingId: 'test' });
+
+      expect(response.status).toBe(403);
+    });
+
+    it('should return 400 for missing pendingId', async () => {
+      const response = await request(app)
+        .post('/api/bank/monzo/complete-connection')
+        .set('Cookie', adminCookie)
+        .send({});
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toContain('Missing');
+    });
+
+    it('should return 400 for unknown pendingId', async () => {
+      mockGetPendingConnection.mockImplementation(() => {
+        throw new Error('Pending connection not found or expired');
+      });
+
+      const response = await request(app)
+        .post('/api/bank/monzo/complete-connection')
+        .set('Cookie', adminCookie)
+        .send({ pendingId: 'nonexistent_id' });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toContain('not found');
+    });
+
+    it('should complete connection and create bank account', async () => {
+      const mockPending = {
+        accessToken: 'access_token_123',
+        refreshToken: 'refresh_token_123',
+        expiresIn: 3600,
         syncFromDate: new Date('2024-01-01'),
       };
       const mockAccountInfo = {
-        accountId: 'acc_duplicate',
+        accountId: 'acc_complete_test',
         accountName: 'Current Account',
         accountType: 'current',
       };
 
-      // Create existing bank account
-      await prisma.bankAccount.create({
-        data: {
-          accountId: mockAccountInfo.accountId,
-          accountName: 'Old Name',
-          accountType: 'current',
-          provider: 'monzo',
-          accessToken: 'old_encrypted_token',
-          syncFromDate: new Date('2023-01-01'),
-          syncEnabled: true,
-          lastSyncStatus: 'never_synced',
-        },
-      });
-
-      mockValidateState.mockReturnValue(mockTokenResponse.syncFromDate);
-      mockExchangeCodeForTokens.mockResolvedValue(mockTokenResponse);
+      mockGetPendingConnection.mockReturnValue(mockPending);
       mockGetAccountInfo.mockResolvedValue(mockAccountInfo);
       mockImportFullHistory.mockResolvedValue('sync-log-123');
 
       const response = await request(app)
-        .get('/api/bank/monzo/callback')
-        .query({ code: mockCode, state: mockState });
+        .post('/api/bank/monzo/complete-connection')
+        .set('Cookie', adminCookie)
+        .send({ pendingId: 'valid_pending_id' });
 
-      expect(response.status).toBe(302);
-      expect(response.headers.location).toContain('/settings?success=monzo_connected&bankAccountId=');
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.bankAccountId).toBeTruthy();
 
-      // Verify bank account was updated, not duplicated
-      const bankAccounts = await prisma.bankAccount.findMany({
+      // Verify pending connection was deleted
+      expect(mockDeletePendingConnection).toHaveBeenCalledWith('valid_pending_id');
+
+      // Verify bank account was created
+      const bankAccount = await prisma.bankAccount.findUnique({
         where: { accountId: mockAccountInfo.accountId },
       });
-
-      expect(bankAccounts).toHaveLength(1);
-      expect(bankAccounts[0].accountName).toBe(mockAccountInfo.accountName);
+      expect(bankAccount).toBeTruthy();
+      expect(bankAccount?.accountName).toBe('Current Account');
+      expect(bankAccount?.provider).toBe('monzo');
+      expect(bankAccount?.accessToken).not.toBe(mockPending.accessToken);
 
       // Verify import was triggered
-      expect(mockImportFullHistory).toHaveBeenCalled();
+      expect(mockImportFullHistory).toHaveBeenCalledWith(bankAccount!.id);
     });
 
-    it('should redirect even if background import fails', async () => {
-      const mockState = 'valid_state';
-      const mockCode = 'auth_code_123';
-      const mockTokenResponse = {
-        access_token: 'access_token_123',
-        refresh_token: 'refresh_token_123',
-        expires_in: 3600,
+    it('should return 403 when SCA not yet approved', async () => {
+      const mockPending = {
+        accessToken: 'access_token_123',
+        refreshToken: 'refresh_token_123',
+        expiresIn: 3600,
         syncFromDate: new Date('2024-01-01'),
       };
-      const mockAccountInfo = {
-        accountId: 'acc_import_fail',
-        accountName: 'Current Account',
-        accountType: 'current',
-      };
 
-      mockValidateState.mockReturnValue(mockTokenResponse.syncFromDate);
-      mockExchangeCodeForTokens.mockResolvedValue(mockTokenResponse);
-      mockGetAccountInfo.mockResolvedValue(mockAccountInfo);
-      // Mock import failure
-      mockImportFullHistory.mockRejectedValue(new Error('Import failed'));
+      mockGetPendingConnection.mockReturnValue(mockPending);
+      mockGetAccountInfo.mockRejectedValue(new Error('Failed to fetch account information'));
 
       const response = await request(app)
-        .get('/api/bank/monzo/callback')
-        .query({ code: mockCode, state: mockState });
+        .post('/api/bank/monzo/complete-connection')
+        .set('Cookie', adminCookie)
+        .send({ pendingId: 'valid_pending_id' });
 
-      // Should still redirect successfully (fire and forget)
-      expect(response.status).toBe(302);
-      expect(response.headers.location).toContain('/settings?success=monzo_connected&bankAccountId=');
+      expect(response.status).toBe(403);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toContain('not yet approved');
 
-      // Verify import was attempted
-      expect(mockImportFullHistory).toHaveBeenCalled();
+      // Pending connection should NOT be deleted (allows retry)
+      expect(mockDeletePendingConnection).not.toHaveBeenCalled();
     });
 
-    it('should register webhook during OAuth callback', async () => {
-      // Set webhook secret for this test
+    it('should register webhook during complete connection', async () => {
       process.env.MONZO_WEBHOOK_SECRET = 'test-secret';
 
-      const mockState = 'valid_state';
-      const mockCode = 'auth_code_123';
-      const mockTokenResponse = {
-        access_token: 'access_token_123',
-        refresh_token: 'refresh_token_123',
-        expires_in: 3600,
+      const mockPending = {
+        accessToken: 'access_token_123',
+        refreshToken: 'refresh_token_123',
+        expiresIn: 3600,
         syncFromDate: new Date('2024-01-01'),
       };
       const mockAccountInfo = {
-        accountId: 'acc_webhook_test',
+        accountId: 'acc_webhook_complete',
         accountName: 'Current Account',
         accountType: 'current',
       };
@@ -401,55 +420,70 @@ describe('Monzo OAuth Routes', () => {
         webhookUrl: 'http://localhost:3000/api/bank/webhooks/monzo/test-secret',
       };
 
-      mockValidateState.mockReturnValue(mockTokenResponse.syncFromDate);
-      mockExchangeCodeForTokens.mockResolvedValue(mockTokenResponse);
+      mockGetPendingConnection.mockReturnValue(mockPending);
       mockGetAccountInfo.mockResolvedValue(mockAccountInfo);
       mockRegisterWebhook.mockResolvedValue(mockWebhookResult);
       mockImportFullHistory.mockResolvedValue('sync-log-123');
 
       const response = await request(app)
-        .get('/api/bank/monzo/callback')
-        .query({ code: mockCode, state: mockState });
+        .post('/api/bank/monzo/complete-connection')
+        .set('Cookie', adminCookie)
+        .send({ pendingId: 'valid_pending_id' });
 
-      expect(response.status).toBe(302);
-      expect(response.headers.location).toContain('/settings?success=monzo_connected&bankAccountId=');
-
-      // Verify webhook was registered
+      expect(response.status).toBe(200);
       expect(mockRegisterWebhook).toHaveBeenCalledWith(
-        mockTokenResponse.access_token,
+        mockPending.accessToken,
         mockAccountInfo.accountId,
         expect.stringContaining('/api/bank/webhooks/monzo/')
       );
 
-      // Verify bank account has webhook info
       const bankAccount = await prisma.bankAccount.findUnique({
         where: { accountId: mockAccountInfo.accountId },
       });
-
       expect(bankAccount?.webhookId).toBe('webhook_123');
-      expect(bankAccount?.webhookUrl).toBe(mockWebhookResult.webhookUrl);
     });
 
-    it('should delete old webhook on re-authentication', async () => {
-      // Set webhook secret for this test
+    it('should succeed even if webhook registration fails', async () => {
       process.env.MONZO_WEBHOOK_SECRET = 'test-secret';
 
-      const mockState = 'valid_state';
-      const mockCode = 'auth_code_123';
-      const mockTokenResponse = {
-        access_token: 'new_access_token',
-        refresh_token: 'new_refresh_token',
-        expires_in: 3600,
+      const mockPending = {
+        accessToken: 'access_token_123',
+        refreshToken: 'refresh_token_123',
+        expiresIn: 3600,
         syncFromDate: new Date('2024-01-01'),
       };
       const mockAccountInfo = {
-        accountId: 'acc_reauth',
+        accountId: 'acc_webhook_fail_complete',
         accountName: 'Current Account',
         accountType: 'current',
       };
-      const mockNewWebhookResult = {
-        webhookId: 'webhook_new_123',
-        webhookUrl: 'http://localhost:3000/api/bank/webhooks/monzo/test-secret',
+
+      mockGetPendingConnection.mockReturnValue(mockPending);
+      mockGetAccountInfo.mockResolvedValue(mockAccountInfo);
+      mockRegisterWebhook.mockRejectedValue(new Error('Webhook failed'));
+      mockImportFullHistory.mockResolvedValue('sync-log-123');
+
+      const response = await request(app)
+        .post('/api/bank/monzo/complete-connection')
+        .set('Cookie', adminCookie)
+        .send({ pendingId: 'valid_pending_id' });
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+
+      const bankAccount = await prisma.bankAccount.findUnique({
+        where: { accountId: mockAccountInfo.accountId },
+      });
+      expect(bankAccount?.webhookId).toBeNull();
+    });
+
+    it('should delete old webhook on re-authentication', async () => {
+      process.env.MONZO_WEBHOOK_SECRET = 'test-secret';
+
+      const mockAccountInfo = {
+        accountId: 'acc_reauth_complete',
+        accountName: 'Current Account',
+        accountType: 'current',
       };
 
       // Create existing bank account with old webhook
@@ -468,182 +502,26 @@ describe('Monzo OAuth Routes', () => {
         },
       });
 
-      mockValidateState.mockReturnValue(mockTokenResponse.syncFromDate);
-      mockExchangeCodeForTokens.mockResolvedValue(mockTokenResponse);
+      const mockPending = {
+        accessToken: 'new_access_token',
+        refreshToken: 'new_refresh_token',
+        expiresIn: 3600,
+        syncFromDate: new Date('2024-01-01'),
+      };
+
+      mockGetPendingConnection.mockReturnValue(mockPending);
       mockGetAccountInfo.mockResolvedValue(mockAccountInfo);
       mockDeleteWebhook.mockResolvedValue(undefined);
-      mockRegisterWebhook.mockResolvedValue(mockNewWebhookResult);
+      mockRegisterWebhook.mockResolvedValue({ webhookId: 'webhook_new', webhookUrl: 'http://localhost:3000/api/bank/webhooks/monzo/test-secret' });
       mockImportFullHistory.mockResolvedValue('sync-log-123');
 
       const response = await request(app)
-        .get('/api/bank/monzo/callback')
-        .query({ code: mockCode, state: mockState });
+        .post('/api/bank/monzo/complete-connection')
+        .set('Cookie', adminCookie)
+        .send({ pendingId: 'valid_pending_id' });
 
-      expect(response.status).toBe(302);
-      expect(response.headers.location).toContain('/settings?success=monzo_connected&bankAccountId=');
-
-      // Verify old webhook was deleted
-      expect(mockDeleteWebhook).toHaveBeenCalledWith(
-        mockTokenResponse.access_token,
-        'webhook_old_123'
-      );
-
-      // Verify new webhook was registered
-      expect(mockRegisterWebhook).toHaveBeenCalledWith(
-        mockTokenResponse.access_token,
-        mockAccountInfo.accountId,
-        expect.stringContaining('/api/bank/webhooks/monzo/')
-      );
-
-      // Verify bank account has new webhook info
-      const bankAccount = await prisma.bankAccount.findUnique({
-        where: { accountId: mockAccountInfo.accountId },
-      });
-
-      expect(bankAccount?.webhookId).toBe('webhook_new_123');
-      expect(bankAccount?.webhookUrl).toBe(mockNewWebhookResult.webhookUrl);
-    });
-
-    it('should complete OAuth even if webhook registration fails', async () => {
-      // Set webhook secret for this test
-      process.env.MONZO_WEBHOOK_SECRET = 'test-secret';
-
-      const mockState = 'valid_state';
-      const mockCode = 'auth_code_123';
-      const mockTokenResponse = {
-        access_token: 'access_token_123',
-        refresh_token: 'refresh_token_123',
-        expires_in: 3600,
-        syncFromDate: new Date('2024-01-01'),
-      };
-      const mockAccountInfo = {
-        accountId: 'acc_webhook_fail',
-        accountName: 'Current Account',
-        accountType: 'current',
-      };
-
-      mockValidateState.mockReturnValue(mockTokenResponse.syncFromDate);
-      mockExchangeCodeForTokens.mockResolvedValue(mockTokenResponse);
-      mockGetAccountInfo.mockResolvedValue(mockAccountInfo);
-      mockRegisterWebhook.mockRejectedValue(new Error('Webhook registration failed'));
-      mockImportFullHistory.mockResolvedValue('sync-log-123');
-
-      const response = await request(app)
-        .get('/api/bank/monzo/callback')
-        .query({ code: mockCode, state: mockState });
-
-      // Should still redirect successfully
-      expect(response.status).toBe(302);
-      expect(response.headers.location).toContain('/settings?success=monzo_connected&bankAccountId=');
-
-      // Verify bank account was created without webhook info
-      const bankAccount = await prisma.bankAccount.findUnique({
-        where: { accountId: mockAccountInfo.accountId },
-      });
-
-      expect(bankAccount).toBeTruthy();
-      expect(bankAccount?.webhookId).toBeNull();
-      expect(bankAccount?.webhookUrl).toBeNull();
-
-      // Verify import was still triggered
-      expect(mockImportFullHistory).toHaveBeenCalled();
-    });
-
-    it('should use default webhook base URL when not configured', async () => {
-      // Set webhook secret but not base URL
-      process.env.MONZO_WEBHOOK_SECRET = 'test-secret';
-      const originalBaseUrl = process.env.WEBHOOK_BASE_URL;
-      delete process.env.WEBHOOK_BASE_URL;
-
-      const mockState = 'valid_state';
-      const mockCode = 'auth_code_123';
-      const mockTokenResponse = {
-        access_token: 'access_token_123',
-        refresh_token: 'refresh_token_123',
-        expires_in: 3600,
-        syncFromDate: new Date('2024-01-01'),
-      };
-      const mockAccountInfo = {
-        accountId: 'acc_default_url',
-        accountName: 'Current Account',
-        accountType: 'current',
-      };
-      const mockWebhookResult = {
-        webhookId: 'webhook_default',
-        webhookUrl: 'http://localhost:3000/api/bank/webhooks/monzo/test-secret',
-      };
-
-      mockValidateState.mockReturnValue(mockTokenResponse.syncFromDate);
-      mockExchangeCodeForTokens.mockResolvedValue(mockTokenResponse);
-      mockGetAccountInfo.mockResolvedValue(mockAccountInfo);
-      mockRegisterWebhook.mockResolvedValue(mockWebhookResult);
-      mockImportFullHistory.mockResolvedValue('sync-log-123');
-
-      const response = await request(app)
-        .get('/api/bank/monzo/callback')
-        .query({ code: mockCode, state: mockState });
-
-      expect(response.status).toBe(302);
-
-      // Verify webhook was registered with default localhost URL
-      expect(mockRegisterWebhook).toHaveBeenCalledWith(
-        mockTokenResponse.access_token,
-        mockAccountInfo.accountId,
-        expect.stringContaining('http://localhost:3000/api/bank/webhooks/monzo/')
-      );
-
-      // Restore env var
-      if (originalBaseUrl) {
-        process.env.WEBHOOK_BASE_URL = originalBaseUrl;
-      }
-    });
-
-    it('should skip webhook registration when MONZO_WEBHOOK_SECRET is not configured', async () => {
-      const originalSecret = process.env.MONZO_WEBHOOK_SECRET;
-      delete process.env.MONZO_WEBHOOK_SECRET;
-
-      const mockState = 'valid_state';
-      const mockCode = 'auth_code_123';
-      const mockTokenResponse = {
-        access_token: 'access_token_123',
-        refresh_token: 'refresh_token_123',
-        expires_in: 3600,
-        syncFromDate: new Date('2024-01-01'),
-      };
-      const mockAccountInfo = {
-        accountId: 'acc_no_secret',
-        accountName: 'Current Account',
-        accountType: 'current',
-      };
-
-      mockValidateState.mockReturnValue(mockTokenResponse.syncFromDate);
-      mockExchangeCodeForTokens.mockResolvedValue(mockTokenResponse);
-      mockGetAccountInfo.mockResolvedValue(mockAccountInfo);
-      mockImportFullHistory.mockResolvedValue('sync-log-123');
-
-      const response = await request(app)
-        .get('/api/bank/monzo/callback')
-        .query({ code: mockCode, state: mockState });
-
-      expect(response.status).toBe(302);
-      expect(response.headers.location).toContain('/settings?success=monzo_connected&bankAccountId=');
-
-      // Verify webhook registration was NOT attempted
-      expect(mockRegisterWebhook).not.toHaveBeenCalled();
-
-      // Verify bank account was still created without webhook
-      const bankAccount = await prisma.bankAccount.findUnique({
-        where: { accountId: mockAccountInfo.accountId },
-      });
-
-      expect(bankAccount).toBeTruthy();
-      expect(bankAccount?.webhookId).toBeNull();
-      expect(bankAccount?.webhookUrl).toBeNull();
-
-      // Restore env var
-      if (originalSecret) {
-        process.env.MONZO_WEBHOOK_SECRET = originalSecret;
-      }
+      expect(response.status).toBe(200);
+      expect(mockDeleteWebhook).toHaveBeenCalledWith(mockPending.accessToken, 'webhook_old_123');
     });
   });
 

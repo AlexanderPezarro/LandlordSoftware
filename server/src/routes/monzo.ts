@@ -70,7 +70,9 @@ router.post('/connect', requireAuth, async (req, res) => {
 
 /**
  * GET /api/bank/monzo/callback
- * OAuth callback endpoint - exchanges code for tokens and saves bank account
+ * OAuth callback endpoint - exchanges code for tokens and stores them pending SCA approval.
+ * Monzo requires the user to approve access in their mobile app (Strong Customer Authentication)
+ * before API calls will work, so we store the tokens and redirect to a "pending approval" state.
  */
 router.get('/callback', async (req, res) => {
   try {
@@ -97,17 +99,62 @@ router.get('/callback', async (req, res) => {
     // Exchange code for tokens
     const tokenResponse = await monzoService.exchangeCodeForTokens(code);
 
-    // Get account information
-    const accountInfo = await monzoService.getAccountInfo(tokenResponse.access_token);
+    // Store tokens pending SCA approval
+    const pendingId = monzoService.storePendingConnection(
+      tokenResponse.access_token,
+      tokenResponse.refresh_token,
+      tokenResponse.expires_in,
+      syncFromDate
+    );
+
+    return res.redirect(`/settings?pending_approval=monzo&pendingId=${pendingId}`);
+  } catch (error) {
+    console.error('Monzo callback error:', error);
+    return res.redirect('/settings?error=oauth_failed');
+  }
+});
+
+/**
+ * POST /api/bank/monzo/complete-connection
+ * Complete the Monzo connection after the user approves SCA in their Monzo app.
+ * Retrieves stored tokens, fetches account info, creates BankAccount, registers webhook, starts import.
+ */
+router.post('/complete-connection', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const { pendingId } = req.body;
+
+    if (!pendingId || typeof pendingId !== 'string') {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing or invalid pendingId',
+      });
+    }
+
+    // Retrieve the pending connection (non-destructive, allows retries)
+    let pending;
+    try {
+      pending = monzoService.getPendingConnection(pendingId);
+    } catch {
+      return res.status(400).json({
+        success: false,
+        error: 'Pending connection not found. Please restart the connection flow.',
+      });
+    }
+
+    // Fetch account info (requires SCA approval to have been completed)
+    const accountInfo = await monzoService.getAccountInfo(pending.accessToken);
+
+    // SCA approved and account info retrieved - delete the pending connection
+    monzoService.deletePendingConnection(pendingId);
 
     // Calculate token expiry date
     const tokenExpiresAt = new Date();
-    tokenExpiresAt.setSeconds(tokenExpiresAt.getSeconds() + tokenResponse.expires_in);
+    tokenExpiresAt.setSeconds(tokenExpiresAt.getSeconds() + pending.expiresIn);
 
     // Encrypt tokens before storing
-    const encryptedAccessToken = encryptToken(tokenResponse.access_token);
-    const encryptedRefreshToken = tokenResponse.refresh_token
-      ? encryptToken(tokenResponse.refresh_token)
+    const encryptedAccessToken = encryptToken(pending.accessToken);
+    const encryptedRefreshToken = pending.refreshToken
+      ? encryptToken(pending.refreshToken)
       : null;
 
     // Check if bank account already exists (for re-authentication)
@@ -118,11 +165,9 @@ router.get('/callback', async (req, res) => {
     // Delete old webhook if re-authenticating
     if (existingAccount?.webhookId) {
       try {
-        await monzoService.deleteWebhook(tokenResponse.access_token, existingAccount.webhookId);
-        console.log(`Deleted old webhook: ${existingAccount.webhookId}`);
+        await monzoService.deleteWebhook(pending.accessToken, existingAccount.webhookId);
       } catch (error) {
         console.error('Failed to delete old webhook:', error);
-        // Continue with OAuth - don't block on webhook deletion
       }
     }
 
@@ -135,22 +180,16 @@ router.get('/callback', async (req, res) => {
       try {
         const baseUrl = process.env.WEBHOOK_BASE_URL || 'http://localhost:3000';
         const webhookUrlToRegister = `${baseUrl}/api/bank/webhooks/monzo/${webhookSecret}`;
-
         const webhookResult = await monzoService.registerWebhook(
-          tokenResponse.access_token,
+          pending.accessToken,
           accountInfo.accountId,
           webhookUrlToRegister
         );
-
         webhookId = webhookResult.webhookId;
         webhookUrl = webhookResult.webhookUrl;
-        console.log(`Registered webhook: ${webhookId} at ${webhookUrl}`);
       } catch (error) {
         console.error('Failed to register webhook:', error);
-        // Continue with OAuth - user can still use manual sync if webhooks fail
       }
-    } else {
-      console.warn('MONZO_WEBHOOK_SECRET not configured - skipping webhook registration');
     }
 
     // Save or update bank account
@@ -164,7 +203,7 @@ router.get('/callback', async (req, res) => {
         accessToken: encryptedAccessToken,
         refreshToken: encryptedRefreshToken,
         tokenExpiresAt,
-        syncFromDate,
+        syncFromDate: pending.syncFromDate,
         syncEnabled: true,
         lastSyncStatus: 'never_synced',
         webhookId,
@@ -176,31 +215,36 @@ router.get('/callback', async (req, res) => {
         accessToken: encryptedAccessToken,
         refreshToken: encryptedRefreshToken,
         tokenExpiresAt,
-        syncFromDate,
+        syncFromDate: pending.syncFromDate,
         syncEnabled: true,
         webhookId,
         webhookUrl,
       },
     });
 
-    // Start background import (fire and forget, but capture syncLogId synchronously)
-    // This must complete within 5 minutes of OAuth completion (Monzo API restriction)
-    // We start the import but don't await it - just redirect with the syncLogId
+    // Start background import (fire and forget)
     const importPromise = monzoService.importFullHistory(bankAccount.id);
-
-    // The importFullHistory function creates the syncLog synchronously at the start,
-    // but we need a way to get the syncLogId before redirecting. Let's use a different approach.
-    // For now, redirect without syncLogId and let the frontend poll for the most recent sync log
     importPromise.catch((error) => {
       console.error('Background import failed:', error);
     });
 
-    // Redirect to settings page with success message and bank account ID
-    // Frontend will query for the active sync log for this bank account
-    return res.redirect(`/settings?success=monzo_connected&bankAccountId=${bankAccount.id}`);
+    return res.json({
+      success: true,
+      bankAccountId: bankAccount.id,
+    });
   } catch (error) {
-    console.error('Monzo callback error:', error);
-    return res.redirect('/settings?error=oauth_failed');
+    console.error('Monzo complete-connection error:', error);
+
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const isSCAError = errorMessage.includes('insufficient_permissions') ||
+                       errorMessage.includes('Failed to fetch account information');
+
+    return res.status(isSCAError ? 403 : 500).json({
+      success: false,
+      error: isSCAError
+        ? 'Monzo access not yet approved. Please approve in your Monzo app and try again.'
+        : 'Failed to complete Monzo connection',
+    });
   }
 });
 

@@ -63,6 +63,11 @@ export interface ImportProgressUpdate {
   error?: string;
 }
 
+export interface CompleteConnectionResponse {
+  success: boolean;
+  bankAccountId: string;
+}
+
 export interface GetWebhookStatusResponse {
   success: boolean;
   data: WebhookStatusData;
@@ -130,6 +135,17 @@ export const bankService = {
     return () => {
       eventSource.close();
     };
+  },
+
+  /**
+   * Complete Monzo connection after SCA approval in the Monzo app.
+   * @param pendingId - The pending connection ID from the OAuth callback
+   */
+  async completeMonzoConnection(pendingId: string): Promise<CompleteConnectionResponse> {
+    const response = await api.post<CompleteConnectionResponse>('/bank/monzo/complete-connection', {
+      pendingId,
+    });
+    return response.data;
   },
 
   /**

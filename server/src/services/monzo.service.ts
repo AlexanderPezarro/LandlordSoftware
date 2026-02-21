@@ -25,6 +25,46 @@ setInterval(() => {
   }
 }, 10 * 60 * 1000);
 
+// Pending connections awaiting SCA approval in the Monzo app.
+// After OAuth token exchange, Monzo requires the user to approve access in their app
+// before API calls will work. Tokens are stored here until the user confirms approval.
+export interface PendingConnection {
+  accessToken: string;
+  refreshToken: string | undefined;
+  expiresIn: number;
+  syncFromDate: Date;
+}
+
+const pendingConnectionStore = new Map<string, PendingConnection>();
+
+export function storePendingConnection(
+  accessToken: string,
+  refreshToken: string | undefined,
+  expiresIn: number,
+  syncFromDate: Date
+): string {
+  const pendingId = crypto.randomBytes(32).toString('hex');
+  pendingConnectionStore.set(pendingId, {
+    accessToken,
+    refreshToken,
+    expiresIn,
+    syncFromDate,
+  });
+  return pendingId;
+}
+
+export function getPendingConnection(pendingId: string): PendingConnection {
+  const pending = pendingConnectionStore.get(pendingId);
+  if (!pending) {
+    throw new Error('Pending connection not found or expired');
+  }
+  return pending;
+}
+
+export function deletePendingConnection(pendingId: string): void {
+  pendingConnectionStore.delete(pendingId);
+}
+
 /**
  * Generates the Monzo OAuth authorization URL
  * @param syncFromDays - Number of days to sync transaction history from

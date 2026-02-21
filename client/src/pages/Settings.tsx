@@ -76,6 +76,11 @@ export const Settings: React.FC = () => {
   const [importProgressOpen, setImportProgressOpen] = useState(false);
   const [importSyncLogId, setImportSyncLogId] = useState<string>('');
 
+  // SCA pending approval state
+  const [pendingApprovalOpen, setPendingApprovalOpen] = useState(false);
+  const [pendingId, setPendingId] = useState<string | null>(null);
+  const [completeConnectionLoading, setCompleteConnectionLoading] = useState(false);
+
   useEffect(() => {
     fetchUsers();
 
@@ -85,7 +90,15 @@ export const Settings: React.FC = () => {
     const error = params.get('error');
     const bankAccountId = params.get('bankAccountId');
 
-    if (success === 'monzo_connected') {
+    // Check for pending SCA approval redirect
+    const pendingApproval = params.get('pending_approval');
+    const pendingIdParam = params.get('pendingId');
+
+    if (pendingApproval === 'monzo' && pendingIdParam) {
+      setPendingId(pendingIdParam);
+      setPendingApprovalOpen(true);
+      window.history.replaceState({}, '', '/settings');
+    } else if (success === 'monzo_connected') {
       toast.success('Monzo account connected successfully');
 
       // If we have a bank account ID, fetch the active sync log and show progress
@@ -294,6 +307,47 @@ export const Settings: React.FC = () => {
       const errorMessage = err instanceof ApiError ? err.message : 'Failed to connect Monzo account';
       toast.error(errorMessage);
       setBankConnectLoading(false);
+    }
+  };
+
+  const handleCompleteConnection = async () => {
+    if (!pendingId) return;
+
+    try {
+      setCompleteConnectionLoading(true);
+      const response = await bankService.completeMonzoConnection(pendingId);
+
+      setPendingApprovalOpen(false);
+      setPendingId(null);
+      toast.success('Monzo account connected successfully');
+
+      // Fetch active sync log and show progress (same as existing success flow)
+      if (response.bankAccountId) {
+        try {
+          const syncLog = await bankService.getActiveSyncLog(response.bankAccountId);
+          if (syncLog.status === 'in_progress') {
+            setImportSyncLogId(syncLog.id);
+            setImportProgressOpen(true);
+          }
+        } catch (err) {
+          console.error('Failed to fetch sync log:', err);
+        }
+      }
+    } catch (err) {
+      console.error('Error completing connection:', err);
+      const isAxiosError = err && typeof err === 'object' && 'response' in err;
+      const status = isAxiosError ? (err as { response?: { status?: number } }).response?.status : undefined;
+
+      if (status === 403) {
+        toast.error('Please approve access in your Monzo app first, then try again.');
+      } else {
+        const errorMessage = err instanceof ApiError ? err.message : 'Failed to complete connection. Please restart the connection flow.';
+        toast.error(errorMessage);
+        setPendingApprovalOpen(false);
+        setPendingId(null);
+      }
+    } finally {
+      setCompleteConnectionLoading(false);
     }
   };
 
@@ -592,6 +646,50 @@ export const Settings: React.FC = () => {
             startIcon={<BankIcon />}
           >
             {bankConnectLoading ? <CircularProgress size={24} /> : 'Connect to Monzo'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* SCA Pending Approval Dialog */}
+      <Dialog
+        open={pendingApprovalOpen}
+        onClose={() => {
+          setPendingApprovalOpen(false);
+          setPendingId(null);
+        }}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Approve in Monzo App</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, py: 2 }}>
+            <BankIcon sx={{ fontSize: 48, color: 'primary.main' }} />
+            <Typography variant="body1" textAlign="center">
+              Monzo requires you to approve this connection in your mobile app.
+            </Typography>
+            <Alert severity="info" sx={{ width: '100%' }}>
+              Open your Monzo app, approve the access request, then click the button below.
+            </Alert>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => {
+              setPendingApprovalOpen(false);
+              setPendingId(null);
+            }}
+            color="inherit"
+            disabled={completeConnectionLoading}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleCompleteConnection}
+            variant="contained"
+            disabled={completeConnectionLoading}
+            startIcon={completeConnectionLoading ? <CircularProgress size={20} /> : <BankIcon />}
+          >
+            {completeConnectionLoading ? "Connecting..." : "I've Approved It"}
           </Button>
         </DialogActions>
       </Dialog>
