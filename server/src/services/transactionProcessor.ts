@@ -1,6 +1,5 @@
 import prisma from '../db/client.js';
 import { checkForDuplicate } from './duplicateDetection.js';
-import { convertPenceToPounds } from '../utils/monzo.js';
 import { validateTypeCategoryCombo } from '../utils/transactionValidation.js';
 import { evaluateRules, type RuleEvaluationResult } from './ruleEvaluationEngine.js';
 import type { MonzoTransaction } from './monzo/types.js';
@@ -29,8 +28,7 @@ export interface ProcessTransactionsResult {
  * - Multiple transactions from manual sync API responses
  *
  * Processing steps for each transaction:
- * 1. Convert amount from pence to pounds using convertPenceToPounds
- * 2. Check for duplicates using checkForDuplicate
+ * 1. Check for duplicates using checkForDuplicate
  * 3. If not duplicate: create BankTransaction record with all fields
  * 4. Evaluate matching rules to determine propertyId, type, and category
  * 5. If fully matched and valid: create Transaction record
@@ -72,30 +70,27 @@ export async function processTransactions(
   // Process each transaction independently
   for (const monzoTx of monzoTransactions) {
     try {
-      // Step 1: Convert amount from pence to pounds
-      const amountInPounds = convertPenceToPounds(monzoTx.amount);
-
-      // Step 2: Check for duplicates
+      // Step 1: Check for duplicates
       const duplicateCheck = await checkForDuplicate({
         bankAccountId,
         externalId: monzoTx.id,
-        amount: amountInPounds,
+        amount: monzoTx.amount,
         description: monzoTx.description,
         transactionDate: new Date(monzoTx.created),
       });
 
-      // Step 3: Skip if duplicate
+      // Step 2: Skip if duplicate
       if (duplicateCheck.isDuplicate) {
         result.duplicatesSkipped++;
         continue;
       }
 
-      // Step 4: Create BankTransaction record
+      // Step 3: Create BankTransaction record
       const bankTransaction = await prisma.bankTransaction.create({
         data: {
           bankAccountId,
           externalId: monzoTx.id,
-          amount: amountInPounds,
+          amount: monzoTx.amount,
           currency: monzoTx.currency,
           description: monzoTx.description,
           counterpartyName: monzoTx.counterparty?.name ?? null,
@@ -107,10 +102,10 @@ export async function processTransactions(
         },
       });
 
-      // Step 5: Evaluate matching rules
+      // Step 4: Evaluate matching rules
       const ruleResult = evaluateRules(bankTransaction, matchingRules);
 
-      // Step 6: Create Transaction or PendingTransaction based on rule evaluation
+      // Step 5: Create Transaction or PendingTransaction based on rule evaluation
       await createTransactionOrPending(bankTransaction, ruleResult);
 
       result.processed++;

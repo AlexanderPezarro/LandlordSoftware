@@ -17,7 +17,7 @@ export interface MonzoTransaction {
   created: string;
   /** Transaction description */
   description: string;
-  /** Amount in pence (divide by 100 for pounds) */
+  /** Amount in minor currency units (e.g., pence for GBP) */
   amount: number;
   /** Currency code (e.g., "GBP") */
   currency: string;

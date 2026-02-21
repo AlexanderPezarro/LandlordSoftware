@@ -51,7 +51,7 @@ describe('Transaction Processor Service', () => {
           account_id: 'acc_001',
           created: '2024-01-15T10:30:00Z',
           description: 'Coffee Shop',
-          amount: 350, // £3.50
+          amount: 3.5,
           currency: 'GBP',
           notes: '',
           merchant: { id: 'merch_001', name: 'Coffee Co' },
@@ -87,7 +87,7 @@ describe('Transaction Processor Service', () => {
           account_id: 'acc_001',
           created: '2024-01-15T10:30:00Z',
           description: 'Coffee Shop',
-          amount: 350,
+          amount: 3.5,
           currency: 'GBP',
           notes: '',
           settled: '2024-01-15T10:30:00Z',
@@ -97,7 +97,7 @@ describe('Transaction Processor Service', () => {
           account_id: 'acc_001',
           created: '2024-01-16T14:20:00Z',
           description: 'Grocery Store',
-          amount: 2550,
+          amount: 25.5,
           currency: 'GBP',
           notes: '',
           settled: '2024-01-16T14:20:00Z',
@@ -131,7 +131,7 @@ describe('Transaction Processor Service', () => {
           account_id: 'acc_001',
           created: '2024-01-15T10:30:00Z',
           description: 'Transfer',
-          amount: -5000, // Income (negative in Monzo = money in)
+          amount: -50, // Income (negative in Monzo = money in)
           currency: 'GBP',
           notes: '',
           counterparty: { name: 'John Smith' },
@@ -158,7 +158,7 @@ describe('Transaction Processor Service', () => {
           account_id: 'acc_001',
           created: '2024-01-15T10:30:00Z',
           description: 'Pending Transaction',
-          amount: 100,
+          amount: 1,
           currency: 'GBP',
           notes: '',
           // No settled date
@@ -183,7 +183,7 @@ describe('Transaction Processor Service', () => {
           account_id: 'acc_001',
           created: '2024-01-15T10:30:00Z',
           description: 'Transaction',
-          amount: 500,
+          amount: 5,
           currency: 'GBP',
           notes: 'Personal note about transaction',
           settled: '2024-01-15T10:30:00Z',
@@ -208,7 +208,7 @@ describe('Transaction Processor Service', () => {
           account_id: 'acc_001',
           created: '2024-01-15T10:30:00Z',
           description: 'Transaction',
-          amount: 500,
+          amount: 5,
           currency: 'GBP',
           notes: '',
           settled: '2024-01-15T10:30:00Z',
@@ -226,14 +226,14 @@ describe('Transaction Processor Service', () => {
       expect(savedTx?.reference).toBeNull();
     });
 
-    it('should convert amounts correctly from pence to pounds', async () => {
+    it('should store amounts as-is from Monzo API', async () => {
       const monzoTransactions: MonzoTransaction[] = [
         {
           id: 'tx_001',
           account_id: 'acc_001',
           created: '2024-01-15T10:30:00Z',
           description: 'Transaction',
-          amount: 12345, // £123.45
+          amount: 123.45,
           currency: 'GBP',
           notes: '',
           settled: '2024-01-15T10:30:00Z',
@@ -273,7 +273,7 @@ describe('Transaction Processor Service', () => {
           account_id: 'acc_001',
           created: '2024-01-15T10:30:00Z',
           description: 'Duplicate Transaction',
-          amount: 500,
+          amount: 5,
           currency: 'GBP',
           notes: '',
           settled: '2024-01-15T10:30:00Z',
@@ -313,7 +313,7 @@ describe('Transaction Processor Service', () => {
           account_id: 'acc_001',
           created: '2024-01-15T10:30:00Z',
           description: 'Coffee Shop Purchase', // Same description
-          amount: 1000, // Same amount
+          amount: 10, // Same amount
           currency: 'GBP',
           notes: '',
           settled: '2024-01-15T10:30:00Z',
@@ -351,7 +351,7 @@ describe('Transaction Processor Service', () => {
           account_id: 'acc_001',
           created: '2024-01-15T10:30:00Z',
           description: 'New Transaction 1',
-          amount: 500,
+          amount: 5,
           currency: 'GBP',
           notes: '',
           settled: '2024-01-15T10:30:00Z',
@@ -361,7 +361,7 @@ describe('Transaction Processor Service', () => {
           account_id: 'acc_001',
           created: '2024-01-16T11:00:00Z',
           description: 'Duplicate Transaction',
-          amount: 1000,
+          amount: 10,
           currency: 'GBP',
           notes: '',
           settled: '2024-01-16T11:00:00Z',
@@ -371,7 +371,7 @@ describe('Transaction Processor Service', () => {
           account_id: 'acc_001',
           created: '2024-01-17T12:00:00Z',
           description: 'New Transaction 2',
-          amount: 750,
+          amount: 7.5,
           currency: 'GBP',
           notes: '',
           settled: '2024-01-17T12:00:00Z',
@@ -410,7 +410,7 @@ describe('Transaction Processor Service', () => {
           account_id: 'acc_001',
           created: '2024-01-15T10:30:00Z',
           description: 'Good Transaction',
-          amount: 500,
+          amount: 5,
           currency: 'GBP',
           notes: '',
           settled: '2024-01-15T10:30:00Z',
@@ -420,7 +420,7 @@ describe('Transaction Processor Service', () => {
           account_id: 'acc_001',
           created: 'invalid-date', // Invalid date format
           description: 'Bad Transaction',
-          amount: 1000,
+          amount: 10,
           currency: 'GBP',
           notes: '',
           settled: '2024-01-16T11:00:00Z',
@@ -430,7 +430,7 @@ describe('Transaction Processor Service', () => {
           account_id: 'acc_001',
           created: '2024-01-17T12:00:00Z',
           description: 'Another Good Transaction',
-          amount: 750,
+          amount: 7.5,
           currency: 'GBP',
           notes: '',
           settled: '2024-01-17T12:00:00Z',
@@ -480,7 +480,7 @@ describe('Transaction Processor Service', () => {
           account_id: 'acc_001',
           created: '2024-01-15T10:30:00Z',
           description: 'Minimal Transaction',
-          amount: 500,
+          amount: 5,
           currency: 'GBP',
           notes: '',
           // No merchant, counterparty, category, or settled
@@ -508,7 +508,7 @@ describe('Transaction Processor Service', () => {
           account_id: 'acc_001',
           created: '2024-01-15T10:30:00Z',
           description: 'Large Transaction',
-          amount: 1000000000, // £10,000,000
+          amount: 10000000, // £10,000,000
           currency: 'GBP',
           notes: '',
           settled: '2024-01-15T10:30:00Z',
@@ -558,7 +558,7 @@ describe('Transaction Processor Service', () => {
           account_id: 'acc_001',
           created: '2024-01-15T10:30:00Z',
           description: 'Refund',
-          amount: -5000, // £50 refund
+          amount: -50, // £50 refund
           currency: 'GBP',
           notes: '',
           settled: '2024-01-15T10:30:00Z',

@@ -317,7 +317,7 @@ describe('Monzo Service - importFullHistory', () => {
         id: 'tx_map_test',
         created: '2024-01-15T10:30:00Z',
         description: 'Coffee Shop Purchase',
-        amount: 350, // £3.50 in pence
+        amount: 3.5,
         currency: 'GBP',
         notes: 'Morning coffee',
         merchant: { id: 'merchant_123', name: 'Coffee Shop' },
@@ -340,7 +340,7 @@ describe('Monzo Service - importFullHistory', () => {
 
       expect(importedTransaction).toBeTruthy();
       expect(importedTransaction?.externalId).toBe('tx_map_test');
-      expect(importedTransaction?.amount).toBe(3.5); // Converted from pence
+      expect(importedTransaction?.amount).toBe(3.5);
       expect(importedTransaction?.currency).toBe('GBP');
       expect(importedTransaction?.description).toBe('Coffee Shop Purchase');
       expect(importedTransaction?.counterpartyName).toBe('John Doe');

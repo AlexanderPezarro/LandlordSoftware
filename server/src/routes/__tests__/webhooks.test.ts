@@ -152,7 +152,7 @@ describe('Webhook Routes', () => {
           id: 'tx_webhook_001',
           created: '2024-01-15T10:30:00Z',
           description: 'Coffee Shop',
-          amount: -350, // £3.50 in pence
+          amount: -3.5,
           currency: 'GBP',
           notes: 'Morning coffee',
           merchant: {
@@ -184,7 +184,7 @@ describe('Webhook Routes', () => {
       });
 
       expect(bankTransaction).not.toBeNull();
-      expect(bankTransaction?.amount).toBe(-3.5); // Converted from pence to pounds
+      expect(bankTransaction?.amount).toBe(-3.5);
       expect(bankTransaction?.currency).toBe('GBP');
       expect(bankTransaction?.description).toBe('Coffee Shop');
       expect(bankTransaction?.counterpartyName).toBe('Coffee Shop');
@@ -383,7 +383,7 @@ describe('Webhook Routes', () => {
           id: 'tx_minimal',
           created: '2024-01-15T13:00:00Z',
           description: 'Minimal Transaction',
-          amount: -250,
+          amount: -2.5,
           currency: 'GBP',
           notes: '',
           // No merchant, counterparty, category, or settled
@@ -422,7 +422,7 @@ describe('Webhook Routes', () => {
           id: 'tx_credit',
           created: '2024-01-15T14:00:00Z',
           description: 'Refund',
-          amount: 1500, // £15.00 credit
+          amount: 15, // £15.00 credit
           currency: 'GBP',
           notes: 'Refund from merchant',
         },
@@ -443,7 +443,7 @@ describe('Webhook Routes', () => {
       });
 
       expect(bankTransaction).not.toBeNull();
-      expect(bankTransaction?.amount).toBe(15); // Positive amount
+      expect(bankTransaction?.amount).toBe(15);
     });
 
     it('should handle amount of zero', async () => {
