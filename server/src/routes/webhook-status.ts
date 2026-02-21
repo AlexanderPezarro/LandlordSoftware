@@ -24,7 +24,7 @@ const router = Router();
  * - 403: Not authorized (admin only)
  * - 500: Server error
  */
-router.get('/', requireAuth, requireAdmin, async (_req, res) => {
+router.get('/', requireAuth, requireAdmin(), async (_req, res) => {
   try {
     // Get all bank accounts with webhooks configured
     const accountsWithWebhooks = await prisma.bankAccount.findMany({

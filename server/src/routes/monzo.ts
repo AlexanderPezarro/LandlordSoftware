@@ -208,7 +208,7 @@ router.get('/callback', async (req, res) => {
  * GET /api/bank/monzo/import-progress/:syncLogId
  * Server-Sent Events endpoint for streaming import progress updates
  */
-router.get('/import-progress/:syncLogId', requireAuth, requireAdmin, async (req, res) => {
+router.get('/import-progress/:syncLogId', requireAuth, requireAdmin(), async (req, res) => {
   const { syncLogId } = req.params;
 
   // Validate syncLogId format (UUID)

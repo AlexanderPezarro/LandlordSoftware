@@ -8,7 +8,7 @@ import { bulkIdsSchema, bulkUpdateSchema } from '../../../shared/validation/inde
 const router = Router();
 
 // GET /api/pending-transactions/count - Get count of unreviewed pending transactions
-router.get('/count', requireAuth, requireAdmin, async (_req, res) => {
+router.get('/count', requireAuth, requireAdmin(), async (_req, res) => {
   try {
     const count = await prisma.pendingTransaction.count({
       where: {
@@ -30,7 +30,7 @@ router.get('/count', requireAuth, requireAdmin, async (_req, res) => {
 });
 
 // POST /api/pending-transactions/bulk/approve - Bulk approve pending transactions
-router.post('/bulk/approve', requireAuth, requireAdmin, async (req, res) => {
+router.post('/bulk/approve', requireAuth, requireAdmin(), async (req, res) => {
   try {
     // Validate input using Zod schema
     const validation = bulkIdsSchema.safeParse(req.body);
@@ -147,7 +147,7 @@ router.post('/bulk/approve', requireAuth, requireAdmin, async (req, res) => {
 });
 
 // POST /api/pending-transactions/bulk/update - Bulk update pending transactions
-router.post('/bulk/update', requireAuth, requireAdmin, async (req, res) => {
+router.post('/bulk/update', requireAuth, requireAdmin(), async (req, res) => {
   try {
     // Validate input using Zod schema
     const validation = bulkUpdateSchema.safeParse(req.body);
@@ -248,7 +248,7 @@ router.post('/bulk/update', requireAuth, requireAdmin, async (req, res) => {
 });
 
 // POST /api/pending-transactions/bulk/reject - Bulk reject (delete) pending transactions
-router.post('/bulk/reject', requireAuth, requireAdmin, async (req, res) => {
+router.post('/bulk/reject', requireAuth, requireAdmin(), async (req, res) => {
   try {
     // Validate input using Zod schema
     const validation = bulkIdsSchema.safeParse(req.body);
@@ -297,7 +297,7 @@ router.post('/bulk/reject', requireAuth, requireAdmin, async (req, res) => {
 });
 
 // GET /api/pending-transactions - List all pending transactions with filters
-router.get('/', requireAuth, requireAdmin, async (req, res) => {
+router.get('/', requireAuth, requireAdmin(), async (req, res) => {
   try {
     const { bank_account_id, review_status, search } = req.query;
 
@@ -394,7 +394,7 @@ router.get('/', requireAuth, requireAdmin, async (req, res) => {
 });
 
 // PATCH /api/pending-transactions/:id - Update pending transaction fields
-router.patch('/:id', requireAuth, requireAdmin, async (req, res) => {
+router.patch('/:id', requireAuth, requireAdmin(), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -505,7 +505,7 @@ router.patch('/:id', requireAuth, requireAdmin, async (req, res) => {
 });
 
 // POST /api/pending-transactions/:id/approve - Approve and create transaction
-router.post('/:id/approve', requireAuth, requireAdmin, async (req, res) => {
+router.post('/:id/approve', requireAuth, requireAdmin(), async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user!.id;
