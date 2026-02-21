@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   AppBar,
@@ -16,7 +16,6 @@ import {
   useTheme,
   useMediaQuery,
   Button,
-  Badge,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -31,10 +30,8 @@ import {
   Settings as SettingsIcon,
   Logout as LogoutIcon,
   AdminPanelSettings as AdminPanelSettingsIcon,
-  RateReview as ReviewIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
-import { pendingTransactionsService } from '../services/api/pendingTransactions.service';
 
 const drawerWidth = 240;
 
@@ -42,8 +39,6 @@ interface NavItem {
   text: string;
   icon: React.ReactElement;
   path: string;
-  adminOnly?: boolean;
-  showBadge?: boolean;
 }
 
 const navigationItems: NavItem[] = [
@@ -55,8 +50,7 @@ const navigationItems: NavItem[] = [
   { text: 'Reports', icon: <AssessmentIcon />, path: '/finances/reports' },
   { text: 'Events', icon: <EventIcon />, path: '/events' },
   { text: 'Documents', icon: <FolderIcon />, path: '/documents' },
-  { text: 'Pending Review', icon: <ReviewIcon />, path: '/admin/pending-transactions', adminOnly: true, showBadge: true },
-  { text: 'Users', icon: <AdminPanelSettingsIcon />, path: '/users', adminOnly: true },
+  { text: 'Users', icon: <AdminPanelSettingsIcon />, path: '/users' },
   { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
 ];
 
@@ -66,32 +60,10 @@ interface LayoutProps {
 
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [pendingCount, setPendingCount] = useState(0);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const location = useLocation();
   const { user, logout, isAdmin } = useAuth();
-
-  // Fetch pending count on mount and periodically
-  useEffect(() => {
-    const fetchPendingCount = async () => {
-      if (isAdmin()) {
-        try {
-          const count = await pendingTransactionsService.getPendingCount();
-          setPendingCount(count);
-        } catch (error) {
-          console.error('Error fetching pending count:', error);
-        }
-      }
-    };
-
-    fetchPendingCount();
-
-    // Refresh count every 60 seconds
-    const interval = setInterval(fetchPendingCount, 60000);
-
-    return () => clearInterval(interval);
-  }, [isAdmin]);
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -110,10 +82,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       </Toolbar>
       <List>
         {navigationItems
-          .filter(item => !item.adminOnly || isAdmin())
+          .filter(item => item.text !== 'Users' || isAdmin())
           .map((item) => {
             const isActive = location.pathname === item.path;
-            const showBadgeCount = item.showBadge && pendingCount > 0;
             return (
               <ListItem key={item.text} disablePadding>
                 <ListItemButton
@@ -141,13 +112,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                         : 'inherit',
                     }}
                   >
-                    {showBadgeCount ? (
-                      <Badge badgeContent={pendingCount} color="error">
-                        {item.icon}
-                      </Badge>
-                    ) : (
-                      item.icon
-                    )}
+                    {item.icon}
                   </ListItemIcon>
                   <ListItemText primary={item.text} />
                 </ListItemButton>

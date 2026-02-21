@@ -12,7 +12,7 @@ import { z } from 'zod';
 const router = Router();
 
 // GET /api/events - List events with filtering
-router.get('/', requireAuth, async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     // Validate query parameters
     const validationResult = EventQueryParamsSchema.safeParse(req.query);
@@ -70,7 +70,7 @@ router.get('/', requireAuth, async (req, res) => {
 });
 
 // GET /api/events/:id - Get single event
-router.get('/:id', requireAuth, async (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
 

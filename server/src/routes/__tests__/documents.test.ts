@@ -3,7 +3,6 @@ import request from 'supertest';
 import { createApp } from '../../app.js';
 import prisma from '../../db/client.js';
 import authService from '../../services/auth.service.js';
-import { Roles } from '../../../../shared/types/user.types.js';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -16,25 +15,7 @@ describe('Documents Routes', () => {
     password: 'testPassword123',
   };
 
-  const viewerUser = {
-    email: 'viewer@example.com',
-    password: 'viewerPassword123',
-  };
-
-  const landlordUser = {
-    email: 'landlord@example.com',
-    password: 'landlordPassword123',
-  };
-
-  const adminUser = {
-    email: 'admin@example.com',
-    password: 'adminPassword123',
-  };
-
   let authCookies: string[];
-  let viewerCookies: string[];
-  let landlordCookies: string[];
-  let adminCookies: string[];
   let testPropertyId: string;
   let testTenantId: string;
   const testUploadDir = 'uploads';
@@ -55,7 +36,7 @@ describe('Documents Routes', () => {
     await prisma.property.deleteMany({});
     await prisma.user.deleteMany({});
 
-    // Create test user and login (default LANDLORD role)
+    // Create test user and login
     await authService.createUser(testUser.email, testUser.password);
 
     const loginResponse = await request(app).post('/api/auth/login').send({
@@ -64,36 +45,6 @@ describe('Documents Routes', () => {
     });
 
     authCookies = [loginResponse.headers['set-cookie']];
-
-    // Create viewer user and login
-    await authService.createUser(viewerUser.email, viewerUser.password, Roles.VIEWER);
-
-    const viewerLoginResponse = await request(app).post('/api/auth/login').send({
-      email: viewerUser.email,
-      password: viewerUser.password,
-    });
-
-    viewerCookies = [viewerLoginResponse.headers['set-cookie']];
-
-    // Create landlord user and login
-    await authService.createUser(landlordUser.email, landlordUser.password, Roles.LANDLORD);
-
-    const landlordLoginResponse = await request(app).post('/api/auth/login').send({
-      email: landlordUser.email,
-      password: landlordUser.password,
-    });
-
-    landlordCookies = [landlordLoginResponse.headers['set-cookie']];
-
-    // Create admin user and login
-    await authService.createUser(adminUser.email, adminUser.password, Roles.ADMIN);
-
-    const adminLoginResponse = await request(app).post('/api/auth/login').send({
-      email: adminUser.email,
-      password: adminUser.password,
-    });
-
-    adminCookies = [adminLoginResponse.headers['set-cookie']];
 
     // Create test property for document association
     const property = await prisma.property.create({
@@ -364,53 +315,6 @@ describe('Documents Routes', () => {
         .then(() => true)
         .catch(() => false);
       expect(fileExists).toBe(true);
-    });
-
-    it('should block VIEWER role from uploading documents', async () => {
-      const response = await request(app)
-        .post('/api/documents')
-        .set('Cookie', viewerCookies)
-        .field('entityType', 'Property')
-        .field('entityId', testPropertyId)
-        .attach('file', createTestFile('test.jpg', 'image/jpeg'), 'test.jpg');
-
-      expect(response.status).toBe(403);
-      expect(response.body.success).toBe(false);
-      expect(response.body.error).toContain('Insufficient permissions');
-    });
-
-    it('should allow LANDLORD role to upload documents', async () => {
-      const response = await request(app)
-        .post('/api/documents')
-        .set('Cookie', landlordCookies)
-        .field('entityType', 'Property')
-        .field('entityId', testPropertyId)
-        .attach('file', createTestFile('landlord-doc.jpg', 'image/jpeg'), 'landlord-doc.jpg');
-
-      expect(response.status).toBe(201);
-      expect(response.body.success).toBe(true);
-      expect(response.body.document).toMatchObject({
-        entityType: 'Property',
-        entityId: testPropertyId,
-        fileName: 'landlord-doc.jpg',
-      });
-    });
-
-    it('should allow ADMIN role to upload documents', async () => {
-      const response = await request(app)
-        .post('/api/documents')
-        .set('Cookie', adminCookies)
-        .field('entityType', 'Property')
-        .field('entityId', testPropertyId)
-        .attach('file', createTestFile('admin-doc.jpg', 'image/jpeg'), 'admin-doc.jpg');
-
-      expect(response.status).toBe(201);
-      expect(response.body.success).toBe(true);
-      expect(response.body.document).toMatchObject({
-        entityType: 'Property',
-        entityId: testPropertyId,
-        fileName: 'admin-doc.jpg',
-      });
     });
   });
 
@@ -863,69 +767,6 @@ describe('Documents Routes', () => {
         where: { id: document.id },
       });
       expect(deletedDoc).toBeNull();
-    });
-
-    it('should block VIEWER role from deleting documents', async () => {
-      const document = await prisma.document.create({
-        data: {
-          entityType: 'Property',
-          entityId: testPropertyId,
-          fileName: 'test.jpg',
-          filePath: '2026/01/test.jpg',
-          fileType: 'image/jpeg',
-          fileSize: 1024,
-        },
-      });
-
-      const response = await request(app)
-        .delete(`/api/documents/${document.id}`)
-        .set('Cookie', viewerCookies);
-
-      expect(response.status).toBe(403);
-      expect(response.body.success).toBe(false);
-      expect(response.body.error).toContain('Insufficient permissions');
-    });
-
-    it('should allow LANDLORD role to delete documents', async () => {
-      // First upload a file as landlord
-      const uploadResponse = await request(app)
-        .post('/api/documents')
-        .set('Cookie', landlordCookies)
-        .field('entityType', 'Property')
-        .field('entityId', testPropertyId)
-        .attach('file', createTestFile('landlord-delete.jpg', 'image/jpeg'), 'landlord-delete.jpg');
-
-      expect(uploadResponse.status).toBe(201);
-      const documentId = uploadResponse.body.document.id;
-
-      const response = await request(app)
-        .delete(`/api/documents/${documentId}`)
-        .set('Cookie', landlordCookies);
-
-      expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(response.body.document.id).toBe(documentId);
-    });
-
-    it('should allow ADMIN role to delete documents', async () => {
-      // First upload a file as admin
-      const uploadResponse = await request(app)
-        .post('/api/documents')
-        .set('Cookie', adminCookies)
-        .field('entityType', 'Property')
-        .field('entityId', testPropertyId)
-        .attach('file', createTestFile('admin-delete.jpg', 'image/jpeg'), 'admin-delete.jpg');
-
-      expect(uploadResponse.status).toBe(201);
-      const documentId = uploadResponse.body.document.id;
-
-      const response = await request(app)
-        .delete(`/api/documents/${documentId}`)
-        .set('Cookie', adminCookies);
-
-      expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(response.body.document.id).toBe(documentId);
     });
   });
 

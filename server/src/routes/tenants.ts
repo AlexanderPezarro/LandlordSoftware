@@ -8,7 +8,7 @@ import { z } from 'zod';
 const router = Router();
 
 // GET /api/tenants - List tenants with filtering
-router.get('/', requireAuth, async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     // Validate query parameters
     const validationResult = TenantQueryParamsSchema.safeParse(req.query);
@@ -56,7 +56,7 @@ router.get('/', requireAuth, async (req, res) => {
 });
 
 // GET /api/tenants/:id - Get single tenant
-router.get('/:id', requireAuth, async (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -230,7 +230,7 @@ router.delete('/:id', requireAuth, requireWrite, async (req, res) => {
 });
 
 // GET /api/tenants/:id/lease-history - Get tenant lease history with property details
-router.get('/:id/lease-history', requireAuth, async (req, res) => {
+router.get('/:id/lease-history', async (req, res) => {
   try {
     const { id } = req.params;
 

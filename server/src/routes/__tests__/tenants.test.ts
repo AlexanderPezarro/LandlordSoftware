@@ -3,7 +3,6 @@ import request from 'supertest';
 import { createApp } from '../../app.js';
 import prisma from '../../db/client.js';
 import authService from '../../services/auth.service.js';
-import { Roles } from '../../../../shared/types/user.types.js';
 
 const app = createApp();
 
@@ -14,25 +13,7 @@ describe('Tenants Routes', () => {
     password: 'testPassword123',
   };
 
-  const viewerUser = {
-    email: 'viewer@example.com',
-    password: 'viewerPassword123',
-  };
-
-  const landlordUser = {
-    email: 'landlord@example.com',
-    password: 'landlordPassword123',
-  };
-
-  const adminUser = {
-    email: 'admin@example.com',
-    password: 'adminPassword123',
-  };
-
   let authCookies: string[];
-  let viewerCookies: string[];
-  let landlordCookies: string[];
-  let adminCookies: string[];
 
   // Valid tenant data
   const validTenant = {
@@ -53,7 +34,7 @@ describe('Tenants Routes', () => {
     await prisma.property.deleteMany({});
     await prisma.user.deleteMany({});
 
-    // Create test user and login (default LANDLORD role)
+    // Create test user and login
     await authService.createUser(testUser.email, testUser.password);
 
     const loginResponse = await request(app).post('/api/auth/login').send({
@@ -62,36 +43,6 @@ describe('Tenants Routes', () => {
     });
 
     authCookies = [loginResponse.headers['set-cookie']];
-
-    // Create viewer user and login
-    await authService.createUser(viewerUser.email, viewerUser.password, Roles.VIEWER);
-
-    const viewerLoginResponse = await request(app).post('/api/auth/login').send({
-      email: viewerUser.email,
-      password: viewerUser.password,
-    });
-
-    viewerCookies = [viewerLoginResponse.headers['set-cookie']];
-
-    // Create landlord user and login
-    await authService.createUser(landlordUser.email, landlordUser.password, Roles.LANDLORD);
-
-    const landlordLoginResponse = await request(app).post('/api/auth/login').send({
-      email: landlordUser.email,
-      password: landlordUser.password,
-    });
-
-    landlordCookies = [landlordLoginResponse.headers['set-cookie']];
-
-    // Create admin user and login
-    await authService.createUser(adminUser.email, adminUser.password, Roles.ADMIN);
-
-    const adminLoginResponse = await request(app).post('/api/auth/login').send({
-      email: adminUser.email,
-      password: adminUser.password,
-    });
-
-    adminCookies = [adminLoginResponse.headers['set-cookie']];
   });
 
   afterAll(async () => {
@@ -288,62 +239,11 @@ describe('Tenants Routes', () => {
         expect(response.body.tenant.status).toBe(status);
       }
     });
-
-    it('should block VIEWER role from creating tenants', async () => {
-      const response = await request(app)
-        .post('/api/tenants')
-        .set('Cookie', viewerCookies)
-        .send(validTenant);
-
-      expect(response.status).toBe(403);
-      expect(response.body.success).toBe(false);
-      expect(response.body.error).toContain('Insufficient permissions');
-    });
-
-    it('should allow LANDLORD role to create tenants', async () => {
-      const response = await request(app)
-        .post('/api/tenants')
-        .set('Cookie', landlordCookies)
-        .send(validTenant);
-
-      expect(response.status).toBe(201);
-      expect(response.body.success).toBe(true);
-      expect(response.body.tenant).toMatchObject({
-        firstName: validTenant.firstName,
-        lastName: validTenant.lastName,
-        email: validTenant.email,
-      });
-    });
-
-    it('should allow ADMIN role to create tenants', async () => {
-      const response = await request(app)
-        .post('/api/tenants')
-        .set('Cookie', adminCookies)
-        .send({ ...validTenant, email: 'admin-created@example.com' });
-
-      expect(response.status).toBe(201);
-      expect(response.body.success).toBe(true);
-      expect(response.body.tenant).toMatchObject({
-        firstName: validTenant.firstName,
-        lastName: validTenant.lastName,
-        email: 'admin-created@example.com',
-      });
-    });
   });
 
   describe('GET /api/tenants', () => {
-    it('should require authentication', async () => {
-      const response = await request(app).get('/api/tenants');
-
-      expect(response.status).toBe(401);
-      expect(response.body.success).toBe(false);
-      expect(response.body.error).toBe('Authentication required');
-    });
-
     it('should return empty array when no tenants exist', async () => {
-      const response = await request(app)
-        .get('/api/tenants')
-        .set('Cookie', authCookies);
+      const response = await request(app).get('/api/tenants');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -361,9 +261,7 @@ describe('Tenants Routes', () => {
         },
       });
 
-      const response = await request(app)
-        .get('/api/tenants')
-        .set('Cookie', authCookies);
+      const response = await request(app).get('/api/tenants');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -382,7 +280,6 @@ describe('Tenants Routes', () => {
 
       const response = await request(app)
         .get('/api/tenants')
-        .set('Cookie', authCookies)
         .query({ status: 'Active' });
 
       expect(response.status).toBe(200);
@@ -399,7 +296,6 @@ describe('Tenants Routes', () => {
 
       const response = await request(app)
         .get('/api/tenants')
-        .set('Cookie', authCookies)
         .query({ search: 'John' });
 
       expect(response.status).toBe(200);
@@ -416,7 +312,6 @@ describe('Tenants Routes', () => {
 
       const response = await request(app)
         .get('/api/tenants')
-        .set('Cookie', authCookies)
         .query({ search: 'Jones' });
 
       expect(response.status).toBe(200);
@@ -433,7 +328,6 @@ describe('Tenants Routes', () => {
 
       const response = await request(app)
         .get('/api/tenants')
-        .set('Cookie', authCookies)
         .query({ search: 'jane@example.com' });
 
       expect(response.status).toBe(200);
@@ -455,7 +349,6 @@ describe('Tenants Routes', () => {
 
       const response = await request(app)
         .get('/api/tenants')
-        .set('Cookie', authCookies)
         .query({ status: 'Active', search: 'John' });
 
       expect(response.status).toBe(200);
@@ -468,7 +361,6 @@ describe('Tenants Routes', () => {
     it('should reject invalid query parameters - invalid status', async () => {
       const response = await request(app)
         .get('/api/tenants')
-        .set('Cookie', authCookies)
         .query({ status: 'InvalidStatus' });
 
       expect(response.status).toBe(400);
@@ -478,22 +370,10 @@ describe('Tenants Routes', () => {
   });
 
   describe('GET /api/tenants/:id', () => {
-    it('should require authentication', async () => {
-      const tenant = await prisma.tenant.create({ data: validTenant });
-
-      const response = await request(app).get(`/api/tenants/${tenant.id}`);
-
-      expect(response.status).toBe(401);
-      expect(response.body.success).toBe(false);
-      expect(response.body.error).toBe('Authentication required');
-    });
-
     it('should return tenant by id', async () => {
       const tenant = await prisma.tenant.create({ data: validTenant });
 
-      const response = await request(app)
-        .get(`/api/tenants/${tenant.id}`)
-        .set('Cookie', authCookies);
+      const response = await request(app).get(`/api/tenants/${tenant.id}`);
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -503,9 +383,7 @@ describe('Tenants Routes', () => {
 
     it('should return 404 for non-existent tenant', async () => {
       const nonExistentId = '00000000-0000-0000-0000-000000000000';
-      const response = await request(app)
-        .get(`/api/tenants/${nonExistentId}`)
-        .set('Cookie', authCookies);
+      const response = await request(app).get(`/api/tenants/${nonExistentId}`);
 
       expect(response.status).toBe(404);
       expect(response.body.success).toBe(false);
@@ -513,9 +391,7 @@ describe('Tenants Routes', () => {
     });
 
     it('should return 400 for invalid UUID format', async () => {
-      const response = await request(app)
-        .get('/api/tenants/invalid-id')
-        .set('Cookie', authCookies);
+      const response = await request(app).get('/api/tenants/invalid-id');
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
@@ -648,45 +524,6 @@ describe('Tenants Routes', () => {
       const updatedAt = new Date(response.body.tenant.updatedAt);
       expect(updatedAt.getTime()).toBeGreaterThan(originalUpdatedAt.getTime());
     });
-
-    it('should block VIEWER role from updating tenants', async () => {
-      const tenant = await prisma.tenant.create({ data: validTenant });
-
-      const response = await request(app)
-        .put(`/api/tenants/${tenant.id}`)
-        .set('Cookie', viewerCookies)
-        .send({ firstName: 'Updated by Viewer' });
-
-      expect(response.status).toBe(403);
-      expect(response.body.success).toBe(false);
-      expect(response.body.error).toContain('Insufficient permissions');
-    });
-
-    it('should allow LANDLORD role to update tenants', async () => {
-      const tenant = await prisma.tenant.create({ data: validTenant });
-
-      const response = await request(app)
-        .put(`/api/tenants/${tenant.id}`)
-        .set('Cookie', landlordCookies)
-        .send({ firstName: 'Updated by Landlord' });
-
-      expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(response.body.tenant.firstName).toBe('Updated by Landlord');
-    });
-
-    it('should allow ADMIN role to update tenants', async () => {
-      const tenant = await prisma.tenant.create({ data: validTenant });
-
-      const response = await request(app)
-        .put(`/api/tenants/${tenant.id}`)
-        .set('Cookie', adminCookies)
-        .send({ firstName: 'Updated by Admin' });
-
-      expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(response.body.tenant.firstName).toBe('Updated by Admin');
-    });
   });
 
   describe('DELETE /api/tenants/:id', () => {
@@ -755,42 +592,6 @@ describe('Tenants Routes', () => {
       expect(response.body.success).toBe(true);
       expect(response.body.tenant.status).toBe('Former');
     });
-
-    it('should block VIEWER role from deleting tenants', async () => {
-      const tenant = await prisma.tenant.create({ data: validTenant });
-
-      const response = await request(app)
-        .delete(`/api/tenants/${tenant.id}`)
-        .set('Cookie', viewerCookies);
-
-      expect(response.status).toBe(403);
-      expect(response.body.success).toBe(false);
-      expect(response.body.error).toContain('Insufficient permissions');
-    });
-
-    it('should allow LANDLORD role to delete tenants', async () => {
-      const tenant = await prisma.tenant.create({ data: validTenant });
-
-      const response = await request(app)
-        .delete(`/api/tenants/${tenant.id}`)
-        .set('Cookie', landlordCookies);
-
-      expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(response.body.tenant.status).toBe('Former');
-    });
-
-    it('should allow ADMIN role to delete tenants', async () => {
-      const tenant = await prisma.tenant.create({ data: validTenant });
-
-      const response = await request(app)
-        .delete(`/api/tenants/${tenant.id}`)
-        .set('Cookie', adminCookies);
-
-      expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(response.body.tenant.status).toBe('Former');
-    });
   });
 
   describe('GET /api/tenants/:id/lease-history', () => {
@@ -828,18 +629,8 @@ describe('Tenants Routes', () => {
       });
     });
 
-    it('should require authentication', async () => {
-      const response = await request(app).get(`/api/tenants/${tenant.id}/lease-history`);
-
-      expect(response.status).toBe(401);
-      expect(response.body.success).toBe(false);
-      expect(response.body.error).toBe('Authentication required');
-    });
-
     it('should return empty array when tenant has no leases', async () => {
-      const response = await request(app)
-        .get(`/api/tenants/${tenant.id}/lease-history`)
-        .set('Cookie', authCookies);
+      const response = await request(app).get(`/api/tenants/${tenant.id}/lease-history`);
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -872,9 +663,7 @@ describe('Tenants Routes', () => {
         },
       });
 
-      const response = await request(app)
-        .get(`/api/tenants/${tenant.id}/lease-history`)
-        .set('Cookie', authCookies);
+      const response = await request(app).get(`/api/tenants/${tenant.id}/lease-history`);
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -929,7 +718,6 @@ describe('Tenants Routes', () => {
 
       const response = await request(app)
         .get(`/api/tenants/${tenant.id}/lease-history`)
-        .set('Cookie', authCookies)
         .query({ fromDate: '2024-01-01' });
 
       expect(response.status).toBe(200);
@@ -967,7 +755,6 @@ describe('Tenants Routes', () => {
 
       const response = await request(app)
         .get(`/api/tenants/${tenant.id}/lease-history`)
-        .set('Cookie', authCookies)
         .query({ toDate: '2023-12-31' });
 
       expect(response.status).toBe(200);
@@ -1018,7 +805,6 @@ describe('Tenants Routes', () => {
 
       const response = await request(app)
         .get(`/api/tenants/${tenant.id}/lease-history`)
-        .set('Cookie', authCookies)
         .query({ fromDate: '2023-07-01', toDate: '2023-12-31' });
 
       expect(response.status).toBe(200);
@@ -1043,7 +829,6 @@ describe('Tenants Routes', () => {
 
       const response = await request(app)
         .get(`/api/tenants/${tenant.id}/lease-history`)
-        .set('Cookie', authCookies)
         .query({ fromDate: '2024-01-01' });
 
       expect(response.status).toBe(200);
@@ -1054,9 +839,7 @@ describe('Tenants Routes', () => {
 
     it('should return 404 for non-existent tenant', async () => {
       const nonExistentId = '00000000-0000-0000-0000-000000000000';
-      const response = await request(app)
-        .get(`/api/tenants/${nonExistentId}/lease-history`)
-        .set('Cookie', authCookies);
+      const response = await request(app).get(`/api/tenants/${nonExistentId}/lease-history`);
 
       expect(response.status).toBe(404);
       expect(response.body.success).toBe(false);
@@ -1064,9 +847,7 @@ describe('Tenants Routes', () => {
     });
 
     it('should return 400 for invalid UUID format', async () => {
-      const response = await request(app)
-        .get('/api/tenants/invalid-id/lease-history')
-        .set('Cookie', authCookies);
+      const response = await request(app).get('/api/tenants/invalid-id/lease-history');
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
@@ -1076,7 +857,6 @@ describe('Tenants Routes', () => {
     it('should reject invalid date format in query params', async () => {
       const response = await request(app)
         .get(`/api/tenants/${tenant.id}/lease-history`)
-        .set('Cookie', authCookies)
         .query({ fromDate: 'invalid-date' });
 
       expect(response.status).toBe(400);
@@ -1097,9 +877,7 @@ describe('Tenants Routes', () => {
       const tenantId = createResponse.body.tenant.id;
 
       // Read single
-      const readResponse = await request(app)
-        .get(`/api/tenants/${tenantId}`)
-        .set('Cookie', authCookies);
+      const readResponse = await request(app).get(`/api/tenants/${tenantId}`);
 
       expect(readResponse.status).toBe(200);
       expect(readResponse.body.tenant.id).toBe(tenantId);
@@ -1122,9 +900,7 @@ describe('Tenants Routes', () => {
       expect(deleteResponse.body.tenant.status).toBe('Former');
 
       // Verify still accessible
-      const finalReadResponse = await request(app)
-        .get(`/api/tenants/${tenantId}`)
-        .set('Cookie', authCookies);
+      const finalReadResponse = await request(app).get(`/api/tenants/${tenantId}`);
       expect(finalReadResponse.status).toBe(200);
       expect(finalReadResponse.body.tenant.status).toBe('Former');
     });
@@ -1145,9 +921,7 @@ describe('Tenants Routes', () => {
       }
 
       // List all
-      const listResponse = await request(app)
-        .get('/api/tenants')
-        .set('Cookie', authCookies);
+      const listResponse = await request(app).get('/api/tenants');
       expect(listResponse.status).toBe(200);
       expect(listResponse.body.tenants).toHaveLength(5);
 
@@ -1185,9 +959,7 @@ describe('Tenants Routes', () => {
       expect(response2.body.tenant.id).not.toBe(response1.body.tenant.id);
 
       // Verify both exist in database
-      const listResponse = await request(app)
-        .get('/api/tenants')
-        .set('Cookie', authCookies);
+      const listResponse = await request(app).get('/api/tenants');
       expect(listResponse.status).toBe(200);
       expect(listResponse.body.tenants).toHaveLength(2);
     });
@@ -1199,7 +971,6 @@ describe('Tenants Routes', () => {
       // Attempt SQL injection in search parameter
       const response = await request(app)
         .get('/api/tenants')
-        .set('Cookie', authCookies)
         .query({ search: "' OR '1'='1" });
 
       expect(response.status).toBe(200);

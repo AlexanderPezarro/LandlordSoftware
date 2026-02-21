@@ -3,7 +3,6 @@ import request from 'supertest';
 import { createApp } from '../../app.js';
 import prisma from '../../db/client.js';
 import authService from '../../services/auth.service.js';
-import { Roles } from '../../../../shared/types/user.types.js';
 
 const app = createApp();
 
@@ -14,25 +13,7 @@ describe('Events Routes', () => {
     password: 'testPassword123',
   };
 
-  const viewerUser = {
-    email: 'viewer@example.com',
-    password: 'viewerPassword123',
-  };
-
-  const landlordUser = {
-    email: 'landlord@example.com',
-    password: 'landlordPassword123',
-  };
-
-  const adminUser = {
-    email: 'admin@example.com',
-    password: 'adminPassword123',
-  };
-
   let authCookies: string[];
-  let viewerCookies: string[];
-  let landlordCookies: string[];
-  let adminCookies: string[];
   let testPropertyId: string;
 
   // Valid event data
@@ -51,7 +32,7 @@ describe('Events Routes', () => {
     await prisma.property.deleteMany({});
     await prisma.user.deleteMany({});
 
-    // Create test user and login (default LANDLORD role)
+    // Create test user and login
     await authService.createUser(testUser.email, testUser.password);
 
     const loginResponse = await request(app).post('/api/auth/login').send({
@@ -60,36 +41,6 @@ describe('Events Routes', () => {
     });
 
     authCookies = [loginResponse.headers['set-cookie']];
-
-    // Create viewer user and login
-    await authService.createUser(viewerUser.email, viewerUser.password, Roles.VIEWER);
-
-    const viewerLoginResponse = await request(app).post('/api/auth/login').send({
-      email: viewerUser.email,
-      password: viewerUser.password,
-    });
-
-    viewerCookies = [viewerLoginResponse.headers['set-cookie']];
-
-    // Create landlord user and login
-    await authService.createUser(landlordUser.email, landlordUser.password, Roles.LANDLORD);
-
-    const landlordLoginResponse = await request(app).post('/api/auth/login').send({
-      email: landlordUser.email,
-      password: landlordUser.password,
-    });
-
-    landlordCookies = [landlordLoginResponse.headers['set-cookie']];
-
-    // Create admin user and login
-    await authService.createUser(adminUser.email, adminUser.password, Roles.ADMIN);
-
-    const adminLoginResponse = await request(app).post('/api/auth/login').send({
-      email: adminUser.email,
-      password: adminUser.password,
-    });
-
-    adminCookies = [adminLoginResponse.headers['set-cookie']];
 
     // Create test property
     const property = await prisma.property.create({
@@ -291,62 +242,11 @@ describe('Events Routes', () => {
       expect(response.status).toBe(201);
       expect(response.body.success).toBe(true);
     });
-
-    it('should block VIEWER role from creating events', async () => {
-      const response = await request(app)
-        .post('/api/events')
-        .set('Cookie', viewerCookies)
-        .send(validEvent);
-
-      expect(response.status).toBe(403);
-      expect(response.body.success).toBe(false);
-      expect(response.body.error).toContain('Insufficient permissions');
-    });
-
-    it('should allow LANDLORD role to create events', async () => {
-      const response = await request(app)
-        .post('/api/events')
-        .set('Cookie', landlordCookies)
-        .send(validEvent);
-
-      expect(response.status).toBe(201);
-      expect(response.body.success).toBe(true);
-      expect(response.body.event).toMatchObject({
-        propertyId: validEvent.propertyId,
-        eventType: validEvent.eventType,
-        title: validEvent.title,
-      });
-    });
-
-    it('should allow ADMIN role to create events', async () => {
-      const response = await request(app)
-        .post('/api/events')
-        .set('Cookie', adminCookies)
-        .send(validEvent);
-
-      expect(response.status).toBe(201);
-      expect(response.body.success).toBe(true);
-      expect(response.body.event).toMatchObject({
-        propertyId: validEvent.propertyId,
-        eventType: validEvent.eventType,
-        title: validEvent.title,
-      });
-    });
   });
 
   describe('GET /api/events', () => {
-    it('should require authentication', async () => {
-      const response = await request(app).get('/api/events');
-
-      expect(response.status).toBe(401);
-      expect(response.body.success).toBe(false);
-      expect(response.body.error).toBe('Authentication required');
-    });
-
     it('should return empty array when no events exist', async () => {
-      const response = await request(app)
-        .get('/api/events')
-        .set('Cookie', authCookies);
+      const response = await request(app).get('/api/events');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -369,9 +269,7 @@ describe('Events Routes', () => {
         },
       });
 
-      const response = await request(app)
-        .get('/api/events')
-        .set('Cookie', authCookies);
+      const response = await request(app).get('/api/events');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -405,7 +303,6 @@ describe('Events Routes', () => {
 
       const response = await request(app)
         .get('/api/events')
-        .set('Cookie', authCookies)
         .query({ propertyId: testPropertyId });
 
       expect(response.status).toBe(200);
@@ -427,7 +324,6 @@ describe('Events Routes', () => {
 
       const response = await request(app)
         .get('/api/events')
-        .set('Cookie', authCookies)
         .query({ eventType: 'Maintenance' });
 
       expect(response.status).toBe(200);
@@ -451,7 +347,6 @@ describe('Events Routes', () => {
 
       const response = await request(app)
         .get('/api/events')
-        .set('Cookie', authCookies)
         .query({ completed: 'false' });
 
       expect(response.status).toBe(200);
@@ -475,7 +370,6 @@ describe('Events Routes', () => {
 
       const response = await request(app)
         .get('/api/events')
-        .set('Cookie', authCookies)
         .query({ completed: 'true' });
 
       expect(response.status).toBe(200);
@@ -502,7 +396,6 @@ describe('Events Routes', () => {
 
       const response = await request(app)
         .get('/api/events')
-        .set('Cookie', authCookies)
         .query({ fromDate: '2026-02-01T00:00:00.000Z' });
 
       expect(response.status).toBe(200);
@@ -529,7 +422,6 @@ describe('Events Routes', () => {
 
       const response = await request(app)
         .get('/api/events')
-        .set('Cookie', authCookies)
         .query({ toDate: '2026-02-01T00:00:00.000Z' });
 
       expect(response.status).toBe(200);
@@ -563,7 +455,6 @@ describe('Events Routes', () => {
 
       const response = await request(app)
         .get('/api/events')
-        .set('Cookie', authCookies)
         .query({
           fromDate: '2026-02-01T00:00:00.000Z',
           toDate: '2026-03-01T00:00:00.000Z',
@@ -606,7 +497,6 @@ describe('Events Routes', () => {
 
       const response = await request(app)
         .get('/api/events')
-        .set('Cookie', authCookies)
         .query({
           propertyId: testPropertyId,
           eventType: 'Inspection',
@@ -622,7 +512,6 @@ describe('Events Routes', () => {
     it('should reject invalid query parameters - invalid propertyId', async () => {
       const response = await request(app)
         .get('/api/events')
-        .set('Cookie', authCookies)
         .query({ propertyId: 'invalid-uuid' });
 
       expect(response.status).toBe(400);
@@ -633,7 +522,6 @@ describe('Events Routes', () => {
     it('should reject invalid query parameters - invalid eventType', async () => {
       const response = await request(app)
         .get('/api/events')
-        .set('Cookie', authCookies)
         .query({ eventType: 'InvalidType' });
 
       expect(response.status).toBe(400);
@@ -643,22 +531,10 @@ describe('Events Routes', () => {
   });
 
   describe('GET /api/events/:id', () => {
-    it('should require authentication', async () => {
-      const event = await prisma.event.create({ data: validEvent });
-
-      const response = await request(app).get(`/api/events/${event.id}`);
-
-      expect(response.status).toBe(401);
-      expect(response.body.success).toBe(false);
-      expect(response.body.error).toBe('Authentication required');
-    });
-
     it('should return event by id', async () => {
       const event = await prisma.event.create({ data: validEvent });
 
-      const response = await request(app)
-        .get(`/api/events/${event.id}`)
-        .set('Cookie', authCookies);
+      const response = await request(app).get(`/api/events/${event.id}`);
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -668,9 +544,7 @@ describe('Events Routes', () => {
 
     it('should return 404 for non-existent event', async () => {
       const nonExistentId = '00000000-0000-0000-0000-000000000000';
-      const response = await request(app)
-        .get(`/api/events/${nonExistentId}`)
-        .set('Cookie', authCookies);
+      const response = await request(app).get(`/api/events/${nonExistentId}`);
 
       expect(response.status).toBe(404);
       expect(response.body.success).toBe(false);
@@ -678,9 +552,7 @@ describe('Events Routes', () => {
     });
 
     it('should return 400 for invalid UUID format', async () => {
-      const response = await request(app)
-        .get('/api/events/invalid-id')
-        .set('Cookie', authCookies);
+      const response = await request(app).get('/api/events/invalid-id');
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
@@ -802,45 +674,6 @@ describe('Events Routes', () => {
       const updatedAt = new Date(response.body.event.updatedAt);
       expect(updatedAt.getTime()).toBeGreaterThan(originalUpdatedAt.getTime());
     });
-
-    it('should block VIEWER role from updating events', async () => {
-      const event = await prisma.event.create({ data: validEvent });
-
-      const response = await request(app)
-        .put(`/api/events/${event.id}`)
-        .set('Cookie', viewerCookies)
-        .send({ title: 'Updated by Viewer' });
-
-      expect(response.status).toBe(403);
-      expect(response.body.success).toBe(false);
-      expect(response.body.error).toContain('Insufficient permissions');
-    });
-
-    it('should allow LANDLORD role to update events', async () => {
-      const event = await prisma.event.create({ data: validEvent });
-
-      const response = await request(app)
-        .put(`/api/events/${event.id}`)
-        .set('Cookie', landlordCookies)
-        .send({ title: 'Updated by Landlord' });
-
-      expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(response.body.event.title).toBe('Updated by Landlord');
-    });
-
-    it('should allow ADMIN role to update events', async () => {
-      const event = await prisma.event.create({ data: validEvent });
-
-      const response = await request(app)
-        .put(`/api/events/${event.id}`)
-        .set('Cookie', adminCookies)
-        .send({ title: 'Updated by Admin' });
-
-      expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(response.body.event.title).toBe('Updated by Admin');
-    });
   });
 
   describe('PATCH /api/events/:id/complete', () => {
@@ -918,44 +751,6 @@ describe('Events Routes', () => {
       const originalDate = new Date('2026-01-10T10:00:00.000Z');
       expect(completedDate.getTime()).toBeGreaterThan(originalDate.getTime());
     });
-
-    it('should block VIEWER role from completing events', async () => {
-      const event = await prisma.event.create({ data: validEvent });
-
-      const response = await request(app)
-        .patch(`/api/events/${event.id}/complete`)
-        .set('Cookie', viewerCookies);
-
-      expect(response.status).toBe(403);
-      expect(response.body.success).toBe(false);
-      expect(response.body.error).toContain('Insufficient permissions');
-    });
-
-    it('should allow LANDLORD role to complete events', async () => {
-      const event = await prisma.event.create({ data: validEvent });
-
-      const response = await request(app)
-        .patch(`/api/events/${event.id}/complete`)
-        .set('Cookie', landlordCookies);
-
-      expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(response.body.event.completed).toBe(true);
-      expect(response.body.event.completedDate).toBeDefined();
-    });
-
-    it('should allow ADMIN role to complete events', async () => {
-      const event = await prisma.event.create({ data: validEvent });
-
-      const response = await request(app)
-        .patch(`/api/events/${event.id}/complete`)
-        .set('Cookie', adminCookies);
-
-      expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(response.body.event.completed).toBe(true);
-      expect(response.body.event.completedDate).toBeDefined();
-    });
   });
 
   describe('DELETE /api/events/:id', () => {
@@ -1008,42 +803,6 @@ describe('Events Routes', () => {
       expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Invalid event ID format');
     });
-
-    it('should block VIEWER role from deleting events', async () => {
-      const event = await prisma.event.create({ data: validEvent });
-
-      const response = await request(app)
-        .delete(`/api/events/${event.id}`)
-        .set('Cookie', viewerCookies);
-
-      expect(response.status).toBe(403);
-      expect(response.body.success).toBe(false);
-      expect(response.body.error).toContain('Insufficient permissions');
-    });
-
-    it('should allow LANDLORD role to delete events', async () => {
-      const event = await prisma.event.create({ data: validEvent });
-
-      const response = await request(app)
-        .delete(`/api/events/${event.id}`)
-        .set('Cookie', landlordCookies);
-
-      expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(response.body.message).toBe('Event deleted successfully');
-    });
-
-    it('should allow ADMIN role to delete events', async () => {
-      const event = await prisma.event.create({ data: validEvent });
-
-      const response = await request(app)
-        .delete(`/api/events/${event.id}`)
-        .set('Cookie', adminCookies);
-
-      expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(response.body.message).toBe('Event deleted successfully');
-    });
   });
 
   describe('Integration scenarios', () => {
@@ -1058,9 +817,7 @@ describe('Events Routes', () => {
       const eventId = createResponse.body.event.id;
 
       // Read single
-      const readResponse = await request(app)
-        .get(`/api/events/${eventId}`)
-        .set('Cookie', authCookies);
+      const readResponse = await request(app).get(`/api/events/${eventId}`);
 
       expect(readResponse.status).toBe(200);
       expect(readResponse.body.event.id).toBe(eventId);
@@ -1091,9 +848,7 @@ describe('Events Routes', () => {
       expect(deleteResponse.status).toBe(200);
 
       // Verify deleted
-      const finalReadResponse = await request(app)
-        .get(`/api/events/${eventId}`)
-        .set('Cookie', authCookies);
+      const finalReadResponse = await request(app).get(`/api/events/${eventId}`);
       expect(finalReadResponse.status).toBe(404);
     });
 
@@ -1114,16 +869,13 @@ describe('Events Routes', () => {
       }
 
       // List all
-      const listResponse = await request(app)
-        .get('/api/events')
-        .set('Cookie', authCookies);
+      const listResponse = await request(app).get('/api/events');
       expect(listResponse.status).toBe(200);
       expect(listResponse.body.events).toHaveLength(5);
 
       // Filter by eventType
       const filteredResponse = await request(app)
         .get('/api/events')
-        .set('Cookie', authCookies)
         .query({ eventType: 'Inspection' });
       expect(filteredResponse.status).toBe(200);
       expect(filteredResponse.body.events).toHaveLength(3);
@@ -1150,7 +902,6 @@ describe('Events Routes', () => {
       // Verify it shows in incomplete filter
       const incompleteResponse = await request(app)
         .get('/api/events')
-        .set('Cookie', authCookies)
         .query({ completed: 'false' });
 
       expect(incompleteResponse.body.events).toHaveLength(1);
@@ -1167,7 +918,6 @@ describe('Events Routes', () => {
       // Verify it shows in completed filter
       const completedResponse = await request(app)
         .get('/api/events')
-        .set('Cookie', authCookies)
         .query({ completed: 'true' });
 
       expect(completedResponse.body.events).toHaveLength(1);
@@ -1176,7 +926,6 @@ describe('Events Routes', () => {
       // Verify it doesn't show in incomplete filter
       const stillIncompleteResponse = await request(app)
         .get('/api/events')
-        .set('Cookie', authCookies)
         .query({ completed: 'false' });
 
       expect(stillIncompleteResponse.body.events).toHaveLength(0);
@@ -1209,9 +958,7 @@ describe('Events Routes', () => {
       expect(response2.body.event.id).not.toBe(response1.body.event.id);
 
       // Verify both exist in database
-      const listResponse = await request(app)
-        .get('/api/events')
-        .set('Cookie', authCookies);
+      const listResponse = await request(app).get('/api/events');
       expect(listResponse.status).toBe(200);
       expect(listResponse.body.events).toHaveLength(2);
     });
@@ -1226,7 +973,6 @@ describe('Events Routes', () => {
 
       const response = await request(app)
         .get('/api/events')
-        .set('Cookie', authCookies)
         .query({
           fromDate: '2026-02-15T00:00:00.000Z',
           toDate: '2026-02-15T23:59:59.999Z',

@@ -7,7 +7,6 @@ export { transactionsService } from './transactions.service';
 export { eventsService } from './events.service';
 export { documentsService } from './documents.service';
 export { usersService } from './users.service';
-export { bankService } from './bank.service';
 
 // Export main API client
 export { default as apiClient, api } from '../api';
