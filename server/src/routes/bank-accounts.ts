@@ -16,7 +16,7 @@ function sanitizeBankAccount(account: any) {
 }
 
 // GET /api/bank/accounts - List all bank accounts
-router.get('/', requireAuth, requireAdmin(), async (_req, res) => {
+router.get('/', requireAuth, requireAdmin, async (_req, res) => {
   try {
     const accounts = await prisma.bankAccount.findMany({
       include: {
@@ -56,7 +56,7 @@ router.get('/', requireAuth, requireAdmin(), async (_req, res) => {
 });
 
 // GET /api/bank/accounts/:id - Get single bank account
-router.get('/:id', requireAuth, requireAdmin(), async (req, res) => {
+router.get('/:id', requireAuth, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -96,7 +96,7 @@ router.get('/:id', requireAuth, requireAdmin(), async (req, res) => {
 });
 
 // PATCH /api/bank/accounts/:id - Update bank account
-router.patch('/:id', requireAuth, requireAdmin(), async (req, res) => {
+router.patch('/:id', requireAuth, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -159,7 +159,7 @@ router.patch('/:id', requireAuth, requireAdmin(), async (req, res) => {
 });
 
 // DELETE /api/bank/accounts/:id - Delete bank account
-router.delete('/:id', requireAuth, requireAdmin(), async (req, res) => {
+router.delete('/:id', requireAuth, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -215,7 +215,7 @@ router.delete('/:id', requireAuth, requireAdmin(), async (req, res) => {
 });
 
 // POST /api/bank/accounts/:id/sync - Manually trigger transaction sync
-router.post('/:id/sync', requireAuth, requireAdmin(), async (req, res) => {
+router.post('/:id/sync', requireAuth, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -285,7 +285,7 @@ router.post('/:id/sync', requireAuth, requireAdmin(), async (req, res) => {
 });
 
 // GET /api/bank/accounts/:id/active-sync - Get active or most recent sync log for a bank account
-router.get('/:id/active-sync', requireAuth, requireAdmin(), async (req, res) => {
+router.get('/:id/active-sync', requireAuth, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
 
