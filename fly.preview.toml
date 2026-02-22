@@ -1,16 +1,16 @@
-# fly.toml app configuration file generated for landlordsoftware on 2026-01-17T13:23:56Z
-#
-# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
-#
+# fly.toml template for PR preview environments
+# Placeholders are substituted by the deploy-pr workflow:
+#   APP_NAME_PLACEHOLDER    -> landlordsoftware-pr-<number>
+#   VOLUME_NAME_PLACEHOLDER -> pr_<number>_data
 
-app = 'landlordsoftware'
+app = 'APP_NAME_PLACEHOLDER'
 primary_region = 'lhr'
 
 [build]
   dockerfile = "Dockerfile.app"
 
 [[mounts]]
-  source = 'data'
+  source = 'VOLUME_NAME_PLACEHOLDER'
   destination = '/data'
   auto_extend_size_threshold = 80
   auto_extend_size_increment = '1GB'

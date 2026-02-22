@@ -96,7 +96,7 @@ export const Transactions: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const toast = useToast();
-  const { user } = useAuth();
+  const { user, canWrite } = useAuth();
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [summary, setSummary] = useState<TransactionSummary | null>(null);
@@ -425,14 +425,16 @@ export const Transactions: React.FC = () => {
           <Typography variant="h4" component="h1">
             Finances & Transactions
           </Typography>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleCreateTransaction}
-            size={isMobile ? 'small' : 'medium'}
-          >
-            New Transaction
-          </Button>
+          {canWrite() && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleCreateTransaction}
+              size={isMobile ? 'small' : 'medium'}
+            >
+              New Transaction
+            </Button>
+          )}
         </Box>
 
         {error && (
@@ -579,14 +581,16 @@ export const Transactions: React.FC = () => {
               <Typography variant="body1" color="text.secondary">
                 No transactions found
               </Typography>
-              <Button
-                variant="outlined"
-                startIcon={<AddIcon />}
-                onClick={handleCreateTransaction}
-                sx={{ mt: 2 }}
-              >
-                Create First Transaction
-              </Button>
+              {canWrite() && (
+                <Button
+                  variant="outlined"
+                  startIcon={<AddIcon />}
+                  onClick={handleCreateTransaction}
+                  sx={{ mt: 2 }}
+                >
+                  Create First Transaction
+                </Button>
+              )}
             </Box>
           ) : (
             <TableContainer>
@@ -606,8 +610,8 @@ export const Transactions: React.FC = () => {
                     <TransactionRow
                       key={transaction.id}
                       transaction={transaction}
-                      onEdit={handleEditTransaction}
-                      onDelete={handleDeleteTransaction}
+                      onEdit={canWrite() ? handleEditTransaction : undefined}
+                      onDelete={canWrite() ? handleDeleteTransaction : undefined}
                     />
                   ))}
                 </TableBody>
