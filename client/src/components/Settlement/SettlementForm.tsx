@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -15,6 +15,7 @@ import {
   SelectChangeEvent,
 } from '@mui/material';
 import { settlementService } from '../../services/api/settlement.service';
+import type { Balance } from '../../services/api/settlement.service';
 import { useToast } from '../../contexts/ToastContext';
 
 interface Owner {
@@ -27,6 +28,7 @@ interface SettlementFormProps {
   onClose: () => void;
   propertyId: string;
   owners: Owner[];
+  balances?: Balance[];
   onSuccess: () => void;
   suggestedFrom?: string;
   suggestedTo?: string;
@@ -38,6 +40,7 @@ export const SettlementForm: React.FC<SettlementFormProps> = ({
   onClose,
   propertyId,
   owners,
+  balances = [],
   onSuccess,
   suggestedFrom,
   suggestedTo,
@@ -54,6 +57,44 @@ export const SettlementForm: React.FC<SettlementFormProps> = ({
     settlementDate: new Date().toISOString().split('T')[0],
     notes: '',
   });
+
+  // Compute overpayment warning when amount exceeds balance between selected users
+  const overpaymentWarning = useMemo(() => {
+    const { fromUserId, toUserId, amount } = formData;
+    if (!fromUserId || !toUserId || !amount) return null;
+
+    const enteredAmount = Number(amount);
+    if (isNaN(enteredAmount) || enteredAmount <= 0) return null;
+
+    // Find the balance between the selected from and to users.
+    // In the balance model: userB owes userA. So if fromUserId (payer) is userB
+    // and toUserId (recipient) is userA, the outstanding amount is balance.amount.
+    let outstandingBalance = 0;
+    let creditorEmail = '';
+
+    for (const balance of balances) {
+      if (balance.userB === fromUserId && balance.userA === toUserId) {
+        // fromUser (payer) owes toUser (recipient) this amount
+        outstandingBalance = Math.abs(balance.amount);
+        creditorEmail = balance.userADetails.email;
+        break;
+      } else if (balance.userA === fromUserId && balance.userB === toUserId) {
+        // The balance is reversed: toUser actually owes fromUser,
+        // so there's no outstanding balance in the direction of payment
+        outstandingBalance = 0;
+        creditorEmail = '';
+        break;
+      }
+    }
+
+    if (enteredAmount > outstandingBalance && outstandingBalance >= 0) {
+      const toOwner = owners.find((o) => o.userId === toUserId);
+      const recipientLabel = toOwner?.user.email || creditorEmail || 'the recipient';
+      return `You're settling \u00A3${enteredAmount.toFixed(2)} but ${recipientLabel} only owes you \u00A3${outstandingBalance.toFixed(2)}`;
+    }
+
+    return null;
+  }, [formData.fromUserId, formData.toUserId, formData.amount, balances, owners]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,6 +143,9 @@ export const SettlementForm: React.FC<SettlementFormProps> = ({
         <DialogContent>
           <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
             {warning && <Alert severity="warning">{warning}</Alert>}
+            {overpaymentWarning && (
+              <Alert severity="warning">{overpaymentWarning}</Alert>
+            )}
 
             <FormControl fullWidth required>
               <InputLabel>From (Payer)</InputLabel>

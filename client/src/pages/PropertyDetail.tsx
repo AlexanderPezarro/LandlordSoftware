@@ -560,6 +560,7 @@ export const PropertyDetail: React.FC = () => {
                   onClose={() => setSettlementFormOpen(false)}
                   propertyId={id}
                   owners={owners}
+                  balances={balances}
                   onSuccess={handleSettlementSuccess}
                 />
               )}
