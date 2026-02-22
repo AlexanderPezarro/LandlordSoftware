@@ -31,7 +31,6 @@ import type {
 } from '../types/api.types';
 import { ApiError } from '../types/api.types';
 import PropertyCard from '../components/shared/PropertyCard';
-import ConfirmDialog from '../components/shared/ConfirmDialog';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useProperties } from '../contexts/PropertiesContext';
@@ -259,13 +258,18 @@ export const Properties: React.FC = () => {
     setPropertyToDelete(null);
   };
 
-  const handleDeleteConfirm = async () => {
+  const handleDeleteConfirm = async (archive: boolean) => {
     if (!propertyToDelete) return;
 
     try {
       setDeleteLoading(true);
-      await propertiesService.deleteProperty(propertyToDelete.id);
-      toast.success('Property deleted successfully');
+      if (archive) {
+        await propertiesService.archiveProperty(propertyToDelete.id);
+        toast.success('Property archived successfully');
+      } else {
+        await propertiesService.deleteProperty(propertyToDelete.id);
+        toast.success('Property permanently deleted');
+      }
       setDeleteDialogOpen(false);
       setPropertyToDelete(null);
       await fetchProperties();
@@ -609,14 +613,43 @@ export const Properties: React.FC = () => {
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
-      <ConfirmDialog
-        open={deleteDialogOpen}
-        title="Delete Property"
-        message={`Are you sure you want to delete ${propertyToDelete?.name}? This will set the property status to 'For Sale'.`}
-        onConfirm={handleDeleteConfirm}
-        onCancel={handleDeleteCancel}
-        loading={deleteLoading}
-      />
+      <Dialog open={deleteDialogOpen} onClose={handleDeleteCancel} maxWidth="sm" fullWidth>
+        <DialogTitle>Delete Property</DialogTitle>
+        <DialogContent>
+          <Typography>
+            What would you like to do with {propertyToDelete?.name}?
+          </Typography>
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+              <strong>Archive:</strong> Changes status to 'For Sale' and preserves all data
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              <strong>Permanently Delete:</strong> Removes property and all related data (leases, transactions, events, etc.)
+            </Typography>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDeleteCancel} disabled={deleteLoading}>
+            Cancel
+          </Button>
+          <Button
+            onClick={() => handleDeleteConfirm(true)}
+            color="warning"
+            variant="outlined"
+            disabled={deleteLoading}
+          >
+            Archive
+          </Button>
+          <Button
+            onClick={() => handleDeleteConfirm(false)}
+            color="error"
+            variant="contained"
+            disabled={deleteLoading}
+          >
+            {deleteLoading ? <CircularProgress size={24} /> : 'Permanently Delete'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

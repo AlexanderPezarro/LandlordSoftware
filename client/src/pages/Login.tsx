@@ -15,6 +15,7 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { LoginFormSchema, LoginFormData } from '../../../shared/validation/auth.validation';
 import { authService } from '../services/api/auth.service';
+import { ApiError } from '../types/api.types';
 
 export const Login: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
@@ -25,10 +26,10 @@ export const Login: React.FC = () => {
   const {
     register,
     handleSubmit,
-    formState: { errors, isValid, isSubmitting },
+    formState: { errors, isSubmitting },
   } = useForm<LoginFormData>({
     resolver: zodResolver(LoginFormSchema),
-    mode: 'onChange',
+    mode: 'onSubmit',
     defaultValues: {
       email: '',
       password: '',
@@ -60,7 +61,11 @@ export const Login: React.FC = () => {
         setError(result.error || 'Login failed');
       }
     } catch (err) {
-      setError('An unexpected error occurred');
+      if (err instanceof ApiError) {
+        setError(err.message);
+      } else {
+        setError('An unexpected error occurred');
+      }
     }
   };
 
@@ -77,7 +82,11 @@ export const Login: React.FC = () => {
         setError(result.error || 'Setup failed');
       }
     } catch (err) {
-      setError('An unexpected error occurred during setup');
+      if (err instanceof ApiError) {
+        setError(err.message);
+      } else {
+        setError('An unexpected error occurred during setup');
+      }
     }
   };
 
@@ -160,7 +169,10 @@ export const Login: React.FC = () => {
               id="password"
               autoComplete={setupRequired ? 'new-password' : 'current-password'}
               error={!!errors.password}
-              helperText={errors.password?.message}
+              helperText={
+                errors.password?.message ||
+                (setupRequired ? 'Min 8 characters, 1 uppercase, 1 lowercase, 1 number' : '')
+              }
               disabled={isSubmitting}
               {...register('password')}
             />
@@ -169,7 +181,7 @@ export const Login: React.FC = () => {
               fullWidth
               variant="contained"
               sx={{ mt: 3, mb: 2 }}
-              disabled={isSubmitting || !isValid}
+              disabled={isSubmitting}
             >
               {isSubmitting
                 ? setupRequired
