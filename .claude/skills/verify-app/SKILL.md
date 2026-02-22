@@ -1,17 +1,126 @@
 ---
 name: verify-app
-description: "Run the app locally, login, navigate key pages, and produce a visual verification report using Rodney (browser automation) and Showboat (demo documents). Use after completing features or before PRs to confirm the app works end-to-end."
+description: "Run the app locally, login, navigate key pages, and produce a visual verification report using Rodney (browser automation) and Showboat (demo documents). Use after completing features or before PRs to confirm the app works end-to-end. Supports UAT mode when a UAT plan exists."
 ---
 
 # Verify App
 
 ## Overview
 
-Launch the application, log in as a test user, navigate key pages, and produce a Markdown verification report with screenshots. Uses **Rodney** for headless browser automation and **Showboat** for building the report document.
+Launch the application, log in as a test user, and produce a Markdown verification report with screenshots. Uses **Rodney** for headless browser automation and **Showboat** for building the report document.
+
+**Two modes:**
+
+- **UAT mode** (preferred): When a UAT plan exists (`docs/plans/*-uat-plan.md`), execute each UAT scenario and report pass/fail per scenario.
+- **Default mode** (fallback): When no UAT plan exists, navigate key pages and verify they load correctly.
 
 **Announce at start:** "I'm using the verify-app skill to visually verify the application works."
 
-## The Process
+## Mode Selection
+
+Check for a UAT plan:
+
+```bash
+ls docs/plans/*-uat-plan.md 2>/dev/null
+```
+
+- If found → use **UAT mode** (go to "UAT Mode Process" below)
+- If not found → use **Default mode** (go to "Default Mode Process" below)
+
+---
+
+## UAT Mode Process
+
+### UAT Step 1: Ensure the App is Running
+
+Same as Default Step 1 (see below).
+
+### UAT Step 2: Initialize Report
+
+```bash
+showboat init docs/verification-report.md "UAT Verification Report"
+showboat note docs/verification-report.md "Executing UAT scenarios from the UAT plan."
+```
+
+### UAT Step 3: Launch Browser and Login
+
+Same as Default Steps 4-5 (see below). Use the test credentials specified in the UAT plan.
+
+### UAT Step 4: Execute UAT Scenarios
+
+Read the UAT plan document. For each scenario:
+
+```bash
+showboat note docs/verification-report.md "## UAT-<number>: <scenario title>"
+showboat note docs/verification-report.md "**User Story:** US-<number>"
+```
+
+Follow each step in the scenario using Rodney:
+
+```bash
+# Navigate as specified
+rodney --local open http://localhost:5173/<path>
+rodney --local waitstable
+
+# Perform actions (click, input, etc.)
+rodney --local click '<selector>'
+rodney --local input '<selector>' '<value>'
+rodney --local waitstable
+
+# Screenshot after key steps
+rodney --local screenshot /tmp/uat-<number>-step-<n>.png
+showboat image docs/verification-report.md /tmp/uat-<number>-step-<n>.png
+
+# Verify expected results
+rodney --local assert '<js-expression>'
+```
+
+After each scenario, record the result:
+
+```bash
+# If all steps passed:
+showboat note docs/verification-report.md "**Result: PASS**"
+
+# If any step failed:
+showboat note docs/verification-report.md "**Result: FAIL** — Step <N>: <what went wrong>"
+```
+
+### UAT Step 5: Write Results Summary
+
+```bash
+showboat note docs/verification-report.md "## Results Summary"
+showboat note docs/verification-report.md "| UAT ID | Scenario | Result | Notes |"
+showboat note docs/verification-report.md "|--------|----------|--------|-------|"
+# One row per scenario:
+showboat note docs/verification-report.md "| UAT-001 | <title> | PASS | |"
+showboat note docs/verification-report.md "| UAT-003 | <title> | FAIL | Step 4: expected X, got Y |"
+```
+
+### UAT Step 6: Cleanup
+
+Same as Default Step 8 (see below).
+
+### UAT Step 7: Report Back
+
+Report structured results to the caller:
+
+```
+UAT Results:
+- Total: N scenarios
+- Passed: N
+- Failed: N
+- Failures:
+  - UAT-003: <scenario> — Step 4: expected <X>, got <Y>
+  - UAT-007: <scenario> — Step 2: element not found
+
+Report: docs/verification-report.md
+```
+
+This structured output allows `finishing-a-development-branch` to decide whether to proceed or enter the fix loop.
+
+---
+
+## Default Mode Process
 
 ### Step 1: Ensure the App is Running
 
@@ -251,3 +360,17 @@ The report is written to `docs/verification-report.md` with screenshots alongsid
 **Leaving Rodney running:** Always `rodney --local stop` in cleanup. Orphaned Chrome processes consume memory.
 
 **Rodney `js` only accepts expressions:** Use IIFEs: `(function(){ ... })()`. `var`/`const`/`let` at top level will fail.
+
+## Integration
+
+**Called by:**
+
+- **finishing-a-development-branch** - Dispatches this skill as a subagent to run UAT before presenting merge/PR options
+
+**Reads:**
+
+- **writing-uat-plan** output (`docs/plans/*-uat-plan.md`) - UAT scenarios to execute in UAT mode
+
+**Produces:**
+
+- `docs/verification-report.md` - Visual report with screenshots and pass/fail results

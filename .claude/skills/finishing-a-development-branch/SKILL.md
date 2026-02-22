@@ -1,27 +1,26 @@
 ---
 name: finishing-a-development-branch
-description: Use when implementation is complete, all tests pass, and you need to decide how to integrate the work - guides completion of development work by presenting structured options for merge, PR, or cleanup
+description: Use when implementation is complete and all tasks are done. Runs UAT verification, fixes failures automatically, then guides completion with structured options for merge, PR, or cleanup.
 ---
 
 # Finishing a Development Branch
 
 ## Overview
 
-Guide completion of development work by presenting clear options and handling chosen workflow.
+Guide completion of development work: verify tests pass, run UAT against the UAT plan, fix any failures, then present options for integration.
 
-**Core principle:** Verify tests → Present options → Execute choice → Clean up.
+**Core principle:** Tests pass → UAT passes (with fix loop) → Present options → Execute choice → Clean up.
 
 **Announce at start:** "I'm using the finishing-a-development-branch skill to complete this work."
 
 ## The Process
 
-### Step 1: Verify Tests
+### Step 1: Verify Unit Tests
 
-**Before presenting options, verify tests pass:**
+**Before anything else, verify tests pass:**
 
 ```bash
-# Run project's test suite
-npm test / cargo test / pytest / go test ./...
+npm test
 ```
 
 **If tests fail:**
@@ -31,28 +30,124 @@ Tests failing (<N> failures). Must fix before completing:
 
 [Show failures]
 
-Cannot proceed with merge/PR until tests pass.
+Cannot proceed until tests pass.
 ```
 
 Stop. Don't proceed to Step 2.
 
 **If tests pass:** Continue to Step 2.
 
-### Step 2: Determine Base Branch
+### Step 2: Run UAT Verification
+
+**Find the UAT plan:**
+
+Look for the most recent UAT plan in `docs/plans/` matching `*-uat-plan.md`. If none exists, skip to Step 3 (present options without UAT).
+
+**Dispatch a subagent to execute UAT:**
+
+```
+Task tool (general-purpose):
+  description: "Execute UAT plan"
+  prompt: |
+    You are executing the UAT plan to verify the implementation works end-to-end.
+
+    Use the verify-app skill in UAT mode:
+    - Read the UAT plan at: {path to UAT plan doc}
+    - Start the app if not running (npm run dev, seed if needed)
+    - For each UAT scenario in the plan:
+      1. Follow the preconditions and setup
+      2. Execute each step using Rodney browser automation
+      3. Verify expected results
+      4. Screenshot each key state
+      5. Record PASS or FAIL for each scenario
+    - Produce a verification report at docs/verification-report.md
+
+    Report back with:
+    - Total scenarios: N
+    - Passed: N
+    - Failed: N
+    - For each failure: UAT ID, scenario title, which step failed, what happened vs expected
+```
+
+### Step 3: Handle UAT Results
+
+**If all UAT passes:**
+
+Produce a success report and proceed to Step 4 (present options).
+
+```
+UAT Verification: ✅ All N scenarios passed.
+
+Report: docs/verification-report.md
+```
+
+**If any UAT fails — enter the fix loop:**
+
+```
+UAT Verification: ❌ N of M scenarios failed.
+
+Failures:
+- UAT-003: <scenario> — Step 4 failed: expected <X>, got <Y>
+- UAT-007: <scenario> — Step 2 failed: element not found
+```
+
+**Fix loop process:**
+
+1. **Create fix tasks** for each failure using `TaskCreate`:
+
+```
+TaskCreate:
+  subject: "Fix UAT-003: <scenario title>"
+  description: |
+    UAT scenario UAT-003 failed during verification.
+
+    **Failure:** Step 4 — expected <X>, got <Y>
+    **User Story:** US-<number>
+    **Root cause investigation needed.**
+
+    Steps to reproduce:
+    1. <steps from UAT plan>
+
+    Expected: <what should happen>
+    Actual: <what happened>
+
+    Fix the implementation so this UAT scenario passes.
+  activeForm: "Fixing UAT-003"
+```
+
+2. **Use subagent-driven-development** to implement the fixes:
+   - Dispatch implementer subagent per fix task
+   - Spec review (does the fix address the UAT failure?)
+   - Code quality review
+   - Complete task
+
+3. **Re-run UAT** — go back to Step 2
+
+4. **Repeat** until all UAT scenarios pass
+
+**Safety limit:** If the fix loop has run 3 times without all UAT passing, stop and report to the user:
+
+```
+UAT fix loop has run 3 times. Remaining failures:
+- UAT-003: <details>
+
+Please review manually. The failures may indicate a design issue rather than an implementation bug.
+```
+
+### Step 4: Determine Base Branch
 
 ```bash
-# Try common base branches
 git merge-base HEAD main 2>/dev/null || git merge-base HEAD master 2>/dev/null
 ```
 
 Or ask: "This branch split from main - is that correct?"
 
-### Step 3: Present Options
+### Step 5: Present Options
 
 Present exactly these 4 options:
 
 ```
-Implementation complete. What would you like to do?
+Implementation complete. UAT passed. What would you like to do?
 
 1. Merge back to <base-branch> locally
 2. Push and create a Pull Request
@@ -64,39 +159,31 @@ Which option?
 
 **Don't add explanation** - keep options concise.
 
-### Step 4: Execute Choice
+### Step 6: Execute Choice
 
 #### Option 1: Merge Locally
 
 ```bash
-# Switch to base branch
 git checkout <base-branch>
-
-# Pull latest
 git pull
-
-# Merge feature branch
 git merge <feature-branch>
-
-# Verify tests on merged result
 <test command>
-
-# If tests pass
 git branch -d <feature-branch>
 ```
 
-Then: Cleanup worktree (Step 5)
+Then: Cleanup worktree (Step 7)
 
 #### Option 2: Push and Create PR
 
 ```bash
-# Push branch
 git push -u origin <feature-branch>
 
-# Create PR
 gh pr create --title "<title>" --body "$(cat <<'EOF'
 ## Summary
 <2-3 bullets of what changed>
+
+## UAT Results
+All N scenarios passed. See docs/verification-report.md.
 
 ## Test Plan
 - [ ] <verification steps>
@@ -104,7 +191,7 @@ EOF
 )"
 ```
 
-Then: Cleanup worktree (Step 5)
+Then: Cleanup worktree (Step 7)
 
 #### Option 3: Keep As-Is
 
@@ -134,9 +221,9 @@ git checkout <base-branch>
 git branch -D <feature-branch>
 ```
 
-Then: Cleanup worktree (Step 5)
+Then: Cleanup worktree (Step 7)
 
-### Step 5: Cleanup Worktree
+### Step 7: Cleanup Worktree
 
 **For Options 1, 2, 4:**
 
@@ -156,57 +243,63 @@ git worktree remove <worktree-path>
 
 ## Quick Reference
 
-| Option           | Merge | Push | Keep Worktree | Cleanup Branch |
-| ---------------- | ----- | ---- | ------------- | -------------- |
-| 1. Merge locally | ✓     | -    | -             | ✓              |
-| 2. Create PR     | -     | ✓    | ✓             | -              |
-| 3. Keep as-is    | -     | -    | ✓             | -              |
-| 4. Discard       | -     | -    | -             | ✓ (force)      |
+| Step | Action | Condition |
+|------|--------|-----------|
+| 1 | Run unit tests | Always |
+| 2 | Run UAT | If UAT plan exists |
+| 3 | Fix loop | If UAT failures |
+| 4 | Determine base branch | After UAT passes |
+| 5 | Present 4 options | Always |
+| 6 | Execute choice | User selects |
+| 7 | Cleanup worktree | Options 1, 2, 4 |
+
+| Option | Merge | Push | Keep Worktree | Cleanup Branch |
+|--------|-------|------|---------------|----------------|
+| 1. Merge locally | yes | - | - | yes |
+| 2. Create PR | - | yes | yes | - |
+| 3. Keep as-is | - | - | yes | - |
+| 4. Discard | - | - | - | yes (force) |
 
 ## Common Mistakes
 
-**Skipping test verification**
+**Skipping UAT** - If a UAT plan exists, always run it before presenting options.
 
-- **Problem:** Merge broken code, create failing PR
-- **Fix:** Always verify tests before offering options
+**Infinite fix loop** - Cap at 3 iterations. Persistent failures likely need human review.
 
-**Open-ended questions**
+**Skipping test verification** - Always verify unit tests before offering options.
 
-- **Problem:** "What should I do next?" → ambiguous
-- **Fix:** Present exactly 4 structured options
-
-**Automatic worktree cleanup**
-
-- **Problem:** Remove worktree when might need it (Option 2, 3)
-- **Fix:** Only cleanup for Options 1 and 4
-
-**No confirmation for discard**
-
-- **Problem:** Accidentally delete work
-- **Fix:** Require typed "discard" confirmation
+**No confirmation for discard** - Require typed "discard" confirmation.
 
 ## Red Flags
 
 **Never:**
 
-- Proceed with failing tests
+- Proceed with failing unit tests
+- Skip UAT when a UAT plan exists
 - Merge without verifying tests on result
 - Delete work without confirmation
 - Force-push without explicit request
+- Let the fix loop run more than 3 times without human input
 
 **Always:**
 
-- Verify tests before offering options
+- Verify unit tests before anything else
+- Run UAT if a plan exists
 - Present exactly 4 options
 - Get typed confirmation for Option 4
 - Clean up worktree for Options 1 & 4 only
+- Include UAT results in PR description (Option 2)
 
 ## Integration
 
 **Called by:**
 
-- **subagent-driven-development** (Step 7) - After all tasks complete
-- **executing-plans** (Step 5) - After all batches complete
+- **subagent-driven-development** - After all tasks complete
+
+**Uses:**
+
+- **verify-app** - Executes UAT scenarios (in UAT mode)
+- **subagent-driven-development** - Implements fix tasks when UAT fails
 
 **Pairs with:**
 
