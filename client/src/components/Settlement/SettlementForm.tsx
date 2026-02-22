@@ -74,15 +74,26 @@ export const SettlementForm: React.FC<SettlementFormProps> = ({
 
     for (const balance of balances) {
       if (balance.userB === fromUserId && balance.userA === toUserId) {
-        // fromUser (payer) owes toUser (recipient) this amount
-        outstandingBalance = Math.abs(balance.amount);
-        creditorEmail = balance.userADetails.email;
+        if (balance.amount > 0) {
+          // userB (fromUser) owes userA (toUser) - correct direction
+          outstandingBalance = balance.amount;
+          creditorEmail = balance.userADetails.email;
+        } else {
+          // userA (toUser) owes userB (fromUser) - reverse direction, no outstanding
+          outstandingBalance = 0;
+          creditorEmail = '';
+        }
         break;
       } else if (balance.userA === fromUserId && balance.userB === toUserId) {
-        // The balance is reversed: toUser actually owes fromUser,
-        // so there's no outstanding balance in the direction of payment
-        outstandingBalance = 0;
-        creditorEmail = '';
+        if (balance.amount < 0) {
+          // userA (fromUser) owes userB (toUser) - correct direction
+          outstandingBalance = Math.abs(balance.amount);
+          creditorEmail = balance.userBDetails.email;
+        } else {
+          // userB (toUser) owes userA (fromUser) - reverse direction, no outstanding
+          outstandingBalance = 0;
+          creditorEmail = '';
+        }
         break;
       }
     }
