@@ -127,6 +127,11 @@ This structured output allows `finishing-a-development-branch` to decide whether
 Check if the dev servers are already running. If not, start them.
 
 ```bash
+# Ensure Prisma client is up to date with the schema
+# This is critical after merges or migrations — new models won't be
+# available at runtime until the client is regenerated.
+npx prisma generate
+
 # Check API health
 curl -sf http://localhost:3000/api/health || {
   echo "Server not running, starting..."
