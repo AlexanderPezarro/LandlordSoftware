@@ -26,10 +26,10 @@ export const Login: React.FC = () => {
   const {
     register,
     handleSubmit,
-    formState: { errors, isValid, isSubmitting },
+    formState: { errors, isSubmitting },
   } = useForm<LoginFormData>({
     resolver: zodResolver(LoginFormSchema),
-    mode: 'onChange',
+    mode: 'onSubmit',
     defaultValues: {
       email: '',
       password: '',
@@ -181,7 +181,7 @@ export const Login: React.FC = () => {
               fullWidth
               variant="contained"
               sx={{ mt: 3, mb: 2 }}
-              disabled={isSubmitting || !isValid}
+              disabled={isSubmitting}
             >
               {isSubmitting
                 ? setupRequired
