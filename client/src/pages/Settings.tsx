@@ -25,14 +25,22 @@ import {
   TableHead,
   TableRow,
   IconButton,
+  Chip,
+  Tooltip,
 } from '@mui/material';
 import {
   Add as AddIcon,
   Delete as DeleteIcon,
   AccountBalance as BankIcon,
+  CheckCircle as CheckCircleIcon,
+  Error as ErrorIcon,
+  Sync as SyncIcon,
+  Schedule as ScheduleIcon,
+  LinkOff as LinkOffIcon,
 } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
 import { usersService, UserListItem } from '../services/api/users.service';
-import { bankService } from '../services/api/bank.service';
+import { bankService, BankAccount } from '../services/api/bank.service';
 import { ApiError } from '../types/api.types';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -41,6 +49,7 @@ import ConfirmDialog from '../components/shared/ConfirmDialog';
 
 export const Settings: React.FC = () => {
   const toast = useToast();
+  const navigate = useNavigate();
   const { user: currentUser } = useAuth();
 
   // Password change state
@@ -67,6 +76,10 @@ export const Settings: React.FC = () => {
   const [userToDelete, setUserToDelete] = useState<UserListItem | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
+  // Bank accounts state
+  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
+  const [bankAccountsLoading, setBankAccountsLoading] = useState(true);
+
   // Bank connection dialog state
   const [bankDialogOpen, setBankDialogOpen] = useState(false);
   const [syncFromDays, setSyncFromDays] = useState(90);
@@ -81,8 +94,21 @@ export const Settings: React.FC = () => {
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [completeConnectionLoading, setCompleteConnectionLoading] = useState(false);
 
+  const fetchBankAccounts = async () => {
+    try {
+      setBankAccountsLoading(true);
+      const accounts = await bankService.getBankAccounts();
+      setBankAccounts(accounts);
+    } catch (err) {
+      console.error('Error fetching bank accounts:', err);
+    } finally {
+      setBankAccountsLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchUsers();
+    fetchBankAccounts();
 
     // Check for OAuth callback success/error in URL
     const params = new URLSearchParams(window.location.search);
@@ -285,6 +311,55 @@ export const Settings: React.FC = () => {
     });
   };
 
+  const formatLastSync = (lastSyncAt: string | null): string => {
+    if (!lastSyncAt) return 'Never synced';
+    const diffMs = Date.now() - new Date(lastSyncAt).getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return new Date(lastSyncAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  };
+
+  const getSyncStatusIcon = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'synced':
+      case 'success':
+        return <CheckCircleIcon fontSize="small" color="success" />;
+      case 'syncing':
+      case 'in_progress':
+        return <SyncIcon fontSize="small" color="warning" />;
+      case 'error':
+      case 'failed':
+        return <ErrorIcon fontSize="small" color="error" />;
+      default:
+        return <ScheduleIcon fontSize="small" color="disabled" />;
+    }
+  };
+
+  const getSyncStatusColor = (status: string): 'success' | 'error' | 'warning' | 'default' => {
+    switch (status.toLowerCase()) {
+      case 'synced':
+      case 'success':
+        return 'success';
+      case 'syncing':
+      case 'in_progress':
+        return 'warning';
+      case 'error':
+      case 'failed':
+        return 'error';
+      default:
+        return 'default';
+    }
+  };
+
+  const formatSyncStatus = (status: string): string => {
+    return status.split('_').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+  };
+
   // Bank connection handlers
   const handleOpenBankDialog = () => {
     setSyncFromDays(90); // Reset to default
@@ -320,6 +395,7 @@ export const Settings: React.FC = () => {
       setPendingApprovalOpen(false);
       setPendingId(null);
       toast.success('Monzo account connected successfully');
+      fetchBankAccounts();
 
       // Fetch active sync log and show progress (same as existing success flow)
       if (response.bankAccountId) {
@@ -436,18 +512,78 @@ export const Settings: React.FC = () => {
             <Typography variant="h6">
               Bank Accounts
             </Typography>
-            <Button
-              variant="contained"
-              startIcon={<BankIcon />}
-              onClick={handleOpenBankDialog}
-            >
-              Connect Monzo
-            </Button>
+            {bankAccounts.length === 0 && !bankAccountsLoading && (
+              <Button
+                variant="contained"
+                startIcon={<BankIcon />}
+                onClick={handleOpenBankDialog}
+              >
+                Connect Monzo
+              </Button>
+            )}
           </Box>
           <Divider sx={{ mb: 3 }} />
-          <Typography variant="body2" color="text.secondary">
-            Connect your Monzo account to automatically import and categorize transactions.
-          </Typography>
+
+          {bankAccountsLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
+              <CircularProgress size={24} />
+            </Box>
+          ) : bankAccounts.length === 0 ? (
+            <Typography variant="body2" color="text.secondary">
+              Connect your Monzo account to automatically import and categorize transactions.
+            </Typography>
+          ) : (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {bankAccounts.map((account) => (
+                <Box
+                  key={account.id}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    p: 2,
+                    borderRadius: 1,
+                    bgcolor: 'action.hover',
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <BankIcon color="primary" />
+                    <Box>
+                      <Typography
+                        variant="subtitle2"
+                        sx={{ cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
+                        onClick={() => navigate('/admin/bank-accounts')}
+                      >
+                        {account.accountName}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {account.provider.charAt(0).toUpperCase() + account.provider.slice(1)} &middot; {account.accountType}
+                      </Typography>
+                    </Box>
+                  </Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Box sx={{ textAlign: 'right' }}>
+                      <Chip
+                        icon={getSyncStatusIcon(account.lastSyncStatus)}
+                        label={formatSyncStatus(account.lastSyncStatus)}
+                        color={getSyncStatusColor(account.lastSyncStatus)}
+                        size="small"
+                        variant="outlined"
+                      />
+                      <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
+                        {formatLastSync(account.lastSyncAt)}
+                      </Typography>
+                    </Box>
+                    <Tooltip title="Reconnect account">
+                      <IconButton size="small" onClick={handleOpenBankDialog}>
+                        <LinkOffIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                </Box>
+              ))}
+            </Box>
+          )}
         </Paper>
 
         {/* User Management Section */}
