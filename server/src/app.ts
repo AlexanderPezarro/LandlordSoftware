@@ -18,6 +18,12 @@ import usersRouter from './routes/users.js';
 import propertyOwnershipRouter from './routes/propertyOwnership.routes.js';
 import settlementRouter from './routes/settlement.routes.js';
 import reportRouter from './routes/report.routes.js';
+import monzoRouter from './routes/monzo.js';
+import bankAccountsRouter from './routes/bank-accounts.js';
+import webhooksRouter from './routes/webhooks.js';
+import webhookStatusRouter from './routes/webhook-status.js';
+import matchingRulesRouter from './routes/matching-rules.js';
+import pendingTransactionsRouter from './routes/pending-transactions.js';
 
 // ES module __dirname equivalent
 const __filename = fileURLToPath(import.meta.url);
@@ -135,6 +141,16 @@ export function createApp() {
 
   // Users routes
   app.use('/api/users', usersRouter);
+
+  // Bank integration routes
+  app.use('/api/bank/webhooks/status', webhookStatusRouter);
+  app.use('/api/bank/webhooks', webhooksRouter);
+  app.use('/api/bank/monzo', monzoRouter);
+  app.use('/api/bank', matchingRulesRouter);
+  app.use('/api/bank/accounts', bankAccountsRouter);
+
+  // Pending transactions routes
+  app.use('/api/pending-transactions', pendingTransactionsRouter);
 
   // Serve static files from React build in production
   if (process.env.NODE_ENV === 'production') {

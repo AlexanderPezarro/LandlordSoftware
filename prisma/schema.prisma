@@ -86,22 +86,26 @@ model Lease {
 }
 
 model Transaction {
-  id              String   @id @default(uuid())
-  propertyId      String   @map("property_id")
-  leaseId         String?  @map("lease_id")
-  type            String
-  category        String
-  amount          Float
-  transactionDate DateTime @map("transaction_date")
-  description     String
-  paidByUserId    String?  @map("paid_by_user_id")
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  id                String    @id @default(uuid())
+  propertyId        String    @map("property_id")
+  leaseId           String?   @map("lease_id")
+  type              String
+  category          String
+  amount            Float
+  transactionDate   DateTime  @map("transaction_date")
+  description       String
+  paidByUserId      String?   @map("paid_by_user_id")
+  bankTransactionId String?   @unique @map("bank_transaction_id")
+  isImported        Boolean   @default(false) @map("is_imported")
+  importedAt        DateTime? @map("imported_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
 
-  property  Property   @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  lease     Lease?     @relation(fields: [leaseId], references: [id], onDelete: SetNull)
-  paidBy    User?      @relation("PaidByUser", fields: [paidByUserId], references: [id], onDelete: SetNull)
-  splits    TransactionSplit[]
+  property        Property          @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  lease           Lease?            @relation(fields: [leaseId], references: [id], onDelete: SetNull)
+  paidBy          User?             @relation("PaidByUser", fields: [paidByUserId], references: [id], onDelete: SetNull)
+  splits          TransactionSplit[]
+  bankTransaction BankTransaction?
 
   @@map("transactions")
 }
@@ -183,4 +187,130 @@ model Settlement {
   property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
 
   @@map("settlements")
+}
+
+model BankAccount {
+  id             String    @id @default(uuid())
+  accountId      String    @unique @map("account_id")
+  accountName    String    @map("account_name")
+  accountType    String    @map("account_type")
+  provider       String    @default("monzo")
+  accessToken    String    @map("access_token")  // Encrypted at rest (AES-256-GCM)
+  refreshToken   String?   @map("refresh_token") // Encrypted at rest (AES-256-GCM)
+  tokenExpiresAt DateTime? @map("token_expires_at")
+  syncEnabled    Boolean   @default(true) @map("sync_enabled")
+  syncFromDate   DateTime  @map("sync_from_date")
+  lastSyncAt     DateTime? @map("last_sync_at")
+  lastSyncStatus String    @default("never_synced") @map("last_sync_status")
+  webhookId      String?   @unique @map("webhook_id")
+  webhookUrl     String?   @map("webhook_url")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  bankTransactions BankTransaction[]
+  matchingRules    MatchingRule[]
+  syncLogs         SyncLog[]
+
+  @@map("bank_accounts")
+}
+
+model BankTransaction {
+  id                   String    @id @default(uuid())
+  bankAccountId        String    @map("bank_account_id")
+  externalId           String    @map("external_id")
+  amount               Float
+  currency             String    @default("GBP")
+  description          String
+  counterpartyName     String?   @map("counterparty_name")
+  reference            String?
+  merchant             String?
+  category             String?
+  transactionDate      DateTime  @map("transaction_date")
+  settledDate          DateTime? @map("settled_date")
+  importedAt           DateTime  @default(now()) @map("imported_at")
+  transactionId        String?   @unique @map("transaction_id")
+  pendingTransactionId String?   @unique @map("pending_transaction_id")
+
+  bankAccount        BankAccount          @relation(fields: [bankAccountId], references: [id], onDelete: Cascade)
+  transaction        Transaction?         @relation(fields: [transactionId], references: [id])
+  pendingTransaction PendingTransaction?
+
+  @@unique([bankAccountId, externalId])
+  @@index([bankAccountId, transactionDate])
+  @@map("bank_transactions")
+}
+
+model MatchingRule {
+  id            String   @id @default(uuid())
+  bankAccountId String?  @map("bank_account_id")
+  priority      Int
+  enabled       Boolean  @default(true)
+  name          String
+  conditions    String
+  propertyId    String?  @map("property_id")
+  type          String?
+  category      String?
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  bankAccount BankAccount? @relation(fields: [bankAccountId], references: [id], onDelete: Cascade)
+
+  @@index([bankAccountId, priority])
+  @@map("matching_rules")
+}
+
+model PendingTransaction {
+  id                String    @id @default(uuid())
+  bankTransactionId String    @unique @map("bank_transaction_id")
+  propertyId        String?   @map("property_id")
+  leaseId           String?   @map("lease_id")
+  type              String?
+  category          String?
+  transactionDate   DateTime  @map("transaction_date")
+  description       String
+  createdAt         DateTime  @default(now()) @map("created_at")
+  reviewedAt        DateTime? @map("reviewed_at")
+  reviewedBy        String?   @map("reviewed_by")
+
+  bankTransaction BankTransaction @relation(fields: [bankTransactionId], references: [id], onDelete: Cascade)
+
+  @@map("pending_transactions")
+}
+
+model SyncLog {
+  id                   String    @id @default(uuid())
+  bankAccountId        String    @map("bank_account_id")
+  syncType             String    @map("sync_type")
+  status               String
+  startedAt            DateTime  @default(now()) @map("started_at")
+  completedAt          DateTime? @map("completed_at")
+  transactionsFetched  Int       @default(0) @map("transactions_fetched")
+  transactionsSkipped  Int       @default(0) @map("transactions_skipped")
+  transactionsMatched  Int       @default(0) @map("transactions_matched")
+  transactionsPending  Int       @default(0) @map("transactions_pending")
+  errorMessage         String?   @map("error_message")
+  errorDetails         String?   @map("error_details")
+  webhookEventId       String?   @map("webhook_event_id")
+
+  bankAccount BankAccount @relation(fields: [bankAccountId], references: [id], onDelete: Cascade)
+
+  @@index([bankAccountId, startedAt])
+  @@index([webhookEventId])
+  @@map("sync_logs")
+}
+
+// TransactionAuditLog intentionally has NO foreign key constraint on transactionId.
+// This preserves the complete audit trail even after transactions are deleted,
+// which is critical for compliance and historical tracking.
+model TransactionAuditLog {
+  id            String   @id @default(uuid())
+  transactionId String   @map("transaction_id") // No FK - preserves history after deletion
+  userId        String   @map("user_id")
+  field         String
+  oldValue      String?  @map("old_value")
+  newValue      String?  @map("new_value")
+  changedAt     DateTime @default(now()) @map("changed_at")
+
+  @@index([transactionId, changedAt])
+  @@map("transaction_audit_logs")
 }

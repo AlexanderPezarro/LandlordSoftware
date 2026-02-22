@@ -8,7 +8,7 @@ import { z } from 'zod';
 const router = Router();
 
 // GET /api/tenants - List tenants with filtering
-router.get('/', async (req, res) => {
+router.get('/', requireAuth, async (req, res) => {
   try {
     // Validate query parameters
     const validationResult = TenantQueryParamsSchema.safeParse(req.query);
@@ -56,7 +56,7 @@ router.get('/', async (req, res) => {
 });
 
 // GET /api/tenants/:id - Get single tenant
-router.get('/:id', async (req, res) => {
+router.get('/:id', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -185,10 +185,13 @@ router.put('/:id', requireAuth, requireWrite, async (req, res) => {
   }
 });
 
-// DELETE /api/tenants/:id - Soft delete to 'Former' status (requires auth + write permission)
+// DELETE /api/tenants/:id - Delete tenant (requires auth + write permission)
+// Query param ?archive=true for soft delete (status to 'Former')
+// Default: hard delete (permanently remove tenant and related data)
 router.delete('/:id', requireAuth, requireWrite, async (req, res) => {
   try {
     const { id } = req.params;
+    const { archive } = req.query;
 
     // Validate UUID format
     if (!z.string().uuid().safeParse(id).success) {
@@ -210,11 +213,28 @@ router.delete('/:id', requireAuth, requireWrite, async (req, res) => {
       });
     }
 
-    // Soft delete by setting status to 'Former'
-    const tenant = await prisma.tenant.update({
-      where: { id },
-      data: { status: 'Former' },
-    });
+    let tenant;
+
+    if (archive === 'true') {
+      // Soft delete: set status to 'Former'
+      tenant = await prisma.tenant.update({
+        where: { id },
+        data: { status: 'Former' },
+      });
+    } else {
+      // Hard delete: delete documents manually (polymorphic), then delete tenant
+      // Leases will cascade automatically via onDelete: Cascade
+      await prisma.document.deleteMany({
+        where: {
+          entityType: 'tenant',
+          entityId: id,
+        },
+      });
+
+      tenant = await prisma.tenant.delete({
+        where: { id },
+      });
+    }
 
     return res.json({
       success: true,
@@ -230,7 +250,7 @@ router.delete('/:id', requireAuth, requireWrite, async (req, res) => {
 });
 
 // GET /api/tenants/:id/lease-history - Get tenant lease history with property details
-router.get('/:id/lease-history', async (req, res) => {
+router.get('/:id/lease-history', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
 

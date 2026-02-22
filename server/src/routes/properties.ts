@@ -8,7 +8,7 @@ import { z } from 'zod';
 const router = Router();
 
 // GET /api/properties - List properties with filtering
-router.get('/', async (req, res) => {
+router.get('/', requireAuth, async (req, res) => {
   try {
     // Validate query parameters
     const validationResult = PropertyQueryParamsSchema.safeParse(req.query);
@@ -60,7 +60,7 @@ router.get('/', async (req, res) => {
 });
 
 // GET /api/properties/:id - Get single property
-router.get('/:id', async (req, res) => {
+router.get('/:id', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -189,10 +189,13 @@ router.put('/:id', requireAuth, requireWrite, async (req, res) => {
   }
 });
 
-// DELETE /api/properties/:id - Soft delete via status change (requires auth + write permission)
+// DELETE /api/properties/:id - Delete property (requires auth + write permission)
+// Query param ?archive=true for soft delete (status to 'For Sale')
+// Default: hard delete (permanently remove property and related data)
 router.delete('/:id', requireAuth, requireWrite, async (req, res) => {
   try {
     const { id } = req.params;
+    const { archive } = req.query;
 
     // Validate UUID format
     if (!z.string().uuid().safeParse(id).success) {
@@ -214,11 +217,28 @@ router.delete('/:id', requireAuth, requireWrite, async (req, res) => {
       });
     }
 
-    // Soft delete by setting status to 'For Sale' (inactive state)
-    const property = await prisma.property.update({
-      where: { id },
-      data: { status: 'For Sale' },
-    });
+    let property;
+
+    if (archive === 'true') {
+      // Soft delete: set status to 'For Sale'
+      property = await prisma.property.update({
+        where: { id },
+        data: { status: 'For Sale' },
+      });
+    } else {
+      // Hard delete: delete documents manually (polymorphic), then delete property
+      // Leases, transactions, and events will cascade automatically via onDelete: Cascade
+      await prisma.document.deleteMany({
+        where: {
+          entityType: 'property',
+          entityId: id,
+        },
+      });
+
+      property = await prisma.property.delete({
+        where: { id },
+      });
+    }
 
     return res.json({
       success: true,

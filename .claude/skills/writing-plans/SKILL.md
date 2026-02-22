@@ -1,185 +1,156 @@
 ---
 name: writing-plans
-description: Use when you have a spec or requirements for a multi-step task, before touching code
+description: Use when you have user stories ready and need to create an implementation plan. Reads user stories, produces an implementation plan document and creates tasks via TaskCreate.
 ---
 
-# Writing Plans
+# Creating Implementation Plans
 
 ## Overview
 
-Create comprehensive beads for an implementation tree assuming the engineer has zero context for our codebase and questionable taste. Each bead contains everything they need to know: which files to touch, code examples, testing steps, documentation to check, and how to verify it works. Give them the whole plan as bite-sized beads. DRY. YAGNI. TDD. Frequent commits.
+Create a comprehensive implementation plan from user stories. Each task contains everything an implementer needs: which files to touch, code examples, testing steps, and how to verify it works. The plan is written as a markdown document AND tasks are created using the inbuilt task system (`TaskCreate`).
+
+Assume the implementer has zero context for the codebase and questionable taste. Give them the whole plan as bite-sized tasks. DRY. YAGNI. TDD. Frequent commits.
 
 Assume they are a skilled developer, but know almost nothing about our toolset or problem domain. Assume they don't know good test design very well.
 
-**Announce at start:** "I'm using the writing-plans skill to create the implementation tree as beads."
+**Announce at start:** "I'm using the writing-plans skill to create the implementation plan from the user stories."
 
-**Context:** This should be run in a dedicated worktree (created by brainstorming skill).
+## The Process
 
-## Bite-Sized Bead Granularity
+### Step 1: Read the User Stories
 
-**Each bead is a cohesive feature (15-30 minutes):**
+- Find the user stories doc in `docs/plans/` (or ask the user which one)
+- Read the design doc it references for additional context
+- Identify all features, dependencies, and implementation order
 
-- Group related test-write-test-commit cycles into one bead
-- Each bead should be independently verifiable
-- Each bead should be a complete, shippable unit
+### Step 2: Plan the Task Tree
 
-**Bead structure contains:**
+- Break each user story into implementation tasks (15-30 minutes each)
+- Identify dependencies between tasks
+- Plan order: foundation tasks first (database, auth, core models), then features, then UI
+- Each task should be independently verifiable and a complete, shippable unit
+
+### Step 3: Write the Implementation Plan Document
+
+Write to `docs/plans/YYYY-MM-DD-<topic>-implementation-plan.md`:
+
+```markdown
+# Implementation Plan: <Topic>
+
+**User stories:** docs/plans/YYYY-MM-DD-<topic>-user-stories.md
+**Design:** docs/plans/YYYY-MM-DD-<topic>-design.md
+**Date:** YYYY-MM-DD
+
+## Task Overview
+
+| # | Task | User Story | Dependencies | Complexity |
+|---|------|------------|--------------|------------|
+| 1 | ... | US-001 | none | Small |
+| 2 | ... | US-001 | Task 1 | Medium |
+
+## Tasks
+
+### Task 1: <title>
+
+**User Story:** US-<number>
+**Dependencies:** none
+
+#### Overview
+[What this task implements and why]
+
+#### Files
+- Create: `exact/path/to/file.ts`
+- Modify: `exact/path/to/existing.ts`
+- Test: `exact/path/to/test.ts`
+
+#### Implementation Steps
+
+**Step 1: Write the failing test**
+```typescript
+// exact test code
+```
+Run: `npm test -- --testPathPattern=path/to/test`
+Expected: FAIL
+
+**Step 2: Write minimal implementation**
+```typescript
+// exact implementation code
+```
+
+**Step 3: Verify tests pass**
+Run: `npm test -- --testPathPattern=path/to/test`
+Expected: PASS
+
+**Step 4: Commit**
+```bash
+git add <files>
+git commit -m "feat: <message>"
+```
+
+#### Verification
+[How to verify this task is complete]
+```
+
+### Step 4: Create Tasks
+
+For each task in the plan, create a task using the inbuilt task system:
+
+```
+TaskCreate:
+  subject: "Task 1: <title>"
+  description: |
+    <Full task specification from the plan document -
+    everything the implementer needs including files,
+    code examples, test steps, commit instructions>
+  activeForm: "Implementing <short description>"
+```
+
+After creating all tasks, set up dependencies:
+
+```
+TaskUpdate:
+  taskId: "2"
+  addBlockedBy: ["1"]   # Task 2 depends on Task 1
+```
+
+### Step 5: Commit the Plan
+
+- Commit the implementation plan document to git
+- Report: "Implementation plan created with N tasks. Ready for subagent-driven-development."
+
+## Task Granularity
+
+**Each task is a cohesive feature (15-30 minutes):**
+
+- Group related test-write-test-commit cycles into one task
+- Each task should be independently verifiable
+- Each task should be a complete, shippable unit
+
+**Task description contains:**
 
 - Clear title describing what will be implemented
+- User story reference
 - Complete task description with all steps
 - Files to create/modify with exact paths
 - Code examples for implementation
 - Test steps with expected output
 - Commit instructions
 
-## Bead Structure
+## Key Principles
 
-Each bead description should contain:
-
-````markdown
-## Overview
-
-[What this bead implements and why]
-
-## Files
-
-- Create: `exact/path/to/file.py`
-- Modify: `exact/path/to/existing.py:123-145`
-- Test: `tests/exact/path/to/test.py`
-
-## Implementation Steps
-
-### Step 1: Write the failing test
-
-```python
-def test_specific_behavior():
-    result = function(input)
-    assert result == expected
-```
-````
-
-Run: `pytest tests/path/test.py::test_name -v`
-Expected: FAIL with "function not defined"
-
-### Step 2: Write minimal implementation
-
-```python
-def function(input):
-    return expected
-```
-
-### Step 3: Verify tests pass
-
-Run: `pytest tests/path/test.py::test_name -v`
-Expected: PASS
-
-### Step 4: Commit
-
-```bash
-git add tests/path/test.py src/path/file.py
-git commit -m "feat: add specific feature"
-```
-
-## Verification
-
-[How to verify this bead is complete - manual tests, integration checks, etc.]
-
-## Notes
-
-[Any important context, gotchas, or design decisions]
-
-````
-
-## Creating the Beads
-
-**Step 1: Plan the bead tree**
-- Read the design document
-- Identify all features/components needed
-- Determine dependencies between features
-- Plan order of implementation
-
-**Step 2: Create beads in parallel**
-- Use superpowers:dispatching-parallel-agents to create multiple beads efficiently
-- Each subagent creates one bead with full specification
-- Use priority levels: 0=critical, 1=high, 2=medium, 3=low, 4=backlog
-- Use `bd create` with detailed description containing full task specification
-
-**Step 3: Set up dependencies**
-- Use `bd dep add <issue> <depends-on>` to chain beads
-- Ensure foundation beads are done before dependent beads
-- Use `bd dep tree` to visualize the dependency graph
-
-**Example bead creation:**
-```bash
-# Create foundation bead (priority 1=high)
-bd create --title="Setup database schema" \
-  --type=feature \
-  --priority=1 \
-  --description="$(cat <<'EOF'
-## Overview
-Create the initial database schema for the landlord management system.
-
-## Files
-- Create: `src/db/schema.sql`
-- Create: `src/db/migrations/001_initial_schema.sql`
-
-## Implementation Steps
-
-### Step 1: Write schema test
-[Full test code here]
-
-### Step 2: Create schema
-[Full SQL here]
-
-### Step 3: Verify
-[Verification steps]
-
-### Step 4: Commit
-git add src/db/schema.sql src/db/migrations/001_initial_schema.sql
-git commit -m "feat: add initial database schema"
-EOF
-)"
-
-# Create dependent bead
-bd create --title="Implement landlord CRUD operations" \
-  --type=feature \
-  --priority=1 \
-  --description="[Full task specification]"
-
-# Add dependency (CRUD depends on schema)
-bd dep add beads-abc123 beads-def456
-````
-
-## Remember
-
-- Exact file paths always
-- Complete code in bead description (not "add validation")
-- Exact commands with expected output
-- Reference relevant skills with @ syntax
-- DRY, YAGNI, TDD, frequent commits
-- Use parallel subagents to create many beads efficiently
-- Each bead description must be complete and standalone
-
-## Execution Handoff
-
-**Beads created. Ready for implementation.**
-
-Use **superpowers:subagent-driven-development** to execute:
-
-- Finds ready beads with `bd ready`
-- Dispatches implementer per bead
-- Reviews (spec compliance, then code quality)
-- Closes bead with `bd close`
-- Repeats until all beads are done
+- **Exact file paths always** - Never say "add to the routes file"
+- **Complete code in description** - Not "add validation" but the actual code
+- **Exact commands with expected output** - Implementer should know what success looks like
+- **DRY, YAGNI, TDD, frequent commits**
+- **Each task description must be complete and standalone** - Implementer only sees their task
 
 ## Integration
 
-**Required before this skill:**
+**Requires before this skill:**
 
-- **superpowers:brainstorming** - Creates design doc this skill uses
-- **superpowers:using-git-worktrees** - Creates isolated workspace
+- **writing-user-stories** - Produces the user stories this skill reads
 
-**Used after this skill:**
+**Next in workflow:**
 
-- **superpowers:subagent-driven-development** - Executes the beads
-- **superpowers:dispatching-parallel-agents** - Creates beads in parallel efficiently
+- **subagent-driven-development** - Executes the tasks
+- **writing-uat-plan** - Can run in parallel to produce UAT plan from the same user stories
