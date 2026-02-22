@@ -224,10 +224,13 @@ export interface Transaction {
   amount: number;
   transactionDate: string;
   description?: string | null;
+  paidByUserId?: string | null;
   createdAt: string;
   updatedAt: string;
   property?: Property;
   lease?: Lease;
+  splits?: TransactionSplit[];
+  paidBy?: { id: string; email: string } | null;
 }
 
 export interface TransactionSplit {

@@ -188,16 +188,28 @@ export const Transactions: React.FC = () => {
         const ownerships = await propertyOwnershipService.listOwners(formData.propertyId);
         setPropertyOwnership(ownerships);
 
-        // Auto-generate splits from ownership
-        const amount = parseFloat(formData.amount) || 0;
-        const generatedSplits = ownerships.map((ownership) => ({
-          userId: ownership.userId,
-          percentage: ownership.ownershipPercentage,
-          amount: (amount * ownership.ownershipPercentage) / 100,
-        }));
-        setSplits(generatedSplits);
+        // When editing a transaction that already has splits loaded,
+        // don't overwrite them with ownership defaults
+        const hasExistingSplits =
+          dialogMode === 'edit' &&
+          selectedTransaction &&
+          selectedTransaction.splits &&
+          selectedTransaction.splits.length > 0 &&
+          selectedTransaction.propertyId === formData.propertyId;
+
+        if (!hasExistingSplits) {
+          // Auto-generate splits from ownership (for new transactions or property changes)
+          const amount = parseFloat(formData.amount) || 0;
+          const generatedSplits = ownerships.map((ownership) => ({
+            userId: ownership.userId,
+            percentage: ownership.ownershipPercentage,
+            amount: (amount * ownership.ownershipPercentage) / 100,
+          }));
+          setSplits(generatedSplits);
+        }
 
         // Set default paidByUserId to current user if they're an owner
+        // (only when no paidByUserId is already set)
         if (!formData.paidByUserId && user) {
           const isOwner = ownerships.some((o) => o.userId === user.id);
           if (isOwner) {
@@ -246,8 +258,23 @@ export const Transactions: React.FC = () => {
       amount: transaction.amount.toString(),
       transactionDate: transaction.transactionDate.split('T')[0],
       description: transaction.description || '',
-      paidByUserId: user?.id || '',
+      paidByUserId: transaction.paidByUserId || '',
     });
+
+    // Pre-load existing splits from the transaction so the useEffect
+    // doesn't overwrite them with ownership defaults
+    if (transaction.splits && transaction.splits.length > 0) {
+      setSplits(
+        transaction.splits.map((split) => ({
+          userId: split.userId,
+          percentage: split.percentage,
+          amount: split.amount,
+        }))
+      );
+    } else {
+      setSplits([]);
+    }
+
     setFormErrors({});
     setSelectedFile(null);
     setDialogMode('edit');
