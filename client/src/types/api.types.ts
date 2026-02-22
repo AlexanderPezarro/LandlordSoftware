@@ -402,3 +402,67 @@ export interface PropertyPerformanceResponse {
   success: true;
   data: PropertyPerformance[];
 }
+
+// Owner P&L Report Types
+export interface OwnerPLReportProperty {
+  property: {
+    id: string;
+    name: string;
+    address: string;
+  };
+  owner: {
+    id: string;
+    email: string;
+    ownershipPercentage: number;
+  };
+  period: {
+    startDate: string;
+    endDate: string;
+  };
+  income: {
+    byCategory: Record<string, { ownerShare: number; total: number }>;
+    totalOwnerShare: number;
+    totalOverall: number;
+  };
+  expenses: {
+    byCategory: Record<string, { ownerShare: number; total: number }>;
+    totalOwnerShare: number;
+    totalOverall: number;
+  };
+  netProfit: number;
+  balances: Array<{ userId: string; email: string; amount: number }>;
+}
+
+export interface OwnerPLReport {
+  owner: {
+    id: string;
+    email: string;
+    ownershipPercentage: number;
+  };
+  period: {
+    startDate: string;
+    endDate: string;
+  };
+  properties: OwnerPLReportProperty[];
+  summary: {
+    totalIncome: number;
+    totalExpenses: number;
+    netProfit: number;
+  };
+}
+
+export interface OwnerPLReportResponse {
+  success: true;
+  report: OwnerPLReport;
+}
+
+export interface ReportOwner {
+  id: string;
+  email: string;
+  role: string;
+}
+
+export interface ReportOwnersResponse {
+  success: true;
+  owners: ReportOwner[];
+}

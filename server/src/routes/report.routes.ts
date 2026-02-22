@@ -1,6 +1,7 @@
 import express from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { reportService } from '../services/report.service.js';
+import prisma from '../db/client.js';
 import { z } from 'zod';
 
 const router = express.Router();
@@ -70,6 +71,56 @@ router.get('/reports/profit-loss/users/:userId', requireAuth, async (req, res) =
     } else {
       return res.status(500).json({ success: false, error: 'Internal server error' });
     }
+  }
+});
+
+// Get all unique property owners (for owner selector dropdown)
+// Non-admin users only see themselves; admin users see all owners
+router.get('/reports/owners', requireAuth, async (req, res) => {
+  try {
+    const currentUser = req.user;
+
+    if (!currentUser) {
+      return res.status(401).json({ success: false, error: 'Not authenticated' });
+    }
+
+    if (currentUser.role === 'ADMIN') {
+      // Admin can see all unique owners across all properties
+      const ownerships = await prisma.propertyOwnership.findMany({
+        include: {
+          user: {
+            select: { id: true, email: true, role: true },
+          },
+        },
+        orderBy: { user: { email: 'asc' } },
+      });
+
+      // Deduplicate by userId
+      const uniqueOwners = new Map<string, { id: string; email: string; role: string }>();
+      for (const ownership of ownerships) {
+        if (!uniqueOwners.has(ownership.user.id)) {
+          uniqueOwners.set(ownership.user.id, ownership.user);
+        }
+      }
+
+      return res.json({
+        success: true,
+        owners: Array.from(uniqueOwners.values()),
+      });
+    } else {
+      // Non-admin users only see themselves
+      const user = await prisma.user.findUnique({
+        where: { id: currentUser.id },
+        select: { id: true, email: true, role: true },
+      });
+
+      const owners = user ? [user] : [];
+
+      return res.json({ success: true, owners });
+    }
+  } catch (error) {
+    console.error('Get owners error:', error);
+    return res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
 

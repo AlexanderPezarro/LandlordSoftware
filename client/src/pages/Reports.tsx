@@ -22,11 +22,18 @@ import {
   TableSortLabel,
   ToggleButton,
   ToggleButtonGroup,
+  FormControl,
+  InputLabel,
+  Select,
+  SelectChangeEvent,
+  Chip,
+  Divider,
 } from '@mui/material';
 import {
   PieChart as PieChartIcon,
   BarChart as BarChartIcon,
   Assessment as AssessmentIcon,
+  Person as PersonIcon,
 } from '@mui/icons-material';
 import { format, startOfYear, endOfYear, subDays, startOfQuarter, subYears } from 'date-fns';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
@@ -38,11 +45,14 @@ import {
   PropertyPerformance,
   TransactionFilters,
   Transaction,
+  OwnerPLReport,
+  ReportOwner,
 } from '../types/api.types';
 import StatsCard from '../components/shared/StatsCard';
 import DateRangePicker from '../components/shared/DateRangePicker';
 import PropertySelector from '../components/shared/PropertySelector';
 import { useToast } from '../contexts/ToastContext';
+import { useAuth } from '../contexts/AuthContext';
 
 type ChartType = 'pie' | 'bar';
 type SortField = 'propertyName' | 'totalRevenue' | 'totalExpenses' | 'netIncome';
@@ -67,6 +77,7 @@ export const Reports: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const toast = useToast();
+  const { user, isAdmin } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -77,6 +88,12 @@ export const Reports: React.FC = () => {
   const [propertyData, setPropertyData] = useState<PropertyPerformance[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
 
+  // Owner P&L states
+  const [owners, setOwners] = useState<ReportOwner[]>([]);
+  const [selectedOwnerId, setSelectedOwnerId] = useState<string>('');
+  const [ownerPLReport, setOwnerPLReport] = useState<OwnerPLReport | null>(null);
+  const [ownerPLLoading, setOwnerPLLoading] = useState(false);
+
   // Filter states
   const [propertyFilter, setPropertyFilter] = useState('all');
   const [dateRangeStart, setDateRangeStart] = useState<Date | null>(startOfYear(new Date()));
@@ -86,6 +103,25 @@ export const Reports: React.FC = () => {
   const [chartType, setChartType] = useState<ChartType>('pie');
   const [sortField, setSortField] = useState<SortField>('propertyName');
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
+
+  // Fetch available owners for the selector
+  useEffect(() => {
+    const fetchOwners = async () => {
+      try {
+        const ownersList = await reportsService.getReportOwners();
+        setOwners(ownersList);
+        // Default to current logged-in user
+        if (user && ownersList.some(o => o.id === user.id)) {
+          setSelectedOwnerId(user.id);
+        } else if (ownersList.length > 0) {
+          setSelectedOwnerId(ownersList[0].id);
+        }
+      } catch (err) {
+        console.error('Error fetching owners:', err);
+      }
+    };
+    fetchOwners();
+  }, [user]);
 
   const fetchReports = useCallback(async () => {
     try {
@@ -125,9 +161,34 @@ export const Reports: React.FC = () => {
     }
   }, [propertyFilter, dateRangeStart, dateRangeEnd]);
 
+  // Fetch owner P&L report when owner or date range changes
+  const fetchOwnerPLReport = useCallback(async () => {
+    if (!selectedOwnerId || !dateRangeStart || !dateRangeEnd) {
+      setOwnerPLReport(null);
+      return;
+    }
+
+    try {
+      setOwnerPLLoading(true);
+      const startDate = dateRangeStart.toISOString().split('T')[0];
+      const endDate = dateRangeEnd.toISOString().split('T')[0];
+      const report = await reportsService.getOwnerPLReport(selectedOwnerId, startDate, endDate);
+      setOwnerPLReport(report);
+    } catch (err) {
+      console.error('Error fetching owner P&L report:', err);
+      setOwnerPLReport(null);
+    } finally {
+      setOwnerPLLoading(false);
+    }
+  }, [selectedOwnerId, dateRangeStart, dateRangeEnd]);
+
   useEffect(() => {
     fetchReports();
   }, [fetchReports]);
+
+  useEffect(() => {
+    fetchOwnerPLReport();
+  }, [fetchOwnerPLReport]);
 
   const handleDatePreset = (preset: string) => {
     const now = new Date();
@@ -155,8 +216,19 @@ export const Reports: React.FC = () => {
     }
   };
 
+  const handleOwnerChange = (event: SelectChangeEvent) => {
+    setSelectedOwnerId(event.target.value);
+  };
+
   const formatCurrency = (amount: number) => {
-    return `£${amount.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    return `\u00A3${amount.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
+
+  const formatOwnerShare = (ownerShare: number, total: number, percentage: number) => {
+    if (percentage >= 100) {
+      return formatCurrency(ownerShare);
+    }
+    return `${formatCurrency(ownerShare)} (${percentage}% of ${formatCurrency(total)})`;
   };
 
   // Calculate totals for summary cards
@@ -351,6 +423,9 @@ export const Reports: React.FC = () => {
     toast.success('Report exported successfully');
   };
 
+  // Get the selected owner's name for display
+  const selectedOwner = owners.find(o => o.id === selectedOwnerId);
+
   return (
     <Container maxWidth="xl">
       <Box sx={{ mb: 4 }}>
@@ -384,7 +459,7 @@ export const Reports: React.FC = () => {
         {/* Filters */}
         <Paper sx={{ p: 2, mb: 3 }}>
           <Typography variant="subtitle2" gutterBottom>
-            Date Range Filters
+            Filters
           </Typography>
 
           <Stack spacing={2}>
@@ -394,6 +469,28 @@ export const Reports: React.FC = () => {
                 onChange={setPropertyFilter}
                 includeAllOption={true}
               />
+              <FormControl fullWidth size="small">
+                <InputLabel id="owner-selector-label">Owner</InputLabel>
+                <Select
+                  labelId="owner-selector-label"
+                  id="owner-selector"
+                  value={selectedOwnerId}
+                  label="Owner"
+                  onChange={handleOwnerChange}
+                  startAdornment={<PersonIcon sx={{ mr: 1, color: 'action.active' }} />}
+                >
+                  {owners.length === 0 ? (
+                    <MenuItem disabled>No owners available</MenuItem>
+                  ) : (
+                    owners.map((owner) => (
+                      <MenuItem key={owner.id} value={owner.id}>
+                        {owner.email}
+                        {owner.id === user?.id ? ' (You)' : ''}
+                      </MenuItem>
+                    ))
+                  )}
+                </Select>
+              </FormControl>
             </Stack>
 
             <DateRangePicker
@@ -437,7 +534,237 @@ export const Reports: React.FC = () => {
           </Box>
         ) : (
           <>
-            {/* Summary Cards */}
+            {/* Owner P&L Report Section */}
+            {selectedOwnerId && (
+              <Paper sx={{ p: 3, mb: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                  <PersonIcon />
+                  <Typography variant="h6">
+                    Owner P&L Report
+                    {selectedOwner && (
+                      <Chip
+                        label={selectedOwner.email}
+                        size="small"
+                        color="primary"
+                        variant="outlined"
+                        sx={{ ml: 1 }}
+                      />
+                    )}
+                  </Typography>
+                </Box>
+
+                {!dateRangeStart || !dateRangeEnd ? (
+                  <Alert severity="info" sx={{ mb: 2 }}>
+                    Please select a date range to view the owner P&L report.
+                  </Alert>
+                ) : ownerPLLoading ? (
+                  <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                    <CircularProgress size={32} />
+                  </Box>
+                ) : !ownerPLReport || ownerPLReport.properties.length === 0 ? (
+                  <Typography variant="body2" color="text.secondary" sx={{ py: 4, textAlign: 'center' }}>
+                    No ownership data found for the selected owner in this date range.
+                  </Typography>
+                ) : (
+                  <>
+                    {/* Owner Summary Cards */}
+                    <Box
+                      sx={{
+                        display: 'grid',
+                        gridTemplateColumns: {
+                          xs: '1fr',
+                          sm: 'repeat(2, 1fr)',
+                          md: 'repeat(3, 1fr)',
+                        },
+                        gap: 2,
+                        mb: 3,
+                      }}
+                    >
+                      <StatsCard
+                        title="Owner's Income Share"
+                        value={formatCurrency(ownerPLReport.summary.totalIncome)}
+                        icon={<AssessmentIcon />}
+                        color={theme.palette.success.main}
+                      />
+                      <StatsCard
+                        title="Owner's Expense Share"
+                        value={formatCurrency(ownerPLReport.summary.totalExpenses)}
+                        icon={<AssessmentIcon />}
+                        color={theme.palette.error.main}
+                      />
+                      <StatsCard
+                        title="Owner's Net Profit"
+                        value={formatCurrency(ownerPLReport.summary.netProfit)}
+                        icon={<AssessmentIcon />}
+                        color={ownerPLReport.summary.netProfit >= 0 ? theme.palette.success.main : theme.palette.error.main}
+                      />
+                    </Box>
+
+                    {/* Per-Property Breakdown */}
+                    {ownerPLReport.properties.map((propReport) => (
+                      <Paper
+                        key={propReport.property.id}
+                        variant="outlined"
+                        sx={{ p: 2, mb: 2 }}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                          <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+                            {propReport.property.name}
+                          </Typography>
+                          <Chip
+                            label={`${propReport.owner.ownershipPercentage}% ownership`}
+                            size="small"
+                            color="info"
+                            variant="outlined"
+                          />
+                        </Box>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                          {propReport.property.address}
+                        </Typography>
+
+                        <TableContainer>
+                          <Table size="small">
+                            <TableHead>
+                              <TableRow>
+                                <TableCell sx={{ fontWeight: 'bold' }}>Category</TableCell>
+                                <TableCell align="right" sx={{ fontWeight: 'bold' }}>Owner's Share</TableCell>
+                              </TableRow>
+                            </TableHead>
+                            <TableBody>
+                              {/* Income */}
+                              <TableRow>
+                                <TableCell
+                                  colSpan={2}
+                                  sx={{ bgcolor: 'success.light', fontWeight: 'bold', py: 0.5 }}
+                                >
+                                  INCOME
+                                </TableCell>
+                              </TableRow>
+                              {Object.entries(propReport.income.byCategory).map(([category, data]) => (
+                                <TableRow key={`income-${category}`}>
+                                  <TableCell>{category}</TableCell>
+                                  <TableCell align="right">
+                                    {formatOwnerShare(data.ownerShare, data.total, propReport.owner.ownershipPercentage)}
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                              {Object.keys(propReport.income.byCategory).length === 0 && (
+                                <TableRow>
+                                  <TableCell colSpan={2}>
+                                    <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                                      No income in this period
+                                    </Typography>
+                                  </TableCell>
+                                </TableRow>
+                              )}
+                              <TableRow sx={{ bgcolor: 'grey.100' }}>
+                                <TableCell sx={{ fontWeight: 'bold' }}>Total Income</TableCell>
+                                <TableCell align="right" sx={{ fontWeight: 'bold' }}>
+                                  {formatOwnerShare(
+                                    propReport.income.totalOwnerShare,
+                                    propReport.income.totalOverall,
+                                    propReport.owner.ownershipPercentage
+                                  )}
+                                </TableCell>
+                              </TableRow>
+
+                              {/* Expenses */}
+                              <TableRow>
+                                <TableCell
+                                  colSpan={2}
+                                  sx={{ bgcolor: 'error.light', fontWeight: 'bold', py: 0.5 }}
+                                >
+                                  EXPENSES
+                                </TableCell>
+                              </TableRow>
+                              {Object.entries(propReport.expenses.byCategory).map(([category, data]) => (
+                                <TableRow key={`expense-${category}`}>
+                                  <TableCell>{category}</TableCell>
+                                  <TableCell align="right">
+                                    {formatOwnerShare(data.ownerShare, data.total, propReport.owner.ownershipPercentage)}
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                              {Object.keys(propReport.expenses.byCategory).length === 0 && (
+                                <TableRow>
+                                  <TableCell colSpan={2}>
+                                    <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                                      No expenses in this period
+                                    </Typography>
+                                  </TableCell>
+                                </TableRow>
+                              )}
+                              <TableRow sx={{ bgcolor: 'grey.100' }}>
+                                <TableCell sx={{ fontWeight: 'bold' }}>Total Expenses</TableCell>
+                                <TableCell align="right" sx={{ fontWeight: 'bold' }}>
+                                  {formatOwnerShare(
+                                    propReport.expenses.totalOwnerShare,
+                                    propReport.expenses.totalOverall,
+                                    propReport.owner.ownershipPercentage
+                                  )}
+                                </TableCell>
+                              </TableRow>
+
+                              {/* Net Profit */}
+                              <TableRow sx={{ bgcolor: 'primary.light' }}>
+                                <TableCell sx={{ fontWeight: 'bold' }}>Net Profit</TableCell>
+                                <TableCell
+                                  align="right"
+                                  sx={{
+                                    fontWeight: 'bold',
+                                    color: propReport.netProfit >= 0 ? 'success.dark' : 'error.dark',
+                                  }}
+                                >
+                                  {formatCurrency(propReport.netProfit)}
+                                </TableCell>
+                              </TableRow>
+                            </TableBody>
+                          </Table>
+                        </TableContainer>
+
+                        {/* Balance Summary for this property */}
+                        {propReport.balances.length > 0 && (
+                          <Box sx={{ mt: 2 }}>
+                            <Divider sx={{ mb: 1 }} />
+                            <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                              Balance Summary
+                            </Typography>
+                            {propReport.balances.map((balance, idx) => (
+                              <Box
+                                key={idx}
+                                sx={{
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center',
+                                  py: 0.5,
+                                }}
+                              >
+                                <Typography variant="body2">
+                                  {balance.amount > 0
+                                    ? `${balance.email} owes you`
+                                    : `You owe ${balance.email}`}
+                                </Typography>
+                                <Typography
+                                  variant="body2"
+                                  sx={{
+                                    fontWeight: 'bold',
+                                    color: balance.amount > 0 ? 'success.dark' : 'error.dark',
+                                  }}
+                                >
+                                  {formatCurrency(Math.abs(balance.amount))}
+                                </Typography>
+                              </Box>
+                            ))}
+                          </Box>
+                        )}
+                      </Paper>
+                    ))}
+                  </>
+                )}
+              </Paper>
+            )}
+
+            {/* Summary Cards (overall, not per-owner) */}
             <Box
               sx={{
                 display: 'grid',
@@ -634,7 +961,7 @@ export const Reports: React.FC = () => {
                               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                             ))}
                           </Pie>
-                          <Tooltip formatter={(value?: number) => value ? formatCurrency(value) : '£0.00'} />
+                          <Tooltip formatter={(value?: number) => value ? formatCurrency(value) : '\u00A30.00'} />
                           <Legend />
                         </PieChart>
                       </ResponsiveContainer>
@@ -644,7 +971,7 @@ export const Reports: React.FC = () => {
                           <CartesianGrid strokeDasharray="3 3" />
                           <XAxis dataKey="name" />
                           <YAxis />
-                          <Tooltip formatter={(value?: number) => value ? formatCurrency(value) : '£0.00'} />
+                          <Tooltip formatter={(value?: number) => value ? formatCurrency(value) : '\u00A30.00'} />
                           <Bar dataKey="value" fill={theme.palette.success.main} />
                         </BarChart>
                       </ResponsiveContainer>
@@ -676,7 +1003,7 @@ export const Reports: React.FC = () => {
                               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                             ))}
                           </Pie>
-                          <Tooltip formatter={(value?: number) => value ? formatCurrency(value) : '£0.00'} />
+                          <Tooltip formatter={(value?: number) => value ? formatCurrency(value) : '\u00A30.00'} />
                           <Legend />
                         </PieChart>
                       </ResponsiveContainer>
@@ -686,7 +1013,7 @@ export const Reports: React.FC = () => {
                           <CartesianGrid strokeDasharray="3 3" />
                           <XAxis dataKey="name" />
                           <YAxis />
-                          <Tooltip formatter={(value?: number) => value ? formatCurrency(value) : '£0.00'} />
+                          <Tooltip formatter={(value?: number) => value ? formatCurrency(value) : '\u00A30.00'} />
                           <Bar dataKey="value" fill={theme.palette.error.main} />
                         </BarChart>
                       </ResponsiveContainer>

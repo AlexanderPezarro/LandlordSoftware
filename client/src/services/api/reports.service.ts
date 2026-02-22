@@ -7,6 +7,10 @@ import type {
   MonthlyPLData,
   CategoryBreakdown,
   PropertyPerformance,
+  OwnerPLReport,
+  OwnerPLReportResponse,
+  ReportOwner,
+  ReportOwnersResponse,
 } from '../../types/api.types';
 
 export const reportsService = {
@@ -52,5 +56,28 @@ export const reportsService = {
 
     const response = await api.get<PropertyPerformanceResponse>('/transactions/reports/property-performance', { params });
     return response.data.data;
+  },
+
+  /**
+   * Get per-owner P&L report across all their properties
+   * @param userId - Owner user ID
+   * @param startDate - Start of report period
+   * @param endDate - End of report period
+   * @returns Owner P&L report with per-property breakdown
+   */
+  async getOwnerPLReport(userId: string, startDate: string, endDate: string): Promise<OwnerPLReport> {
+    const params: Record<string, string> = { startDate, endDate };
+    const response = await api.get<OwnerPLReportResponse>(`/reports/profit-loss/users/${userId}`, { params });
+    return response.data.report;
+  },
+
+  /**
+   * Get list of property owners for the owner selector
+   * Admin users get all owners; non-admin users get only themselves
+   * @returns Array of owner users
+   */
+  async getReportOwners(): Promise<ReportOwner[]> {
+    const response = await api.get<ReportOwnersResponse>('/reports/owners');
+    return response.data.owners;
   },
 };
