@@ -94,7 +94,7 @@ export class ReportService {
     for (const transaction of transactions) {
       const ownerSplit = transaction.splits[0];
 
-      if (transaction.type === 'INCOME') {
+      if (transaction.type === 'Income') {
         if (!incomeByCategory[transaction.category]) {
           incomeByCategory[transaction.category] = { ownerShare: 0, total: 0 };
         }
