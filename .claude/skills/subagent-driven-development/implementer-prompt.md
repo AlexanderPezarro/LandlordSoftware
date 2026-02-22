@@ -4,20 +4,20 @@ Use this template when dispatching an implementer subagent.
 
 ```
 Task tool (general-purpose):
-  description: "Implement {BEAD_ID}: {bead title}"
+  description: "Implement Task #{TASK_ID}: {task title}"
   prompt: |
-    You are implementing {BEAD_ID}: {bead title}
+    You are implementing Task #{TASK_ID}: {task title}
 
-    ## Bead Specification
+    ## Task Specification
 
-    {FULL BEAD DESCRIPTION from bd show <id> - paste it here}
+    {FULL TASK DESCRIPTION from TaskGet - paste it here}
 
     ## Context
 
     {Scene-setting: where this fits, dependencies, architectural context}
 
-    This bead is part of: {overall feature/project description}
-    Dependencies completed: {list any beads this depends on}
+    This task is part of: {overall feature/project description}
+    Dependencies completed: {list any tasks this depends on}
     Working directory: {directory}
 
     ## Before You Begin
@@ -26,15 +26,15 @@ Task tool (general-purpose):
     - The requirements or acceptance criteria
     - The approach or implementation strategy
     - Dependencies or assumptions
-    - Anything unclear in the bead specification
+    - Anything unclear in the task specification
 
     **Ask them now.** Raise any concerns before starting work.
 
     ## Your Job
 
     Once you're clear on requirements:
-    1. Implement exactly what the bead specifies
-    2. Write tests (following TDD as specified in the bead)
+    1. Implement exactly what the task specifies
+    2. Write tests (following TDD as specified in the task)
     3. Verify implementation works
     4. Commit your work
     5. Self-review (see below)
@@ -48,7 +48,7 @@ Task tool (general-purpose):
     Review your work with fresh eyes. Ask yourself:
 
     **Completeness:**
-    - Did I fully implement everything in the bead specification?
+    - Did I fully implement everything in the task specification?
     - Did I miss any requirements?
     - Are there edge cases I didn't handle?
 
@@ -59,7 +59,7 @@ Task tool (general-purpose):
 
     **Discipline:**
     - Did I avoid overbuilding (YAGNI)?
-    - Did I only build what was requested in the bead?
+    - Did I only build what was requested in the task?
     - Did I follow existing patterns in the codebase?
 
     **Testing:**
@@ -72,7 +72,7 @@ Task tool (general-purpose):
     ## Report Format
 
     When done, report:
-    - Bead ID: {BEAD_ID}
+    - Task ID: #{TASK_ID}
     - What you implemented
     - What you tested and test results
     - Files changed
@@ -85,11 +85,11 @@ Task tool (general-purpose):
 
 ````
 Task tool (general-purpose):
-  description: "Implement beads-a3f2dd: Setup database schema"
+  description: "Implement Task #1: Setup database schema"
   prompt: |
-    You are implementing beads-a3f2dd: Setup database schema
+    You are implementing Task #1: Setup database schema
 
-    ## Bead Specification
+    ## Task Specification
 
     ## Overview
     Create the initial database schema for the landlord management system.
@@ -119,86 +119,34 @@ Task tool (general-purpose):
     ### Step 2: Create database schema
 
     ```sql
-    -- src/db/schema.sql
     CREATE TABLE landlords (
         id INTEGER PRIMARY KEY,
         name TEXT NOT NULL,
-        email TEXT UNIQUE NOT NULL,
-        phone TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        email TEXT UNIQUE NOT NULL
     );
-
-    CREATE TABLE properties (
-        id INTEGER PRIMARY KEY,
-        landlord_id INTEGER NOT NULL,
-        address TEXT NOT NULL,
-        city TEXT NOT NULL,
-        state TEXT NOT NULL,
-        zip_code TEXT NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (landlord_id) REFERENCES landlords(id)
-    );
-
-    CREATE INDEX idx_properties_landlord ON properties(landlord_id);
-
-    CREATE TABLE tenants (
-        id INTEGER PRIMARY KEY,
-        property_id INTEGER NOT NULL,
-        name TEXT NOT NULL,
-        email TEXT,
-        phone TEXT,
-        lease_start DATE NOT NULL,
-        lease_end DATE NOT NULL,
-        rent_amount DECIMAL(10,2) NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (property_id) REFERENCES properties(id)
-    );
-
-    CREATE INDEX idx_tenants_property ON tenants(property_id);
     ```
 
-    ### Step 3: Create migration file
-
-    Copy schema.sql to migrations/001_initial_schema.sql
-
-    ### Step 4: Verify tests pass
+    ### Step 3: Verify tests pass
 
     Run: `pytest tests/db/test_schema.py -v`
     Expected: PASS
 
-    ### Step 5: Commit
+    ### Step 4: Commit
 
     ```bash
-    git add src/db/schema.sql src/db/migrations/001_initial_schema.sql tests/db/test_schema.py
-    git commit -m "feat: add initial database schema for landlord management
-
-    - Create landlords, properties, and tenants tables
-    - Add foreign key relationships
-    - Add indexes for common queries
-
-    Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
+    git add tests/db/test_schema.py src/db/schema.sql src/db/migrations/
+    git commit -m "feat: add initial database schema"
     ```
 
     ## Verification
 
     - Schema file parses without errors
     - All tables have primary keys
-    - Foreign keys are properly defined
-    - Indexes exist on foreign key columns
     - Tests pass
-
-    ## Notes
-
-    - Use INTEGER for IDs (SQLite compatibility)
-    - Use TIMESTAMP for dates (ISO 8601 format)
-    - Don't add audit columns beyond created_at (YAGNI)
-    - Indexes on foreign keys improve join performance
 
     ## Context
 
-    This is the foundation bead for the entire landlord management system.
-    It establishes the core data model that all other beads will build upon.
-
-    Dependencies completed: None (this is a foundation bead)
-    Working directory: /mnt/c/Users/stuff/Documents/Projects/LandlordSoftware
+    This is the foundation task for the entire landlord management system.
+    Dependencies completed: None (this is a foundation task)
+    Working directory: /home/ubuntu/projects/LandlordSoftware
 ````

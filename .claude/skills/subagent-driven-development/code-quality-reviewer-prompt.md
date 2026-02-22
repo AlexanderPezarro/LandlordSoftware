@@ -11,11 +11,11 @@ Task tool (code-reviewer):
   Use template at requesting-code-review/code-reviewer.md
 
   WHAT_WAS_IMPLEMENTED: {from implementer's report}
-  PLAN_OR_REQUIREMENTS: Bead {BEAD_ID} specification:
-    {paste the full bead description here}
-  BASE_SHA: {commit before this bead}
+  PLAN_OR_REQUIREMENTS: Task #{TASK_ID} specification:
+    {paste the full task description here}
+  BASE_SHA: {commit before this task}
   HEAD_SHA: {current commit}
-  DESCRIPTION: {bead title}
+  DESCRIPTION: {task title}
 ```
 
 **Code reviewer returns:** Strengths, Issues (Critical/Important/Minor), Assessment
@@ -24,14 +24,14 @@ Task tool (code-reviewer):
 
 ```
 Task tool (code-reviewer):
-  description: "Review code quality for beads-a3f2dd"
+  description: "Review code quality for Task #1"
 
   WHAT_WAS_IMPLEMENTED:
     Database schema implementation with landlords, properties, and tenants tables.
     Includes migration file and comprehensive tests.
 
   PLAN_OR_REQUIREMENTS:
-    Bead beads-a3f2dd specification:
+    Task #1 specification:
 
     ## Overview
     Create the initial database schema for the landlord management system.
@@ -41,7 +41,7 @@ Task tool (code-reviewer):
     - Create: `src/db/migrations/001_initial_schema.sql`
     - Create: `tests/db/test_schema.py`
 
-    [... full bead specification ...]
+    [... full task specification ...]
 
   BASE_SHA: 9da03e1
   HEAD_SHA: a7f3bc2

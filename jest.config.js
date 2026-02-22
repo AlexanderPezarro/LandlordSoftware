@@ -9,6 +9,7 @@ export default {
       roots: ['<rootDir>/server/src'],
       testMatch: ['**/__tests__/**/*.test.ts'],
       moduleFileExtensions: ['ts', 'js', 'json'],
+      setupFiles: ['<rootDir>/server/src/services/__tests__/jest.setup.ts'],
       collectCoverageFrom: [
         'server/src/**/*.ts',
         '!server/src/**/*.test.ts',
