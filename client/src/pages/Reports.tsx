@@ -16,7 +16,7 @@ import { Chip } from '../components/primitives/Chip';
 import { Divider } from '../components/primitives/Divider';
 import { Spinner } from '../components/primitives/Spinner';
 import { StatsCard } from '../components/composed/StatsCard';
-import DateRangePicker from '../components/composed/DateRangePicker';
+import { DateRangePicker } from '../components/composed/DateRangePicker';
 import { PropertySelector } from '../components/composed/PropertySelector';
 import { reportsService } from '../services/api/reports.service';
 import { transactionsService } from '../services/api/transactions.service';

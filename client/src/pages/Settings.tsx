@@ -27,8 +27,8 @@ import { bankService, BankAccount } from '../services/api/bank.service';
 import { ApiError } from '../types/api.types';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
-import { ImportProgressDialog } from '../components/bank/ImportProgressDialog';
-import ConfirmDialog from '../components/shared/ConfirmDialog';
+import { ImportProgressDialog } from '../components/composed/bank';
+import { ConfirmDialog } from '../components/composed/ConfirmDialog';
 import styles from './Settings.module.scss';
 
 export const Settings: React.FC = () => {
@@ -58,7 +58,6 @@ export const Settings: React.FC = () => {
   // Delete user dialog state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<UserListItem | null>(null);
-  const [deleteLoading, setDeleteLoading] = useState(false);
 
   // Bank accounts state
   const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
@@ -272,7 +271,6 @@ export const Settings: React.FC = () => {
     if (!userToDelete) return;
 
     try {
-      setDeleteLoading(true);
       await usersService.deleteUser(userToDelete.id);
       toast.success('User deleted successfully');
       setDeleteDialogOpen(false);
@@ -282,8 +280,6 @@ export const Settings: React.FC = () => {
       console.error('Error deleting user:', err);
       const errorMessage = err instanceof ApiError ? err.message : 'Failed to delete user';
       toast.error(errorMessage);
-    } finally {
-      setDeleteLoading(false);
     }
   };
 
@@ -711,7 +707,6 @@ export const Settings: React.FC = () => {
         message={`Are you sure you want to delete ${userToDelete?.email}? This action cannot be undone.`}
         onConfirm={handleDeleteConfirm}
         onCancel={handleDeleteCancel}
-        loading={deleteLoading}
       />
 
       {/* Bank Connection Dialog */}

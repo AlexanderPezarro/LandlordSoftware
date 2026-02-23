@@ -6,7 +6,7 @@
   margin: 0 auto;
   padding: 0 $spacing-6;
 
-  @include responsive(sm) {
+  @include respond-down(sm) {
     padding: 0 $spacing-4;
   }
 }

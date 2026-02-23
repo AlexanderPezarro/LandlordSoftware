@@ -27,10 +27,8 @@ export default defineConfig({
         manualChunks: {
           // Core React libraries
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          // Material-UI core
-          'mui-core': ['@mui/material', '@mui/system'],
-          // Material-UI icons (large package)
-          'mui-icons': ['@mui/icons-material'],
+          // Icons
+          'lucide': ['lucide-react'],
           // Other vendors (axios, etc.)
           'vendor': ['axios']
         }

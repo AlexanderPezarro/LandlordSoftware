@@ -3,19 +3,19 @@
 .container {
   display: flex;
   flex-direction: column;
-  gap: $spacing-sm;
+  gap: $spacing-2;
 }
 
 .label {
   font-family: $font-family;
-  font-size: $font-size-base;
+  font-size: $font-size-body2;
   color: $color-text-secondary;
   font-weight: 500;
 }
 
 .pickers {
   display: flex;
-  gap: $spacing-md;
+  gap: $spacing-4;
   align-items: flex-start;
 
   @media (max-width: $breakpoint-sm) {

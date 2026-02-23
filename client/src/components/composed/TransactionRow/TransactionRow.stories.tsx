@@ -1,5 +1,5 @@
 import React from 'react';
-import Table from '../../primitives/Table';
+import { Table } from '../../primitives/Table';
 import TransactionRow from './TransactionRow';
 import type { Transaction } from '../../../types/api.types';
 
@@ -15,12 +15,12 @@ export default {
       <Table>
         <Table.Head>
           <Table.Row>
-            <Table.Cell as="th">Date</Table.Cell>
-            <Table.Cell as="th">Property</Table.Cell>
-            <Table.Cell as="th">Type</Table.Cell>
-            <Table.Cell as="th">Category</Table.Cell>
-            <Table.Cell as="th">Amount</Table.Cell>
-            <Table.Cell as="th">Actions</Table.Cell>
+            <Table.Cell>Date</Table.Cell>
+            <Table.Cell>Property</Table.Cell>
+            <Table.Cell>Type</Table.Cell>
+            <Table.Cell>Category</Table.Cell>
+            <Table.Cell>Amount</Table.Cell>
+            <Table.Cell>Actions</Table.Cell>
           </Table.Row>
         </Table.Head>
         <Table.Body>

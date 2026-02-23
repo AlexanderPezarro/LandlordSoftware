@@ -1,8 +1,8 @@
 import React from 'react';
 import { Pencil, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
-import Table from '../../primitives/Table';
-import Button from '../../primitives/Button';
+import { Table } from '../../primitives/Table';
+import { Button } from '../../primitives/Button';
 import { TransactionRowProps } from '../../../types/component.types';
 import styles from './TransactionRow.module.scss';
 
@@ -39,7 +39,7 @@ const TransactionRow: React.FC<TransactionRowProps> = ({
     transaction.splits != null && transaction.splits.length > 0;
 
   return (
-    <Table.Row hover>
+    <Table.Row>
       <Table.Cell>{formatDate(transaction.transactionDate)}</Table.Cell>
       <Table.Cell>{propertyName}</Table.Cell>
       <Table.Cell>{transaction.type}</Table.Cell>

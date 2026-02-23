@@ -17,7 +17,7 @@ import {
 import { bankService } from '../../services/api/bank.service';
 import { ApiError } from '../../types/api.types';
 import { useToast } from '../../contexts/ToastContext';
-import PropertySelector from '../../components/shared/PropertySelector';
+import { PropertySelector } from '../../components/composed/PropertySelector';
 import { useProperties } from '../../contexts/PropertiesContext';
 import styles from './PendingTransactions.module.scss';
 
