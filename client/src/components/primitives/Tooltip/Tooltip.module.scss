@@ -1,0 +1,53 @@
+@use '../../../styles/variables' as *;
+
+.wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.tooltip {
+  position: absolute;
+  z-index: $z-index-tooltip;
+  background-color: rgba(0, 0, 0, 0.87);
+  color: #ffffff;
+  font-size: $font-size-caption;
+  line-height: $line-height-caption;
+  padding: $spacing-1 $spacing-2;
+  border-radius: $radius-sm;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity $transition-duration $transition-easing;
+}
+
+.visible {
+  opacity: 1;
+}
+
+.top {
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: $spacing-1;
+}
+
+.bottom {
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: $spacing-1;
+}
+
+.left {
+  right: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-right: $spacing-1;
+}
+
+.right {
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-left: $spacing-1;
+}
