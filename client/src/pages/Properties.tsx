@@ -1,27 +1,14 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import {
-  Container,
-  Typography,
-  Box,
-  Button,
-  TextField,
-  MenuItem,
-  CircularProgress,
-  Alert,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  useMediaQuery,
-  useTheme,
-  Stack,
-  InputAdornment,
-} from '@mui/material';
-import {
-  Add as AddIcon,
-  Search as SearchIcon,
-} from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { Plus, Search, AlertCircle } from 'lucide-react';
+import { Container } from '../components/primitives/Container';
+import { Button } from '../components/primitives/Button';
+import { TextField } from '../components/primitives/TextField';
+import { Select } from '../components/primitives/Select';
+import { Dialog } from '../components/primitives/Dialog';
+import { Spinner } from '../components/primitives/Spinner';
+import { PropertyCard } from '../components/composed/PropertyCard/PropertyCard';
+import { OwnershipSection } from '../components/composed/PropertyOwnership/OwnershipSection';
 import { propertiesService } from '../services/api/properties.service';
 import { leasesService } from '../services/api/leases.service';
 import { propertyOwnershipService } from '../services/api/propertyOwnership.service';
@@ -31,18 +18,35 @@ import type {
   UpdatePropertyRequest,
 } from '../types/api.types';
 import { ApiError } from '../types/api.types';
-import PropertyCard from '../components/shared/PropertyCard';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useProperties } from '../contexts/PropertiesContext';
 import type { PropertyWithLease } from '../types/component.types';
-import { OwnershipSection } from '../components/PropertyOwnership/OwnershipSection';
+import styles from './Properties.module.scss';
 
 type PropertyStatus = 'Available' | 'Occupied' | 'Under Maintenance' | 'For Sale';
 type PropertyType = 'House' | 'Flat' | 'Studio' | 'Bungalow' | 'Terraced' | 'Semi-Detached' | 'Detached' | 'Maisonette' | 'Commercial';
 
 const PROPERTY_STATUSES: PropertyStatus[] = ['Available', 'Occupied', 'Under Maintenance', 'For Sale'];
 const PROPERTY_TYPES: PropertyType[] = ['House', 'Flat', 'Studio', 'Bungalow', 'Terraced', 'Semi-Detached', 'Detached', 'Maisonette', 'Commercial'];
+
+const STATUS_OPTIONS = [
+  { value: 'all', label: 'All Statuses' },
+  ...PROPERTY_STATUSES.map((s) => ({ value: s, label: s })),
+];
+
+const TYPE_OPTIONS = [
+  { value: 'all', label: 'All Types' },
+  ...PROPERTY_TYPES.map((t) => ({ value: t, label: t })),
+];
+
+const SORT_OPTIONS = [
+  { value: 'name', label: 'Name' },
+  { value: 'status', label: 'Status' },
+];
+
+const PROPERTY_TYPE_OPTIONS = PROPERTY_TYPES.map((t) => ({ value: t, label: t }));
+const PROPERTY_STATUS_OPTIONS = PROPERTY_STATUSES.map((s) => ({ value: s, label: s }));
 
 interface PropertyFormData {
   name: string;
@@ -73,8 +77,6 @@ const initialFormData: PropertyFormData = {
 export const Properties: React.FC = () => {
   const toast = useToast();
   const navigate = useNavigate();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { canWrite } = useAuth();
   const { refetch: refetchPropertiesContext } = useProperties();
 
@@ -424,9 +426,9 @@ export const Properties: React.FC = () => {
   if (loading) {
     return (
       <Container maxWidth="lg">
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
-          <CircularProgress />
-        </Box>
+        <div className={styles.loadingWrapper}>
+          <Spinner />
+        </div>
       </Container>
     );
   }
@@ -434,127 +436,87 @@ export const Properties: React.FC = () => {
   if (error) {
     return (
       <Container maxWidth="lg">
-        <Box sx={{ mb: 4 }}>
-          <Typography variant="h4" component="h1" gutterBottom>
-            Properties
-          </Typography>
-          <Alert severity="error">{error}</Alert>
-        </Box>
+        <div className={styles.page}>
+          <h1 className={styles.title}>Properties</h1>
+          <div className={styles.alert}>
+            <AlertCircle size={20} />
+            {error}
+          </div>
+        </div>
       </Container>
     );
   }
 
   return (
     <Container maxWidth="lg">
-      <Box sx={{ mb: 4 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Typography variant="h4" component="h1">
-            Properties
-          </Typography>
+      <div className={styles.page}>
+        <div className={styles.header}>
+          <h1 className={styles.title}>Properties</h1>
           {canWrite() && (
             <Button
-              variant="contained"
-              color="primary"
-              startIcon={<AddIcon />}
+              variant="primary"
+              startIcon={<Plus size={18} />}
               onClick={() => handleOpenDialog('create')}
             >
               Add Property
             </Button>
           )}
-        </Box>
+        </div>
 
         {/* Search and Filters */}
-        <Box sx={{ mb: 3 }}>
-          <Stack spacing={2}>
-            <TextField
+        <div className={styles.filters}>
+          <TextField
+            size="small"
+            fullWidth
+            placeholder="Search by name, address, or postcode..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery((e.target as HTMLInputElement).value)}
+            startAdornment={<Search size={18} />}
+          />
+          <div className={styles.filterRow}>
+            <Select
+              label="Status"
+              value={statusFilter}
+              onChange={(value) => setStatusFilter(value)}
+              options={STATUS_OPTIONS}
               fullWidth
               size="small"
-              placeholder="Search by name, address, or postcode..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
-              }}
             />
-            <Stack direction={isMobile ? 'column' : 'row'} spacing={2}>
-              <TextField
-                select
-                fullWidth
-                size="small"
-                label="Status"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-              >
-                <MenuItem value="all">All Statuses</MenuItem>
-                {PROPERTY_STATUSES.map((status) => (
-                  <MenuItem key={status} value={status}>
-                    {status}
-                  </MenuItem>
-                ))}
-              </TextField>
-              <TextField
-                select
-                fullWidth
-                size="small"
-                label="Property Type"
-                value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value)}
-              >
-                <MenuItem value="all">All Types</MenuItem>
-                {PROPERTY_TYPES.map((type) => (
-                  <MenuItem key={type} value={type}>
-                    {type}
-                  </MenuItem>
-                ))}
-              </TextField>
-              <TextField
-                select
-                fullWidth
-                size="small"
-                label="Sort By"
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as 'name' | 'status')}
-              >
-                <MenuItem value="name">Name</MenuItem>
-                <MenuItem value="status">Status</MenuItem>
-              </TextField>
-            </Stack>
-          </Stack>
-        </Box>
+            <Select
+              label="Property Type"
+              value={typeFilter}
+              onChange={(value) => setTypeFilter(value)}
+              options={TYPE_OPTIONS}
+              fullWidth
+              size="small"
+            />
+            <Select
+              label="Sort By"
+              value={sortBy}
+              onChange={(value) => setSortBy(value as 'name' | 'status')}
+              options={SORT_OPTIONS}
+              fullWidth
+              size="small"
+            />
+          </div>
+        </div>
 
         {/* Properties Grid */}
         {filteredAndSortedProperties.length === 0 ? (
-          <Box sx={{ textAlign: 'center', py: 8 }}>
-            <Typography variant="h6" color="text.secondary" gutterBottom>
-              No properties found
-            </Typography>
+          <div className={styles.empty}>
+            <p className={styles.emptyTitle}>No properties found</p>
             {canWrite() && (
               <Button
-                variant="outlined"
-                startIcon={<AddIcon />}
+                variant="secondary"
+                startIcon={<Plus size={18} />}
                 onClick={() => handleOpenDialog('create')}
-                sx={{ mt: 2 }}
               >
                 Add First Property
               </Button>
             )}
-          </Box>
+          </div>
         ) : (
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: {
-                xs: '1fr',
-                sm: 'repeat(2, 1fr)',
-                md: 'repeat(3, 1fr)',
-              },
-              gap: 3,
-            }}
-          >
+          <div className={styles.grid}>
             {filteredAndSortedProperties.map((property) => (
               <PropertyCard
                 key={property.id}
@@ -564,21 +526,21 @@ export const Properties: React.FC = () => {
                 onDelete={canWrite() ? (e) => handleDeleteClick(property, e) : undefined}
               />
             ))}
-          </Box>
+          </div>
         )}
-      </Box>
+      </div>
 
       {/* Create/Edit Dialog */}
-      <Dialog open={dialogOpen} onClose={handleCloseDialog} maxWidth="md" fullWidth>
-        <DialogTitle>
+      <Dialog open={dialogOpen} onClose={handleCloseDialog} size="large">
+        <Dialog.Title>
           {dialogMode === 'create' ? 'Add New Property' : 'Edit Property'}
-        </DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+        </Dialog.Title>
+        <Dialog.Content>
+          <div className={styles.formFields}>
             <TextField
               label="Property Name"
               value={formData.name}
-              onChange={(e) => handleFormChange('name', e.target.value)}
+              onChange={(e) => handleFormChange('name', (e.target as HTMLInputElement).value)}
               error={!!formErrors.name}
               helperText={formErrors.name}
               required
@@ -587,17 +549,17 @@ export const Properties: React.FC = () => {
             <TextField
               label="Street Address"
               value={formData.street}
-              onChange={(e) => handleFormChange('street', e.target.value)}
+              onChange={(e) => handleFormChange('street', (e.target as HTMLInputElement).value)}
               error={!!formErrors.street}
               helperText={formErrors.street}
               required
               fullWidth
             />
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+            <div className={styles.formRow}>
               <TextField
                 label="City"
                 value={formData.city}
-                onChange={(e) => handleFormChange('city', e.target.value)}
+                onChange={(e) => handleFormChange('city', (e.target as HTMLInputElement).value)}
                 error={!!formErrors.city}
                 helperText={formErrors.city}
                 required
@@ -605,141 +567,125 @@ export const Properties: React.FC = () => {
               <TextField
                 label="County"
                 value={formData.county}
-                onChange={(e) => handleFormChange('county', e.target.value)}
+                onChange={(e) => handleFormChange('county', (e.target as HTMLInputElement).value)}
                 error={!!formErrors.county}
                 helperText={formErrors.county}
                 required
               />
-            </Box>
+            </div>
             <TextField
               label="Postcode"
               value={formData.postcode}
-              onChange={(e) => handleFormChange('postcode', e.target.value)}
+              onChange={(e) => handleFormChange('postcode', (e.target as HTMLInputElement).value)}
               error={!!formErrors.postcode}
               helperText={formErrors.postcode}
               required
               fullWidth
             />
-            <TextField
+            <Select
               label="Property Type"
-              select
               value={formData.propertyType}
-              onChange={(e) => handleFormChange('propertyType', e.target.value)}
-              required
+              onChange={(value) => handleFormChange('propertyType', value)}
+              options={PROPERTY_TYPE_OPTIONS}
               fullWidth
-            >
-              {PROPERTY_TYPES.map((type) => (
-                <MenuItem key={type} value={type}>
-                  {type}
-                </MenuItem>
-              ))}
-            </TextField>
-            <TextField
+            />
+            <Select
               label="Status"
-              select
               value={formData.status}
-              onChange={(e) => handleFormChange('status', e.target.value)}
-              required
+              onChange={(value) => handleFormChange('status', value)}
+              options={PROPERTY_STATUS_OPTIONS}
               fullWidth
-            >
-              {PROPERTY_STATUSES.map((status) => (
-                <MenuItem key={status} value={status}>
-                  {status}
-                </MenuItem>
-              ))}
-            </TextField>
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+            />
+            <div className={styles.formRow}>
               <TextField
                 label="Purchase Date"
                 type="date"
                 value={formData.purchaseDate}
-                onChange={(e) => handleFormChange('purchaseDate', e.target.value)}
-                InputLabelProps={{ shrink: true }}
+                onChange={(e) => handleFormChange('purchaseDate', (e.target as HTMLInputElement).value)}
               />
               <TextField
                 label="Purchase Price"
                 type="number"
                 value={formData.purchasePrice}
-                onChange={(e) => handleFormChange('purchasePrice', e.target.value)}
+                onChange={(e) => handleFormChange('purchasePrice', (e.target as HTMLInputElement).value)}
                 error={!!formErrors.purchasePrice}
                 helperText={formErrors.purchasePrice}
-                inputProps={{ min: 0, step: 0.01 }}
-                InputProps={{
-                  startAdornment: <InputAdornment position="start">£</InputAdornment>,
-                }}
+                min={0}
+                step={0.01}
+                startAdornment={<span>\u00A3</span>}
               />
-            </Box>
+            </div>
             <TextField
               label="Notes"
               value={formData.notes}
-              onChange={(e) => handleFormChange('notes', e.target.value)}
+              onChange={(e) => handleFormChange('notes', (e.target as HTMLInputElement).value)}
               multiline
               rows={3}
               fullWidth
             />
 
             {/* Ownership Configuration */}
-            <Box sx={{ mt: 3, pt: 3, borderTop: 1, borderColor: 'divider' }}>
+            <div className={styles.ownershipSection}>
               <OwnershipSection
                 owners={owners}
                 onChange={setOwners}
                 disabled={false}
               />
               {formErrors.ownership && (
-                <Alert severity="error" sx={{ mt: 2 }}>
+                <div className={styles.ownershipError} role="alert">
+                  <AlertCircle size={18} />
                   {formErrors.ownership}
-                </Alert>
+                </div>
               )}
-            </Box>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog} color="inherit">
+            </div>
+          </div>
+        </Dialog.Content>
+        <Dialog.Actions>
+          <Button variant="text" onClick={handleCloseDialog}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit} variant="contained" color="primary">
+          <Button variant="primary" onClick={handleSubmit}>
             {dialogMode === 'create' ? 'Create' : 'Save'}
           </Button>
-        </DialogActions>
+        </Dialog.Actions>
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={deleteDialogOpen} onClose={handleDeleteCancel} maxWidth="sm" fullWidth>
-        <DialogTitle>Delete Property</DialogTitle>
-        <DialogContent>
-          <Typography>
+      <Dialog open={deleteDialogOpen} onClose={handleDeleteCancel} size="small">
+        <Dialog.Title>Delete Property</Dialog.Title>
+        <Dialog.Content>
+          <p className={styles.deleteQuestion}>
             What would you like to do with {propertyToDelete?.name}?
-          </Typography>
-          <Box sx={{ mt: 2 }}>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-              <strong>Archive:</strong> Changes status to 'For Sale' and preserves all data
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
+          </p>
+          <div className={styles.deleteBody}>
+            <p className={styles.deleteOption}>
+              <strong>Archive:</strong> Changes status to &apos;For Sale&apos; and preserves all data
+            </p>
+            <p className={styles.deleteOption}>
               <strong>Permanently Delete:</strong> Removes property and all related data (leases, transactions, events, etc.)
-            </Typography>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleDeleteCancel} disabled={deleteLoading}>
+            </p>
+          </div>
+        </Dialog.Content>
+        <Dialog.Actions>
+          <Button variant="text" onClick={handleDeleteCancel} disabled={deleteLoading}>
             Cancel
           </Button>
           <Button
+            variant="secondary"
             onClick={() => handleDeleteConfirm(true)}
-            color="warning"
-            variant="outlined"
             disabled={deleteLoading}
           >
             Archive
           </Button>
           <Button
+            variant="primary"
             onClick={() => handleDeleteConfirm(false)}
-            color="error"
-            variant="contained"
             disabled={deleteLoading}
+            loading={deleteLoading}
           >
-            {deleteLoading ? <CircularProgress size={24} /> : 'Permanently Delete'}
+            Permanently Delete
           </Button>
-        </DialogActions>
+        </Dialog.Actions>
       </Dialog>
     </Container>
   );
