@@ -1,0 +1,132 @@
+@use '../../../styles/variables' as *;
+
+.wrapper {
+  display: inline-flex;
+  flex-direction: column;
+  gap: $spacing-1;
+}
+
+.fullWidth {
+  width: 100%;
+}
+
+.label {
+  font-family: $font-family;
+  font-size: $font-size-body2;
+  font-weight: $font-weight-regular;
+  color: $color-text-secondary;
+  line-height: $line-height-body2;
+  margin-bottom: $spacing-1;
+}
+
+.labelError {
+  color: $color-error;
+}
+
+.selectContainer {
+  position: relative;
+  display: inline-flex;
+  width: 100%;
+}
+
+.select {
+  width: 100%;
+  font-family: $font-family;
+  font-size: $font-size-body1;
+  color: $color-text-primary;
+  background-color: $color-paper;
+  border: 1px solid $color-divider;
+  border-radius: $radius-sm;
+  cursor: pointer;
+  appearance: none;
+  transition: border-color $transition-duration $transition-easing,
+              box-shadow $transition-duration $transition-easing;
+
+  // Hide default arrow in IE
+  &::-ms-expand {
+    display: none;
+  }
+
+  &:hover:not(:disabled) {
+    border-color: $color-text-primary;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: $color-primary;
+    border-width: 2px;
+  }
+
+  &:focus.medium {
+    padding: 15px 35px 15px 13px;
+  }
+
+  &:focus.small {
+    padding: 7px 35px 7px 13px;
+  }
+}
+
+.medium {
+  padding: 16px 36px 16px 14px;
+}
+
+.small {
+  padding: 8px 36px 8px 14px;
+  font-size: $font-size-body2;
+}
+
+.placeholder {
+  color: $color-text-secondary;
+}
+
+.error {
+  border-color: $color-error;
+
+  &:hover:not(:disabled) {
+    border-color: $color-error;
+  }
+
+  &:focus {
+    border-color: $color-error;
+  }
+}
+
+.disabled {
+  color: $color-text-disabled;
+  background-color: $color-background;
+  border-color: $color-divider;
+  cursor: not-allowed;
+
+  &:hover {
+    border-color: $color-divider;
+  }
+}
+
+.arrow {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: $color-text-secondary;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: color $transition-duration $transition-easing;
+}
+
+.arrowDisabled {
+  color: $color-text-disabled;
+}
+
+.helperText {
+  font-family: $font-family;
+  font-size: $font-size-caption;
+  color: $color-text-secondary;
+  line-height: $line-height-caption;
+  margin-top: $spacing-1;
+}
+
+.helperTextError {
+  color: $color-error;
+}
