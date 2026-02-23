@@ -1,0 +1,220 @@
+@use '../styles/variables' as *;
+@use '../styles/mixins' as *;
+
+// ---------------------------------------------------------------------------
+// Page layout
+// ---------------------------------------------------------------------------
+
+.page {
+  margin-bottom: $spacing-8;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-6;
+}
+
+.title {
+  font-size: $font-size-h4;
+  font-weight: $font-weight-regular;
+  line-height: $line-height-h4;
+  letter-spacing: $letter-spacing-h4;
+  color: $color-text-primary;
+  margin: 0;
+}
+
+// ---------------------------------------------------------------------------
+// Loading & error states
+// ---------------------------------------------------------------------------
+
+.loadingWrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
+
+.errorAlert {
+  background-color: #fdeded;
+  color: $color-error;
+  padding: $spacing-3 $spacing-4;
+  border-radius: $radius-sm;
+  font-size: $font-size-body2;
+  line-height: $line-height-body2;
+}
+
+// ---------------------------------------------------------------------------
+// Filters
+// ---------------------------------------------------------------------------
+
+.filters {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+  margin-bottom: $spacing-6;
+}
+
+.filterRow {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+
+  @include respond-to(md) {
+    flex-direction: row;
+  }
+}
+
+.searchField {
+  flex: 1;
+}
+
+.filterSelect {
+  flex: 1;
+}
+
+// ---------------------------------------------------------------------------
+// Empty state
+// ---------------------------------------------------------------------------
+
+.emptyState {
+  text-align: center;
+  padding: $spacing-8 * 2 0;
+}
+
+.emptyTitle {
+  font-size: $font-size-h6;
+  font-weight: $font-weight-medium;
+  color: $color-text-secondary;
+  margin: 0 0 $spacing-4;
+}
+
+// ---------------------------------------------------------------------------
+// Lease card grid
+// ---------------------------------------------------------------------------
+
+.cardGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: $spacing-6;
+
+  @include respond-to(sm) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @include respond-to(md) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.leaseCard {
+  cursor: default;
+  transition: box-shadow $transition-duration $transition-easing;
+}
+
+.leaseCardClickable {
+  cursor: pointer;
+
+  &:hover {
+    @include elevation(4);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Lease card content
+// ---------------------------------------------------------------------------
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: $spacing-2;
+}
+
+.propertyName {
+  font-size: $font-size-h6;
+  font-weight: $font-weight-medium;
+  line-height: $line-height-h6;
+  color: $color-text-primary;
+  margin: 0;
+  flex: 1;
+  margin-right: $spacing-2;
+  @include truncate;
+}
+
+.tenantName {
+  font-size: $font-size-body2;
+  line-height: $line-height-body2;
+  color: $color-text-secondary;
+  margin: 0 0 $spacing-1;
+}
+
+.monthlyRent {
+  font-size: $font-size-h6;
+  font-weight: $font-weight-medium;
+  line-height: $line-height-h6;
+  color: $color-primary;
+  margin: 0 0 $spacing-1;
+}
+
+.leaseDates {
+  font-size: $font-size-body2;
+  line-height: $line-height-body2;
+  color: $color-text-secondary;
+  margin: 0;
+}
+
+.cardActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: $spacing-1;
+  padding-top: 0;
+}
+
+// ---------------------------------------------------------------------------
+// Form dialog
+// ---------------------------------------------------------------------------
+
+.formGrid {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+  margin-top: $spacing-2;
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $spacing-4;
+}
+
+// ---------------------------------------------------------------------------
+// Delete dialog
+// ---------------------------------------------------------------------------
+
+.deleteDialogMessage {
+  font-size: $font-size-body2;
+  line-height: $line-height-body2;
+  color: $color-text-secondary;
+  margin: 0;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+}
+
+.warningIcon {
+  color: $color-warning;
+}
+
+.confirmDanger {
+  background-color: $color-error;
+  border-color: $color-error;
+
+  &:hover {
+    background-color: darken(#d32f2f, 8%);
+  }
+}

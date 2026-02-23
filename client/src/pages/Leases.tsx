@@ -1,33 +1,14 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
-import {
-  Container,
-  Typography,
-  Box,
-  Button,
-  TextField,
-  MenuItem,
-  CircularProgress,
-  Alert,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  useMediaQuery,
-  useTheme,
-  Stack,
-  InputAdornment,
-  Card,
-  CardContent,
-  CardActions,
-  Chip,
-  IconButton,
-} from '@mui/material';
-import {
-  Add as AddIcon,
-  Search as SearchIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-} from '@mui/icons-material';
+import { Plus, Search, Pencil, Trash2, AlertTriangle } from 'lucide-react';
+import { Container } from '../components/primitives/Container';
+import { Button } from '../components/primitives/Button';
+import { TextField } from '../components/primitives/TextField';
+import { Select } from '../components/primitives/Select';
+import { DatePicker } from '../components/primitives/DatePicker';
+import { Card } from '../components/primitives/Card';
+import { Chip } from '../components/primitives/Chip';
+import { Dialog } from '../components/primitives/Dialog';
+import { Spinner } from '../components/primitives/Spinner';
 import { leasesService } from '../services/api/leases.service';
 import { propertiesService } from '../services/api/properties.service';
 import { tenantsService } from '../services/api/tenants.service';
@@ -40,9 +21,9 @@ import type {
   LeaseFilters,
 } from '../types/api.types';
 import { ApiError } from '../types/api.types';
-import ConfirmDialog from '../components/shared/ConfirmDialog';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
+import styles from './Leases.module.scss';
 
 type LeaseStatus = 'Draft' | 'Active' | 'Expired' | 'Terminated';
 
@@ -102,11 +83,25 @@ const formatDate = (dateString: string): string => {
   });
 };
 
+/** Convert "YYYY-MM-DD" string to Date, or return null. */
+const parseDate = (dateStr: string): Date | null => {
+  if (!dateStr) return null;
+  const d = new Date(dateStr + 'T00:00:00');
+  return isNaN(d.getTime()) ? null : d;
+};
+
+/** Convert Date to "YYYY-MM-DD" string. */
+const toDateString = (date: Date | null): string => {
+  if (!date) return '';
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
+
 export const Leases: React.FC = () => {
   const toast = useToast();
   const { canWrite } = useAuth();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -348,12 +343,35 @@ export const Leases: React.FC = () => {
     return `${propertyName} - ${tenantName}`;
   };
 
+  // Build select options
+  const propertyFilterOptions = [
+    { value: 'all', label: 'All Properties' },
+    ...properties.map((p) => ({ value: p.id, label: p.name })),
+  ];
+
+  const statusFilterOptions = [
+    { value: 'all', label: 'All Statuses' },
+    ...LEASE_STATUSES.map((s) => ({ value: s, label: s })),
+  ];
+
+  const propertyOptions = properties.map((p) => ({
+    value: p.id,
+    label: `${p.name} - ${p.street}, ${p.city}`,
+  }));
+
+  const tenantOptions = tenants.map((t) => ({
+    value: t.id,
+    label: `${t.firstName} ${t.lastName} - ${t.email}`,
+  }));
+
+  const statusOptions = LEASE_STATUSES.map((s) => ({ value: s, label: s }));
+
   if (loading) {
     return (
       <Container maxWidth="lg">
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
-          <CircularProgress />
-        </Box>
+        <div className={styles.loadingWrapper}>
+          <Spinner />
+        </div>
       </Container>
     );
   }
@@ -361,307 +379,261 @@ export const Leases: React.FC = () => {
   if (error) {
     return (
       <Container maxWidth="lg">
-        <Box sx={{ mb: 4 }}>
-          <Typography variant="h4" component="h1" gutterBottom>
-            Leases
-          </Typography>
-          <Alert severity="error">{error}</Alert>
-        </Box>
+        <div className={styles.page}>
+          <h1 className={styles.title}>Leases</h1>
+          <div className={styles.errorAlert}>{error}</div>
+        </div>
       </Container>
     );
   }
 
   return (
     <Container maxWidth="lg">
-      <Box sx={{ mb: 4 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Typography variant="h4" component="h1">
-            Leases
-          </Typography>
+      <div className={styles.page}>
+        <div className={styles.header}>
+          <h1 className={styles.title}>Leases</h1>
           {canWrite() && (
             <Button
-              variant="contained"
-              color="primary"
-              startIcon={<AddIcon />}
+              variant="primary"
+              startIcon={<Plus size={20} />}
               onClick={() => handleOpenDialog('create')}
             >
               Add Lease
             </Button>
           )}
-        </Box>
+        </div>
 
         {/* Search and Filters */}
-        <Box sx={{ mb: 3 }}>
-          <Stack spacing={2}>
-            <TextField
-              fullWidth
+        <div className={styles.filters}>
+          <TextField
+            fullWidth
+            size="small"
+            placeholder="Search by property or tenant name..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery((e.target as HTMLInputElement).value)}
+            startAdornment={<Search size={20} />}
+          />
+          <div className={styles.filterRow}>
+            <Select
+              label="Property"
+              value={propertyFilter}
+              onChange={(value) => setPropertyFilter(value)}
+              options={propertyFilterOptions}
               size="small"
-              placeholder="Search by property or tenant name..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
-              }}
+              fullWidth
             />
-            <Stack direction={isMobile ? 'column' : 'row'} spacing={2}>
-              <TextField
-                select
-                fullWidth
-                size="small"
-                label="Property"
-                value={propertyFilter}
-                onChange={(e) => setPropertyFilter(e.target.value)}
-              >
-                <MenuItem value="all">All Properties</MenuItem>
-                {properties.map((property) => (
-                  <MenuItem key={property.id} value={property.id}>
-                    {property.name}
-                  </MenuItem>
-                ))}
-              </TextField>
-              <TextField
-                select
-                fullWidth
-                size="small"
-                label="Status"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-              >
-                <MenuItem value="all">All Statuses</MenuItem>
-                {LEASE_STATUSES.map((status) => (
-                  <MenuItem key={status} value={status}>
-                    {status}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Stack>
-          </Stack>
-        </Box>
+            <Select
+              label="Status"
+              value={statusFilter}
+              onChange={(value) => setStatusFilter(value)}
+              options={statusFilterOptions}
+              size="small"
+              fullWidth
+            />
+          </div>
+        </div>
 
         {/* Leases Grid */}
         {filteredLeases.length === 0 ? (
-          <Box sx={{ textAlign: 'center', py: 8 }}>
-            <Typography variant="h6" color="text.secondary" gutterBottom>
-              No leases found
-            </Typography>
+          <div className={styles.emptyState}>
+            <h2 className={styles.emptyTitle}>No leases found</h2>
             {canWrite() && (
               <Button
-                variant="outlined"
-                startIcon={<AddIcon />}
+                variant="secondary"
+                startIcon={<Plus size={20} />}
                 onClick={() => handleOpenDialog('create')}
-                sx={{ mt: 2 }}
               >
                 Add First Lease
               </Button>
             )}
-          </Box>
+          </div>
         ) : (
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: {
-                xs: '1fr',
-                sm: 'repeat(2, 1fr)',
-                md: 'repeat(3, 1fr)',
-              },
-              gap: 3,
-            }}
-          >
+          <div className={styles.cardGrid}>
             {filteredLeases.map((lease) => (
               <Card
                 key={lease.id}
-                sx={{
-                  cursor: canWrite() ? 'pointer' : 'default',
-                  '&:hover': canWrite() ? {
-                    boxShadow: 4,
-                  } : {},
-                }}
+                className={`${styles.leaseCard} ${canWrite() ? styles.leaseCardClickable : ''}`}
                 onClick={canWrite() ? () => handleOpenDialog('edit', lease) : undefined}
               >
-                <CardContent>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                    <Typography variant="h6" component="div" noWrap sx={{ flex: 1, mr: 1 }}>
+                <Card.Content>
+                  <div className={styles.cardHeader}>
+                    <h3 className={styles.propertyName}>
                       {lease.property?.name || getPropertyName(lease.propertyId)}
-                    </Typography>
+                    </h3>
                     <Chip
                       label={lease.status}
                       color={getStatusColor(lease.status)}
                       size="small"
                     />
-                  </Box>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                  </div>
+                  <p className={styles.tenantName}>
                     Tenant: {lease.tenant
                       ? `${lease.tenant.firstName} ${lease.tenant.lastName}`
                       : getTenantName(lease.tenantId)}
-                  </Typography>
-                  <Typography variant="h6" color="primary" gutterBottom>
+                  </p>
+                  <p className={styles.monthlyRent}>
                     {formatCurrency(lease.monthlyRent)}/month
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
+                  </p>
+                  <p className={styles.leaseDates}>
                     {formatDate(lease.startDate)} - {lease.endDate ? formatDate(lease.endDate) : 'Ongoing'}
-                  </Typography>
-                </CardContent>
+                  </p>
+                </Card.Content>
                 {canWrite() && (
-                  <CardActions sx={{ justifyContent: 'flex-end', pt: 0 }}>
-                    <IconButton
+                  <Card.Actions className={styles.cardActions}>
+                    <Button
+                      variant="icon"
                       size="small"
-                      color="primary"
                       onClick={(e) => handleEditClick(lease, e)}
                       aria-label="Edit lease"
                     >
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton
+                      <Pencil size={18} />
+                    </Button>
+                    <Button
+                      variant="icon"
                       size="small"
-                      color="error"
                       onClick={(e) => handleDeleteClick(lease, e)}
                       aria-label="Delete lease"
                     >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </CardActions>
+                      <Trash2 size={18} />
+                    </Button>
+                  </Card.Actions>
                 )}
               </Card>
             ))}
-          </Box>
+          </div>
         )}
-      </Box>
+      </div>
 
       {/* Create/Edit Dialog */}
-      <Dialog open={dialogOpen} onClose={handleCloseDialog} maxWidth="md" fullWidth>
-        <DialogTitle>
+      <Dialog open={dialogOpen} onClose={handleCloseDialog} size="large">
+        <Dialog.Title>
           {dialogMode === 'create' ? 'Add New Lease' : 'Edit Lease'}
-        </DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-            <TextField
+        </Dialog.Title>
+        <Dialog.Content>
+          <div className={styles.formGrid}>
+            <Select
               label="Property"
-              select
               value={formData.propertyId}
-              onChange={(e) => handleFormChange('propertyId', e.target.value)}
+              onChange={(value) => handleFormChange('propertyId', value)}
+              options={propertyOptions}
               error={!!formErrors.propertyId}
               helperText={formErrors.propertyId}
-              required
+              placeholder="Select a property"
               fullWidth
-            >
-              {properties.map((property) => (
-                <MenuItem key={property.id} value={property.id}>
-                  {property.name} - {property.street}, {property.city}
-                </MenuItem>
-              ))}
-            </TextField>
-            <TextField
+              name="propertyId"
+            />
+            <Select
               label="Tenant"
-              select
               value={formData.tenantId}
-              onChange={(e) => handleFormChange('tenantId', e.target.value)}
+              onChange={(value) => handleFormChange('tenantId', value)}
+              options={tenantOptions}
               error={!!formErrors.tenantId}
               helperText={formErrors.tenantId}
-              required
+              placeholder="Select a tenant"
               fullWidth
-            >
-              {tenants.map((tenant) => (
-                <MenuItem key={tenant.id} value={tenant.id}>
-                  {tenant.firstName} {tenant.lastName} - {tenant.email}
-                </MenuItem>
-              ))}
-            </TextField>
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-              <TextField
+              name="tenantId"
+            />
+            <div className={styles.formRow}>
+              <DatePicker
                 label="Start Date"
-                type="date"
-                value={formData.startDate}
-                onChange={(e) => handleFormChange('startDate', e.target.value)}
+                value={parseDate(formData.startDate)}
+                onChange={(date) => handleFormChange('startDate', toDateString(date))}
                 error={!!formErrors.startDate}
                 helperText={formErrors.startDate}
-                InputLabelProps={{ shrink: true }}
-                required
+                dateFormat="dd/MM/yyyy"
+                placeholderText="Select start date"
               />
-              <TextField
+              <DatePicker
                 label="End Date"
-                type="date"
-                value={formData.endDate}
-                onChange={(e) => handleFormChange('endDate', e.target.value)}
+                value={parseDate(formData.endDate)}
+                onChange={(date) => handleFormChange('endDate', toDateString(date))}
                 error={!!formErrors.endDate}
                 helperText={formErrors.endDate || 'Leave empty for ongoing lease'}
-                InputLabelProps={{ shrink: true }}
+                dateFormat="dd/MM/yyyy"
+                placeholderText="Select end date"
               />
-            </Box>
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+            </div>
+            <div className={styles.formRow}>
               <TextField
                 label="Monthly Rent"
                 type="number"
                 value={formData.monthlyRent}
-                onChange={(e) => handleFormChange('monthlyRent', e.target.value)}
+                onChange={(e) => handleFormChange('monthlyRent', (e.target as HTMLInputElement).value)}
                 error={!!formErrors.monthlyRent}
                 helperText={formErrors.monthlyRent}
-                inputProps={{ min: 0, step: 0.01 }}
-                InputProps={{
-                  startAdornment: <InputAdornment position="start">£</InputAdornment>,
-                }}
-                required
+                startAdornment={<span>£</span>}
               />
               <TextField
                 label="Security Deposit"
                 type="number"
                 value={formData.securityDepositAmount}
-                onChange={(e) => handleFormChange('securityDepositAmount', e.target.value)}
+                onChange={(e) => handleFormChange('securityDepositAmount', (e.target as HTMLInputElement).value)}
                 error={!!formErrors.securityDepositAmount}
                 helperText={formErrors.securityDepositAmount}
-                inputProps={{ min: 0, step: 0.01 }}
-                InputProps={{
-                  startAdornment: <InputAdornment position="start">£</InputAdornment>,
-                }}
-                required
+                startAdornment={<span>£</span>}
               />
-            </Box>
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-              <TextField
+            </div>
+            <div className={styles.formRow}>
+              <DatePicker
                 label="Security Deposit Paid Date"
-                type="date"
-                value={formData.securityDepositPaidDate}
-                onChange={(e) => handleFormChange('securityDepositPaidDate', e.target.value)}
-                InputLabelProps={{ shrink: true }}
+                value={parseDate(formData.securityDepositPaidDate)}
+                onChange={(date) => handleFormChange('securityDepositPaidDate', toDateString(date))}
+                dateFormat="dd/MM/yyyy"
+                placeholderText="Select date"
               />
-              <TextField
+              <Select
                 label="Status"
-                select
                 value={formData.status}
-                onChange={(e) => handleFormChange('status', e.target.value)}
-                required
-              >
-                {LEASE_STATUSES.map((status) => (
-                  <MenuItem key={status} value={status}>
-                    {status}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Box>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog} color="inherit">
+                onChange={(value) => handleFormChange('status', value)}
+                options={statusOptions}
+                fullWidth
+                name="status"
+              />
+            </div>
+          </div>
+        </Dialog.Content>
+        <Dialog.Actions>
+          <Button variant="text" onClick={handleCloseDialog}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit} variant="contained" color="primary">
+          <Button variant="primary" onClick={handleSubmit}>
             {dialogMode === 'create' ? 'Create' : 'Save'}
           </Button>
-        </DialogActions>
+        </Dialog.Actions>
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
-      <ConfirmDialog
+      <Dialog
         open={deleteDialogOpen}
-        title="Terminate Lease"
-        message={`Are you sure you want to terminate the lease for ${getDeleteLeaseDescription()}? This will set the lease status to 'Terminated'.`}
-        onConfirm={handleDeleteConfirm}
-        onCancel={handleDeleteCancel}
-        loading={deleteLoading}
-      />
+        onClose={deleteLoading ? () => {} : handleDeleteCancel}
+        size="small"
+      >
+        <Dialog.Title>
+          <span className={styles.titleRow}>
+            <AlertTriangle size={20} className={styles.warningIcon} />
+            Terminate Lease
+          </span>
+        </Dialog.Title>
+        <Dialog.Content>
+          <p className={styles.deleteDialogMessage}>
+            Are you sure you want to terminate the lease for {getDeleteLeaseDescription()}? This will set the lease status to &apos;Terminated&apos;.
+          </p>
+        </Dialog.Content>
+        <Dialog.Actions>
+          <Button variant="text" onClick={handleDeleteCancel} disabled={deleteLoading}>
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            className={styles.confirmDanger}
+            onClick={handleDeleteConfirm}
+            disabled={deleteLoading}
+            loading={deleteLoading}
+          >
+            {deleteLoading ? 'Processing...' : 'Confirm'}
+          </Button>
+        </Dialog.Actions>
+      </Dialog>
     </Container>
   );
 };
