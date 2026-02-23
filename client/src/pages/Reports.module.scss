@@ -1,0 +1,398 @@
+@use '../styles/variables' as *;
+@use '../styles/mixins' as *;
+
+// ---------------------------------------------------------------------------
+// Layout
+// ---------------------------------------------------------------------------
+
+.page {
+  margin-bottom: $spacing-8;
+}
+
+// ---------------------------------------------------------------------------
+// Page Header
+// ---------------------------------------------------------------------------
+
+.pageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-6;
+  gap: $spacing-4;
+  flex-wrap: wrap;
+}
+
+.pageTitle {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+}
+
+.pageTitleIcon {
+  color: $color-text-primary;
+  flex-shrink: 0;
+}
+
+.pageTitleText {
+  font-size: $font-size-h4;
+  font-weight: $font-weight-regular;
+  line-height: $line-height-h4;
+  letter-spacing: $letter-spacing-h4;
+  color: $color-text-primary;
+  margin: 0;
+}
+
+.exportSelect {
+  min-width: 200px;
+}
+
+// ---------------------------------------------------------------------------
+// Error Alert
+// ---------------------------------------------------------------------------
+
+.alert {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  width: 100%;
+  padding: $spacing-3 $spacing-4;
+  border-radius: $radius-sm;
+  font-size: $font-size-body2;
+  line-height: $line-height-body2;
+  margin-bottom: $spacing-4;
+}
+
+.alertError {
+  background-color: rgba($color-error, 0.1);
+  color: darken($color-error, 5%);
+}
+
+.alertInfo {
+  background-color: rgba($color-info, 0.1);
+  color: darken($color-info, 5%);
+}
+
+.alertCloseButton {
+  margin-left: auto;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  padding: $spacing-1;
+  display: flex;
+  align-items: center;
+  border-radius: $radius-sm;
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.08);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Filters Section
+// ---------------------------------------------------------------------------
+
+.filtersCard {
+  margin-bottom: $spacing-6;
+}
+
+.filtersTitle {
+  font-size: $font-size-body2;
+  font-weight: $font-weight-medium;
+  line-height: $line-height-body2;
+  color: $color-text-primary;
+  margin: 0 0 $spacing-4;
+}
+
+.filtersStack {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+}
+
+.filterRow {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+
+  @include respond-to(md) {
+    flex-direction: row;
+  }
+}
+
+.filterField {
+  flex: 1;
+  min-width: 0;
+}
+
+.datePresets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-2;
+
+  @include respond-down(md) {
+    flex-direction: column;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Loading State
+// ---------------------------------------------------------------------------
+
+.loadingWrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
+
+.loadingSmall {
+  display: flex;
+  justify-content: center;
+  padding: $spacing-8 0;
+}
+
+// ---------------------------------------------------------------------------
+// Stats Grid
+// ---------------------------------------------------------------------------
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: $spacing-6;
+  margin-bottom: $spacing-6;
+
+  @include respond-to(sm) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @include respond-to(md) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Section Cards (Paper replacement)
+// ---------------------------------------------------------------------------
+
+.sectionCard {
+  margin-bottom: $spacing-6;
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-4;
+}
+
+.sectionTitle {
+  font-size: $font-size-h6;
+  font-weight: $font-weight-medium;
+  line-height: $line-height-h6;
+  letter-spacing: $letter-spacing-h6;
+  color: $color-text-primary;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+}
+
+.sectionTitleNoMargin {
+  margin-bottom: 0;
+}
+
+// ---------------------------------------------------------------------------
+// Owner P&L Report
+// ---------------------------------------------------------------------------
+
+.ownerHeader {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  margin-bottom: $spacing-4;
+}
+
+.ownerIcon {
+  color: $color-text-primary;
+  flex-shrink: 0;
+}
+
+.chipInline {
+  margin-left: $spacing-2;
+}
+
+.propertyCard {
+  border: 1px solid $color-divider;
+  border-radius: $radius-sm;
+  padding: $spacing-4;
+  margin-bottom: $spacing-4;
+}
+
+.propertyHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-2;
+}
+
+.propertyName {
+  font-size: $font-size-body1;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  margin: 0;
+}
+
+.propertyAddress {
+  font-size: $font-size-body2;
+  line-height: $line-height-body2;
+  color: $color-text-secondary;
+  margin: 0 0 $spacing-4;
+}
+
+// ---------------------------------------------------------------------------
+// Table Section Headers (colSpan rows)
+// ---------------------------------------------------------------------------
+
+.sectionHeaderRow {
+  font-weight: $font-weight-bold;
+  padding: $spacing-1 $spacing-4;
+}
+
+.sectionHeaderIncome {
+  background-color: rgba($color-success, 0.15);
+}
+
+.sectionHeaderExpense {
+  background-color: rgba($color-error, 0.15);
+}
+
+.totalRow {
+  background-color: $color-background;
+}
+
+.netRow {
+  background-color: rgba($color-primary, 0.1);
+}
+
+.boldCell {
+  font-weight: $font-weight-bold;
+}
+
+.italicText {
+  font-style: italic;
+  color: $color-text-secondary;
+}
+
+// ---------------------------------------------------------------------------
+// Value Colors
+// ---------------------------------------------------------------------------
+
+.textSuccess {
+  color: $color-success;
+}
+
+.textError {
+  color: $color-error;
+}
+
+.textSuccessDark {
+  color: darken($color-success, 10%);
+}
+
+.textErrorDark {
+  color: darken($color-error, 10%);
+}
+
+// ---------------------------------------------------------------------------
+// Empty State
+// ---------------------------------------------------------------------------
+
+.emptyText {
+  font-size: $font-size-body2;
+  line-height: $line-height-body2;
+  color: $color-text-secondary;
+  padding: $spacing-8 0;
+  text-align: center;
+  margin: 0;
+}
+
+// ---------------------------------------------------------------------------
+// Charts Grid
+// ---------------------------------------------------------------------------
+
+.chartsGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: $spacing-6;
+
+  @include respond-to(md) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.chartSection {
+  min-width: 0;
+}
+
+.chartTitle {
+  font-size: $font-size-body2;
+  font-weight: $font-weight-medium;
+  line-height: $line-height-body2;
+  color: $color-text-primary;
+  text-align: center;
+  margin: 0 0 $spacing-2;
+}
+
+// ---------------------------------------------------------------------------
+// P&L Table
+// ---------------------------------------------------------------------------
+
+.plTableContainer {
+  max-height: 600px;
+  overflow-x: auto;
+  overflow-y: auto;
+}
+
+.plTableCategoryCell {
+  min-width: 150px;
+}
+
+.plTableMonthCell {
+  min-width: 100px;
+}
+
+// ---------------------------------------------------------------------------
+// Balance Summary
+// ---------------------------------------------------------------------------
+
+.balanceSummary {
+  margin-top: $spacing-4;
+}
+
+.balanceSummaryTitle {
+  font-size: $font-size-body2;
+  font-weight: $font-weight-medium;
+  line-height: $line-height-body2;
+  color: $color-text-primary;
+  margin: 0 0 $spacing-2;
+}
+
+.balanceRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: $spacing-1 0;
+}
+
+.balanceLabel {
+  font-size: $font-size-body2;
+  line-height: $line-height-body2;
+  color: $color-text-primary;
+}
+
+.balanceAmount {
+  font-size: $font-size-body2;
+  line-height: $line-height-body2;
+  font-weight: $font-weight-bold;
+}
