@@ -2,20 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  Box,
-  Container,
-  TextField,
-  Button,
-  Typography,
-  Paper,
-  Alert,
-  CircularProgress,
-} from '@mui/material';
+import { Info, AlertCircle } from 'lucide-react';
+import { Card } from '../components/primitives/Card';
+import { TextField } from '../components/primitives/TextField';
+import { Button } from '../components/primitives/Button';
+import { Spinner } from '../components/primitives/Spinner';
 import { useAuth } from '../contexts/AuthContext';
 import { LoginFormSchema, LoginFormData } from '../../../shared/validation/auth.validation';
 import { authService } from '../services/api/auth.service';
 import { ApiError } from '../types/api.types';
+import styles from './Login.module.scss';
 
 export const Login: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
@@ -93,64 +89,41 @@ export const Login: React.FC = () => {
   // Loading state while checking setup
   if (setupRequired === null) {
     return (
-      <Container component="main" maxWidth="xs">
-        <Box
-          sx={{
-            marginTop: 8,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-          }}
-        >
-          <CircularProgress />
-        </Box>
-      </Container>
+      <div className={styles.page}>
+        <div className={styles.spinnerWrapper}>
+          <Spinner />
+        </div>
+      </div>
     );
   }
 
   return (
-    <Container component="main" maxWidth="xs">
-      <Box
-        sx={{
-          marginTop: 8,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
-        <Paper
-          elevation={3}
-          sx={{
-            padding: 4,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            width: '100%',
-          }}
-        >
-          <Typography component="h1" variant="h5" sx={{ mb: 3 }}>
-            Landlord Management System
-          </Typography>
-          <Typography component="h2" variant="h6" sx={{ mb: 3 }}>
-            {setupRequired ? 'Create Admin Account' : 'Sign In'}
-          </Typography>
-          {setupRequired && (
-            <Alert severity="info" sx={{ width: '100%', mb: 2 }}>
+    <div className={styles.page}>
+      <Card className={styles.card}>
+        <h1 className={styles.title}>Landlord Management System</h1>
+        <h2 className={styles.subtitle}>
+          {setupRequired ? 'Create Admin Account' : 'Sign In'}
+        </h2>
+        {setupRequired && (
+          <div className={`${styles.alert} ${styles.alertInfo}`}>
+            <Info size={20} className={styles.alertIcon} />
+            <span className={styles.alertText}>
               No users exist. Create the first admin account to get started.
-            </Alert>
-          )}
-          {error && (
-            <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
-              {error}
-            </Alert>
-          )}
-          <Box
-            component="form"
-            onSubmit={handleSubmit(setupRequired ? onSetupSubmit : onSubmit)}
-            sx={{ width: '100%' }}
-          >
+            </span>
+          </div>
+        )}
+        {error && (
+          <div className={`${styles.alert} ${styles.alertError}`}>
+            <AlertCircle size={20} className={styles.alertIcon} />
+            <span className={styles.alertText}>{error}</span>
+          </div>
+        )}
+        <form
+          className={styles.form}
+          onSubmit={handleSubmit(setupRequired ? onSetupSubmit : onSubmit)}
+        >
+          <div className={styles.field}>
             <TextField
-              margin="normal"
               fullWidth
               id="email"
               label="Email Address"
@@ -161,8 +134,9 @@ export const Login: React.FC = () => {
               disabled={isSubmitting}
               {...register('email')}
             />
+          </div>
+          <div className={styles.field}>
             <TextField
-              margin="normal"
               fullWidth
               label="Password"
               type="password"
@@ -176,24 +150,25 @@ export const Login: React.FC = () => {
               disabled={isSubmitting}
               {...register('password')}
             />
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              sx={{ mt: 3, mb: 2 }}
-              disabled={isSubmitting}
-            >
-              {isSubmitting
-                ? setupRequired
-                  ? 'Creating Admin...'
-                  : 'Signing in...'
-                : setupRequired
-                  ? 'Create Admin & Continue'
-                  : 'Sign In'}
-            </Button>
-          </Box>
-        </Paper>
-      </Box>
-    </Container>
+          </div>
+          <Button
+            type="submit"
+            fullWidth
+            variant="primary"
+            className={styles.submitButton}
+            disabled={isSubmitting}
+            loading={isSubmitting}
+          >
+            {isSubmitting
+              ? setupRequired
+                ? 'Creating Admin...'
+                : 'Signing in...'
+              : setupRequired
+                ? 'Create Admin & Continue'
+                : 'Sign In'}
+          </Button>
+        </form>
+      </Card>
+    </div>
   );
 };
