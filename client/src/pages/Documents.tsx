@@ -1,35 +1,22 @@
-import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import {
-  Container,
-  Typography,
-  Box,
-  Button,
-  TextField,
-  MenuItem,
-  CircularProgress,
-  Alert,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  useMediaQuery,
-  useTheme,
-  Stack,
-  Card,
-  CardContent,
-  Chip,
-  IconButton,
-  Tooltip,
-} from '@mui/material';
-import {
-  Add as AddIcon,
-  Download as DownloadIcon,
-  Delete as DeleteIcon,
-  Description as DescriptionIcon,
+  FileText,
   Image as ImageIcon,
-  PictureAsPdf as PdfIcon,
-  InsertDriveFile as FileIcon,
-} from '@mui/icons-material';
+  File as FileIcon,
+  Download,
+  Trash2,
+  Plus,
+  AlertTriangle,
+} from 'lucide-react';
+import { Container } from '../components/primitives/Container';
+import { Button } from '../components/primitives/Button';
+import { Select } from '../components/primitives/Select';
+import { Card } from '../components/primitives/Card';
+import { Chip } from '../components/primitives/Chip';
+import { Dialog } from '../components/primitives/Dialog';
+import { Spinner } from '../components/primitives/Spinner';
+import { FileUpload } from '../components/primitives/FileUpload';
+import { Tooltip } from '../components/primitives/Tooltip';
 import { documentsService } from '../services/api/documents.service';
 import { propertiesService } from '../services/api/properties.service';
 import { tenantsService } from '../services/api/tenants.service';
@@ -43,9 +30,9 @@ import type {
   Transaction,
 } from '../types/api.types';
 import { ApiError } from '../types/api.types';
-import ConfirmDialog from '../components/shared/ConfirmDialog';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
+import styles from './Documents.module.scss';
 
 type EntityType = 'Property' | 'Tenant' | 'Lease' | 'Transaction';
 
@@ -57,12 +44,12 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 const getEntityTypeColor = (
   entityType: EntityType
-): 'primary' | 'secondary' | 'success' | 'warning' => {
+): 'primary' | 'default' | 'success' | 'warning' => {
   switch (entityType) {
     case 'Property':
       return 'primary';
     case 'Tenant':
-      return 'secondary';
+      return 'default';
     case 'Lease':
       return 'success';
     case 'Transaction':
@@ -74,12 +61,12 @@ const getEntityTypeColor = (
 
 const getFileIcon = (fileType: string) => {
   if (fileType === 'application/pdf') {
-    return <PdfIcon color="error" />;
+    return <FileText size={24} className={styles.fileIconPdf} />;
   }
   if (fileType.startsWith('image/')) {
-    return <ImageIcon color="primary" />;
+    return <ImageIcon size={24} className={styles.fileIconImage} />;
   }
-  return <FileIcon color="action" />;
+  return <FileIcon size={24} className={styles.fileIconGeneric} />;
 };
 
 const formatFileSize = (bytes: number): string => {
@@ -103,9 +90,6 @@ const formatDate = (dateString: string): string => {
 export const Documents: React.FC = () => {
   const toast = useToast();
   const { canWrite } = useAuth();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Data states
   const [loading, setLoading] = useState(true);
@@ -122,7 +106,7 @@ export const Documents: React.FC = () => {
 
   // Upload dialog states
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadFiles, setUploadFiles] = useState<File[]>([]);
   const [selectedEntityType, setSelectedEntityType] = useState<EntityType | ''>('');
   const [selectedEntityId, setSelectedEntityId] = useState<string>('');
   const [uploadLoading, setUploadLoading] = useState(false);
@@ -257,41 +241,36 @@ export const Documents: React.FC = () => {
 
   // Upload dialog handlers
   const handleOpenUploadDialog = () => {
-    setSelectedFile(null);
+    setUploadFiles([]);
     setSelectedEntityType('');
     setSelectedEntityId('');
     setUploadErrors({});
     setUploadDialogOpen(true);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
   };
 
   const handleCloseUploadDialog = () => {
     setUploadDialogOpen(false);
-    setSelectedFile(null);
+    setUploadFiles([]);
     setSelectedEntityType('');
     setSelectedEntityId('');
     setUploadErrors({});
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-      // Clear file error if there was one
-      if (uploadErrors.file) {
-        setUploadErrors((prev) => {
-          const newErrors = { ...prev };
-          delete newErrors.file;
-          return newErrors;
-        });
-      }
+  const handleFilesChange = (files: File[]) => {
+    setUploadFiles(files);
+    // Clear file error if there was one
+    if (uploadErrors.file) {
+      setUploadErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors.file;
+        return newErrors;
+      });
     }
   };
 
   const validateUploadForm = (): boolean => {
     const errors: Record<string, string> = {};
+    const selectedFile = uploadFiles[0] || null;
 
     if (!selectedFile) {
       errors.file = 'Please select a file to upload';
@@ -323,6 +302,7 @@ export const Documents: React.FC = () => {
   };
 
   const handleUpload = async () => {
+    const selectedFile = uploadFiles[0] || null;
     if (!validateUploadForm() || !selectedFile || !selectedEntityType) {
       return;
     }
@@ -417,12 +397,34 @@ export const Documents: React.FC = () => {
     setSelectedEntityId('');
   }, [selectedEntityType]);
 
+  // Build Select options for filters
+  const entityTypeFilterOptions = [
+    { value: 'all', label: 'All Entity Types' },
+    ...ENTITY_TYPES.map((type) => ({ value: type, label: type })),
+  ];
+
+  const entityIdFilterOptions = [
+    { value: 'all', label: 'All Entities' },
+    ...filteredEntityOptions.map((opt) => ({ value: opt.id, label: opt.label })),
+  ];
+
+  // Build Select options for upload dialog
+  const uploadEntityTypeOptions = ENTITY_TYPES.map((type) => ({
+    value: type,
+    label: type,
+  }));
+
+  const uploadEntityIdOptions = uploadEntityOptions.map((opt) => ({
+    value: opt.id,
+    label: opt.label,
+  }));
+
   if (loading && documents.length === 0) {
     return (
       <Container maxWidth="lg">
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
-          <CircularProgress />
-        </Box>
+        <div className={styles.loadingWrapper}>
+          <Spinner />
+        </div>
       </Container>
     );
   }
@@ -430,281 +432,230 @@ export const Documents: React.FC = () => {
   if (error && documents.length === 0) {
     return (
       <Container maxWidth="lg">
-        <Box sx={{ mb: 4 }}>
-          <Typography variant="h4" component="h1" gutterBottom>
-            Documents
-          </Typography>
-          <Alert severity="error">{error}</Alert>
-        </Box>
+        <div className={styles.page}>
+          <h1 className={styles.title}>Documents</h1>
+          <div className={styles.alert}>{error}</div>
+        </div>
       </Container>
     );
   }
 
   return (
     <Container maxWidth="lg">
-      <Box sx={{ mb: 4 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Typography variant="h4" component="h1">
-            Documents
-          </Typography>
+      <div className={styles.page}>
+        <div className={styles.header}>
+          <h1 className={styles.title}>Documents</h1>
           {canWrite() && (
             <Button
-              variant="contained"
-              color="primary"
-              startIcon={<AddIcon />}
+              variant="primary"
+              startIcon={<Plus size={18} />}
               onClick={handleOpenUploadDialog}
             >
               Upload Document
             </Button>
           )}
-        </Box>
+        </div>
 
         {/* Filters */}
-        <Box sx={{ mb: 3 }}>
-          <Stack direction={isMobile ? 'column' : 'row'} spacing={2}>
-            <TextField
-              select
-              fullWidth
-              size="small"
-              label="Entity Type"
-              value={entityTypeFilter}
-              onChange={(e) => setEntityTypeFilter(e.target.value)}
-            >
-              <MenuItem value="all">All Entity Types</MenuItem>
-              {ENTITY_TYPES.map((type) => (
-                <MenuItem key={type} value={type}>
-                  {type}
-                </MenuItem>
-              ))}
-            </TextField>
-            <TextField
-              select
-              fullWidth
-              size="small"
-              label="Entity"
-              value={entityIdFilter}
-              onChange={(e) => setEntityIdFilter(e.target.value)}
-              disabled={entityTypeFilter === 'all'}
-            >
-              <MenuItem value="all">All Entities</MenuItem>
-              {filteredEntityOptions.map((option) => (
-                <MenuItem key={option.id} value={option.id}>
-                  {option.label}
-                </MenuItem>
-              ))}
-            </TextField>
-          </Stack>
-        </Box>
+        <div className={styles.filters}>
+          <Select
+            label="Entity Type"
+            value={entityTypeFilter}
+            onChange={(value) => setEntityTypeFilter(value)}
+            options={entityTypeFilterOptions}
+            size="small"
+            fullWidth
+          />
+          <Select
+            label="Entity"
+            value={entityIdFilter}
+            onChange={(value) => setEntityIdFilter(value)}
+            options={entityIdFilterOptions}
+            disabled={entityTypeFilter === 'all'}
+            size="small"
+            fullWidth
+          />
+        </div>
 
         {/* Documents Grid */}
         {documents.length === 0 ? (
-          <Box sx={{ textAlign: 'center', py: 8 }}>
-            <DescriptionIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
-            <Typography variant="h6" color="text.secondary" gutterBottom>
-              No documents found
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          <div className={styles.emptyState}>
+            <FileText size={64} className={styles.emptyIcon} />
+            <h2 className={styles.emptyTitle}>No documents found</h2>
+            <p className={styles.emptyDescription}>
               Upload your first document to get started
-            </Typography>
+            </p>
             {canWrite() && (
               <Button
-                variant="outlined"
-                startIcon={<AddIcon />}
+                variant="secondary"
+                startIcon={<Plus size={18} />}
                 onClick={handleOpenUploadDialog}
               >
                 Upload First Document
               </Button>
             )}
-          </Box>
+          </div>
         ) : (
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: {
-                xs: '1fr',
-                sm: 'repeat(2, 1fr)',
-                md: 'repeat(3, 1fr)',
-              },
-              gap: 3,
-            }}
-          >
+          <div className={styles.documentsGrid}>
             {documents.map((doc) => (
-              <Card
-                key={doc.id}
-                sx={{
-                  position: 'relative',
-                  '&:hover': {
-                    boxShadow: 4,
-                  },
-                }}
-              >
-                <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, mb: 2 }}>
-                    <Box sx={{ flexShrink: 0 }}>{getFileIcon(doc.fileType)}</Box>
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography
-                        variant="subtitle1"
-                        component="div"
-                        noWrap
-                        title={doc.fileName}
-                        sx={{ fontWeight: 500 }}
-                      >
+              <Card key={doc.id} className={styles.documentCard}>
+                <Card.Content>
+                  <div className={styles.cardBody}>
+                    <div className={styles.fileIcon}>{getFileIcon(doc.fileType)}</div>
+                    <div className={styles.fileInfo}>
+                      <span className={styles.fileName} title={doc.fileName}>
                         {doc.fileName}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
+                      </span>
+                      <span className={styles.fileSize}>
                         {formatFileSize(doc.fileSize)}
-                      </Typography>
-                    </Box>
-                  </Box>
+                      </span>
+                    </div>
+                  </div>
 
-                  <Box sx={{ mb: 2 }}>
-                    <Chip
-                      label={doc.entityType}
-                      color={getEntityTypeColor(doc.entityType)}
-                      size="small"
-                      sx={{ mb: 1 }}
-                    />
-                    <Typography variant="body2" color="text.secondary" noWrap title={getEntityName(doc.entityType, doc.entityId)}>
-                      {getEntityName(doc.entityType, doc.entityId)}
-                    </Typography>
-                  </Box>
-
-                  <Typography variant="caption" color="text.secondary">
-                    Uploaded: {formatDate(doc.uploadedAt)}
-                  </Typography>
-
-                  <Box sx={{ position: 'absolute', top: 8, right: 8, display: 'flex', gap: 0.5 }}>
-                    <Tooltip title="Download">
-                      <IconButton
+                  <div className={styles.entitySection}>
+                    <div className={styles.entityChip}>
+                      <Chip
+                        label={doc.entityType}
+                        color={getEntityTypeColor(doc.entityType)}
                         size="small"
-                        color="primary"
+                      />
+                    </div>
+                    <span
+                      className={styles.entityName}
+                      title={getEntityName(doc.entityType, doc.entityId)}
+                    >
+                      {getEntityName(doc.entityType, doc.entityId)}
+                    </span>
+                  </div>
+
+                  <span className={styles.uploadDate}>
+                    Uploaded: {formatDate(doc.uploadedAt)}
+                  </span>
+
+                  <div className={styles.cardActions}>
+                    <Tooltip content="Download">
+                      <button
+                        className={`${styles.actionButton} ${styles.downloadButton}`}
                         onClick={() => handleDownload(doc)}
                         aria-label="Download document"
+                        type="button"
                       >
-                        <DownloadIcon fontSize="small" />
-                      </IconButton>
+                        <Download size={18} />
+                      </button>
                     </Tooltip>
                     {canWrite() && (
-                      <Tooltip title="Delete">
-                        <IconButton
-                          size="small"
-                          color="error"
+                      <Tooltip content="Delete">
+                        <button
+                          className={`${styles.actionButton} ${styles.deleteButton}`}
                           onClick={(e) => handleDeleteClick(doc, e)}
                           aria-label="Delete document"
+                          type="button"
                         >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
+                          <Trash2 size={18} />
+                        </button>
                       </Tooltip>
                     )}
-                  </Box>
-                </CardContent>
+                  </div>
+                </Card.Content>
               </Card>
             ))}
-          </Box>
+          </div>
         )}
-      </Box>
+      </div>
 
       {/* Upload Dialog */}
-      <Dialog open={uploadDialogOpen} onClose={handleCloseUploadDialog} maxWidth="sm" fullWidth>
-        <DialogTitle>Upload Document</DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-            <TextField
-              select
+      <Dialog open={uploadDialogOpen} onClose={handleCloseUploadDialog} size="medium">
+        <Dialog.Title>Upload Document</Dialog.Title>
+        <Dialog.Content>
+          <div className={styles.uploadForm}>
+            <Select
               label="Entity Type"
+              placeholder="Select entity type"
               value={selectedEntityType}
-              onChange={(e) => setSelectedEntityType(e.target.value as EntityType | '')}
+              onChange={(value) => setSelectedEntityType(value as EntityType | '')}
+              options={uploadEntityTypeOptions}
               error={!!uploadErrors.entityType}
               helperText={uploadErrors.entityType}
-              required
               fullWidth
-            >
-              <MenuItem value="" disabled>
-                Select entity type
-              </MenuItem>
-              {ENTITY_TYPES.map((type) => (
-                <MenuItem key={type} value={type}>
-                  {type}
-                </MenuItem>
-              ))}
-            </TextField>
+              name="upload-entity-type"
+            />
 
-            <TextField
-              select
+            <Select
               label="Entity"
+              placeholder="Select entity"
               value={selectedEntityId}
-              onChange={(e) => setSelectedEntityId(e.target.value)}
+              onChange={(value) => setSelectedEntityId(value)}
+              options={uploadEntityIdOptions}
               error={!!uploadErrors.entityId}
               helperText={uploadErrors.entityId}
-              required
-              fullWidth
               disabled={!selectedEntityType}
-            >
-              <MenuItem value="" disabled>
-                Select entity
-              </MenuItem>
-              {uploadEntityOptions.map((option) => (
-                <MenuItem key={option.id} value={option.id}>
-                  {option.label}
-                </MenuItem>
-              ))}
-            </TextField>
+              fullWidth
+              name="upload-entity-id"
+            />
 
-            <Box>
-              <input
-                ref={fileInputRef}
-                type="file"
+            <div>
+              <FileUpload
                 accept=".pdf,.jpg,.jpeg,.png"
-                onChange={handleFileChange}
-                style={{ display: 'none' }}
-                id="document-file-input"
+                onFilesChange={handleFilesChange}
+                maxSize={MAX_FILE_SIZE}
+                disabled={uploadLoading}
               />
-              <label htmlFor="document-file-input">
-                <Button
-                  variant="outlined"
-                  component="span"
-                  fullWidth
-                  sx={{ py: 2 }}
-                >
-                  {selectedFile ? selectedFile.name : 'Choose File'}
-                </Button>
-              </label>
               {uploadErrors.file && (
-                <Typography variant="caption" color="error" sx={{ mt: 0.5, display: 'block' }}>
-                  {uploadErrors.file}
-                </Typography>
+                <span className={styles.fileInputError}>{uploadErrors.file}</span>
               )}
-              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+              <span className={styles.fileInputHint}>
                 Allowed formats: PDF, JPG, PNG (max 10MB)
-              </Typography>
-            </Box>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseUploadDialog} color="inherit" disabled={uploadLoading}>
+              </span>
+            </div>
+          </div>
+        </Dialog.Content>
+        <Dialog.Actions>
+          <Button variant="text" onClick={handleCloseUploadDialog} disabled={uploadLoading}>
             Cancel
           </Button>
           <Button
+            variant="primary"
             onClick={handleUpload}
-            variant="contained"
-            color="primary"
             disabled={uploadLoading}
-            startIcon={uploadLoading ? <CircularProgress size={16} /> : undefined}
+            loading={uploadLoading}
           >
             {uploadLoading ? 'Uploading...' : 'Upload'}
           </Button>
-        </DialogActions>
+        </Dialog.Actions>
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
-      <ConfirmDialog
+      <Dialog
         open={deleteDialogOpen}
-        title="Delete Document"
-        message={`Are you sure you want to delete "${documentToDelete?.fileName}"? This action cannot be undone.`}
-        onConfirm={handleDeleteConfirm}
-        onCancel={handleDeleteCancel}
-        loading={deleteLoading}
-      />
+        onClose={deleteLoading ? () => {} : handleDeleteCancel}
+        size="small"
+      >
+        <Dialog.Title>
+          <span className={styles.deleteDialogTitle}>
+            <AlertTriangle size={20} className={styles.deleteIcon} />
+            Delete Document
+          </span>
+        </Dialog.Title>
+        <Dialog.Content>
+          <p className={styles.deleteMessage}>
+            Are you sure you want to delete &quot;{documentToDelete?.fileName}&quot;? This action
+            cannot be undone.
+          </p>
+        </Dialog.Content>
+        <Dialog.Actions>
+          <Button variant="text" onClick={handleDeleteCancel} disabled={deleteLoading}>
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            onClick={handleDeleteConfirm}
+            disabled={deleteLoading}
+            loading={deleteLoading}
+          >
+            {deleteLoading ? 'Processing...' : 'Confirm'}
+          </Button>
+        </Dialog.Actions>
+      </Dialog>
     </Container>
   );
 };
