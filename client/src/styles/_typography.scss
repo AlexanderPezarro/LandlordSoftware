@@ -1,0 +1,77 @@
+// =============================================================================
+// Typography - heading scale matching MUI defaults
+// =============================================================================
+
+@use 'variables' as *;
+
+h1 {
+  font-size: $font-size-h1;
+  font-weight: $font-weight-light;
+  line-height: $line-height-h1;
+  letter-spacing: $letter-spacing-h1;
+}
+
+h2 {
+  font-size: $font-size-h2;
+  font-weight: $font-weight-light;
+  line-height: $line-height-h2;
+  letter-spacing: $letter-spacing-h2;
+}
+
+h3 {
+  font-size: $font-size-h3;
+  font-weight: $font-weight-regular;
+  line-height: $line-height-h3;
+  letter-spacing: $letter-spacing-h3;
+}
+
+h4 {
+  font-size: $font-size-h4;
+  font-weight: $font-weight-regular;
+  line-height: $line-height-h4;
+  letter-spacing: $letter-spacing-h4;
+}
+
+h5 {
+  font-size: $font-size-h5;
+  font-weight: $font-weight-regular;
+  line-height: $line-height-h5;
+  letter-spacing: $letter-spacing-h5;
+}
+
+h6 {
+  font-size: $font-size-h6;
+  font-weight: $font-weight-medium;
+  line-height: $line-height-h6;
+  letter-spacing: $letter-spacing-h6;
+}
+
+// Body text utility classes
+.body1 {
+  font-size: $font-size-body1;
+  font-weight: $font-weight-regular;
+  line-height: $line-height-body1;
+  letter-spacing: $letter-spacing-body1;
+}
+
+.body2 {
+  font-size: $font-size-body2;
+  font-weight: $font-weight-regular;
+  line-height: $line-height-body2;
+  letter-spacing: $letter-spacing-body2;
+}
+
+.caption {
+  font-size: $font-size-caption;
+  font-weight: $font-weight-regular;
+  line-height: $line-height-caption;
+  letter-spacing: $letter-spacing-caption;
+}
+
+.overline {
+  font-size: $font-size-overline;
+  font-weight: $font-weight-regular;
+  line-height: $line-height-overline;
+  letter-spacing: $letter-spacing-overline;
+  text-transform: uppercase;
+}

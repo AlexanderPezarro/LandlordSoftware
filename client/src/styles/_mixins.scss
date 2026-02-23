@@ -1,0 +1,92 @@
+// =============================================================================
+// Mixins
+// =============================================================================
+
+@use 'variables' as *;
+
+// -----------------------------------------------------------------------------
+// Responsive: min-width (mobile-first)
+// Usage: @include respond-to(md) { ... }
+// -----------------------------------------------------------------------------
+
+@mixin respond-to($breakpoint) {
+  @if map-has-key($breakpoints, $breakpoint) {
+    @media (min-width: map-get($breakpoints, $breakpoint)) {
+      @content;
+    }
+  } @else {
+    @warn "Unknown breakpoint: #{$breakpoint}. Available: sm, md, lg, xl.";
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Responsive: max-width (desktop-first)
+// Usage: @include respond-down(md) { ... }
+// -----------------------------------------------------------------------------
+
+@mixin respond-down($breakpoint) {
+  @if map-has-key($breakpoints, $breakpoint) {
+    @media (max-width: (map-get($breakpoints, $breakpoint) - 0.02px)) {
+      @content;
+    }
+  } @else {
+    @warn "Unknown breakpoint: #{$breakpoint}. Available: sm, md, lg, xl.";
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Elevation (box-shadow)
+// Usage: @include elevation(2);
+// -----------------------------------------------------------------------------
+
+@mixin elevation($level) {
+  @if $level == 1 {
+    box-shadow: $shadow-1;
+  } @else if $level == 2 {
+    box-shadow: $shadow-2;
+  } @else if $level == 4 {
+    box-shadow: $shadow-4;
+  } @else if $level == 8 {
+    box-shadow: $shadow-8;
+  } @else {
+    @warn "Unknown elevation level: #{$level}. Available: 1, 2, 4, 8.";
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Truncate text with ellipsis
+// Usage: @include truncate;
+// -----------------------------------------------------------------------------
+
+@mixin truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// -----------------------------------------------------------------------------
+// Visually hidden (accessible screen-reader-only text)
+// Usage: @include visually-hidden;
+// -----------------------------------------------------------------------------
+
+@mixin visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+// -----------------------------------------------------------------------------
+// Focus ring (accessible keyboard focus indicator)
+// Usage: @include focus-ring;
+// -----------------------------------------------------------------------------
+
+@mixin focus-ring($color: $color-primary) {
+  outline: 2px solid $color;
+  outline-offset: 2px;
+}
