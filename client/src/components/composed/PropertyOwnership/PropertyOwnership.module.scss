@@ -1,0 +1,91 @@
+@use '../../../styles/variables' as *;
+
+// OwnershipSection
+.root {
+  display: flex;
+  flex-direction: column;
+}
+
+.heading {
+  font-size: $font-size-h6;
+  line-height: $line-height-h6;
+  letter-spacing: $letter-spacing-h6;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+  margin: 0 0 $spacing-2;
+}
+
+.description {
+  font-size: $font-size-body2;
+  line-height: $line-height-body2;
+  letter-spacing: $letter-spacing-body2;
+  color: $color-text-secondary;
+  margin: 0 0 $spacing-4;
+}
+
+.loadingText {
+  font-size: $font-size-body2;
+  line-height: $line-height-body2;
+  color: $color-text-secondary;
+  margin: 0;
+}
+
+.ownerList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+}
+
+.summary {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+}
+
+.totalText {
+  font-size: $font-size-body2;
+  line-height: $line-height-body2;
+  color: $color-text-secondary;
+}
+
+.errorAlert {
+  font-size: $font-size-body2;
+  line-height: $line-height-body2;
+  color: $color-error;
+  background-color: rgba($color-error, 0.08);
+  border: 1px solid rgba($color-error, 0.3);
+  border-radius: $radius-sm;
+  padding: $spacing-2 $spacing-3;
+}
+
+// OwnerInput
+.ownerRow {
+  display: flex;
+  gap: $spacing-4;
+  align-items: flex-start;
+}
+
+.ownerSelect {
+  flex: 1;
+  min-width: 0;
+}
+
+.percentageField {
+  width: 180px;
+  flex-shrink: 0;
+}
+
+.percentSymbol {
+  font-size: $font-size-body2;
+  color: $color-text-secondary;
+}
+
+.removeButton {
+  margin-top: $spacing-6;
+  color: $color-error;
+  flex-shrink: 0;
+
+  &:hover:not(:disabled) {
+    background-color: rgba($color-error, 0.08);
+  }
+}
