@@ -1,0 +1,131 @@
+@use '../../../styles/variables' as *;
+
+.button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  font-family: $font-family;
+  font-weight: $font-weight-medium;
+  text-transform: none;
+  cursor: pointer;
+  border: none;
+  border-radius: $radius-sm;
+  transition:
+    background-color $transition-duration $transition-easing,
+    box-shadow $transition-duration $transition-easing;
+
+  &:disabled {
+    opacity: 0.6;
+    pointer-events: none;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Variants
+// ---------------------------------------------------------------------------
+
+.primary {
+  background-color: $color-primary;
+  color: $color-primary-contrast;
+
+  &:hover:not(:disabled) {
+    background-color: $color-primary-dark;
+  }
+}
+
+.secondary {
+  background-color: transparent;
+  color: $color-primary;
+  border: 1px solid $color-primary;
+
+  &:hover:not(:disabled) {
+    background-color: rgba($color-primary, 0.08);
+  }
+}
+
+.text {
+  background-color: transparent;
+  color: $color-primary;
+  border: none;
+
+  &:hover:not(:disabled) {
+    background-color: rgba($color-primary, 0.08);
+  }
+}
+
+.icon {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  background-color: transparent;
+  color: $color-text-primary;
+  border: none;
+  border-radius: $radius-full;
+
+  &:hover:not(:disabled) {
+    background-color: rgba(0, 0, 0, 0.04);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Sizes (not applied to icon variant)
+// ---------------------------------------------------------------------------
+
+.small:not(.icon) {
+  padding: 4px 10px;
+  font-size: 13px;
+}
+
+.medium:not(.icon) {
+  padding: 6px 16px;
+  font-size: 14px;
+}
+
+.large:not(.icon) {
+  padding: 8px 22px;
+  font-size: 15px;
+}
+
+// ---------------------------------------------------------------------------
+// Full width
+// ---------------------------------------------------------------------------
+
+.fullWidth {
+  width: 100%;
+}
+
+// ---------------------------------------------------------------------------
+// Loading state
+// ---------------------------------------------------------------------------
+
+.loading .content {
+  visibility: hidden;
+}
+
+.spinnerWrapper {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// ---------------------------------------------------------------------------
+// Content & icons
+// ---------------------------------------------------------------------------
+
+.content {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-2;
+}
+
+.startIcon,
+.endIcon {
+  display: inline-flex;
+  align-items: center;
+  font-size: 18px;
+}
