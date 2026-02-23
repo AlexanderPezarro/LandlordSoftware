@@ -31,6 +31,8 @@ import {
   CalendarMonth as CalendarIcon,
   AccountBalance as AccountBalanceIcon,
   Description as DescriptionIcon,
+  Add as AddIcon,
+  MonetizationOn as MonetizationOnIcon,
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { format } from 'date-fns';
@@ -38,6 +40,10 @@ import { propertiesService } from '../services/api/properties.service';
 import { leasesService } from '../services/api/leases.service';
 import { transactionsService } from '../services/api/transactions.service';
 import { eventsService } from '../services/api/events.service';
+import { propertyOwnershipService } from '../services/api/propertyOwnership.service';
+import { settlementService } from '../services/api/settlement.service';
+import type { PropertyOwnership } from '../services/api/propertyOwnership.service';
+import type { Balance, Settlement } from '../services/api/settlement.service';
 import type {
   Property,
   Lease,
@@ -48,6 +54,10 @@ import type {
 import { ApiError } from '../types/api.types';
 import EventBadge from '../components/shared/EventBadge';
 import { useToast } from '../contexts/ToastContext';
+import { useAuth } from '../contexts/AuthContext';
+import { BalanceCard } from '../components/Settlement/BalanceCard';
+import { SettlementForm } from '../components/Settlement/SettlementForm';
+import { SettlementHistory } from '../components/Settlement/SettlementHistory';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -89,6 +99,7 @@ export const PropertyDetail: React.FC = () => {
   const navigate = useNavigate();
   const toast = useToast();
   const theme = useTheme();
+  const { user } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -97,6 +108,13 @@ export const PropertyDetail: React.FC = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
   const [tabValue, setTabValue] = useState(0);
+
+  // Settlement-related state
+  const [balances, setBalances] = useState<Balance[]>([]);
+  const [settlements, setSettlements] = useState<Settlement[]>([]);
+  const [owners, setOwners] = useState<PropertyOwnership[]>([]);
+  const [settlementLoading, setSettlementLoading] = useState(false);
+  const [settlementFormOpen, setSettlementFormOpen] = useState(false);
 
   // Edit dialog state
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -139,6 +157,36 @@ export const PropertyDetail: React.FC = () => {
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
+    // Load settlement data when Balances tab is selected
+    if (newValue === 4 && id) {
+      loadBalancesData();
+    }
+  };
+
+  const loadBalancesData = async () => {
+    if (!id) return;
+
+    setSettlementLoading(true);
+    try {
+      const [balancesData, settlementsData, ownersData] = await Promise.all([
+        settlementService.getPropertyBalances(id),
+        settlementService.getPropertySettlements(id),
+        propertyOwnershipService.listOwners(id),
+      ]);
+
+      setBalances(balancesData);
+      setSettlements(settlementsData);
+      setOwners(ownersData);
+    } catch (error) {
+      console.error('Failed to load balances:', error);
+      toast.error('Failed to load settlement data');
+    } finally {
+      setSettlementLoading(false);
+    }
+  };
+
+  const handleSettlementSuccess = () => {
+    loadBalancesData();
   };
 
   const handleBack = () => {
@@ -288,6 +336,7 @@ export const PropertyDetail: React.FC = () => {
             <Tab icon={<AccountBalanceIcon />} iconPosition="start" label={`Leases (${leases.length})`} {...a11yProps(1)} />
             <Tab icon={<AccountBalanceIcon />} iconPosition="start" label={`Transactions (${transactions.length})`} {...a11yProps(2)} />
             <Tab icon={<CalendarIcon />} iconPosition="start" label={`Events (${events.length})`} {...a11yProps(3)} />
+            <Tab icon={<MonetizationOnIcon />} iconPosition="start" label="Balances & Settlements" {...a11yProps(4)} />
           </Tabs>
         </Box>
 
@@ -469,6 +518,53 @@ export const PropertyDetail: React.FC = () => {
                 </TableBody>
               </Table>
             </TableContainer>
+          )}
+        </TabPanel>
+
+        <TabPanel value={tabValue} index={4}>
+          {settlementLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+              <CircularProgress />
+            </Box>
+          ) : (
+            <>
+              <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+                <Typography variant="h5">Balances & Settlements</Typography>
+                {owners.length > 1 && (
+                  <Button
+                    variant="contained"
+                    startIcon={<AddIcon />}
+                    onClick={() => setSettlementFormOpen(true)}
+                  >
+                    Record Settlement
+                  </Button>
+                )}
+              </Box>
+
+              {owners.length < 2 ? (
+                <Paper sx={{ p: 4, textAlign: 'center' }}>
+                  <Typography variant="body1" color="text.secondary">
+                    This property needs at least two owners to track balances and settlements.
+                  </Typography>
+                </Paper>
+              ) : (
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                  <BalanceCard balances={balances} currentUserId={user?.id} />
+                  <SettlementHistory settlements={settlements} />
+                </Box>
+              )}
+
+              {id && (
+                <SettlementForm
+                  open={settlementFormOpen}
+                  onClose={() => setSettlementFormOpen(false)}
+                  propertyId={id}
+                  owners={owners}
+                  balances={balances}
+                  onSuccess={handleSettlementSuccess}
+                />
+              )}
+            </>
           )}
         </TabPanel>
       </Box>

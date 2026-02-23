@@ -14,6 +14,12 @@ model User {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  propertyOwnerships PropertyOwnership[]
+  transactionSplits  TransactionSplit[]
+  paidTransactions   Transaction[]       @relation("PaidByUser")
+  settlementsFrom    Settlement[]        @relation("SettlementsFrom")
+  settlementsTo      Settlement[]        @relation("SettlementsTo")
+
   @@map("users")
 }
 
@@ -35,6 +41,8 @@ model Property {
   leases       Lease[]
   transactions Transaction[]
   events       Event[]
+  ownerships   PropertyOwnership[]
+  settlements  Settlement[]
 
   @@map("properties")
 }
@@ -86,6 +94,7 @@ model Transaction {
   amount            Float
   transactionDate   DateTime  @map("transaction_date")
   description       String
+  paidByUserId      String?   @map("paid_by_user_id")
   bankTransactionId String?   @unique @map("bank_transaction_id")
   isImported        Boolean   @default(false) @map("is_imported")
   importedAt        DateTime? @map("imported_at")
@@ -94,6 +103,8 @@ model Transaction {
 
   property        Property          @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   lease           Lease?            @relation(fields: [leaseId], references: [id], onDelete: SetNull)
+  paidBy          User?             @relation("PaidByUser", fields: [paidByUserId], references: [id], onDelete: SetNull)
+  splits          TransactionSplit[]
   bankTransaction BankTransaction?
 
   @@map("transactions")
@@ -127,6 +138,55 @@ model Document {
   uploadedAt DateTime @default(now()) @map("uploaded_at")
 
   @@map("documents")
+}
+
+model PropertyOwnership {
+  id                  String   @id @default(uuid())
+  userId              String   @map("user_id")
+  propertyId          String   @map("property_id")
+  ownershipPercentage Float    @map("ownership_percentage")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, propertyId])
+  @@map("property_ownership")
+}
+
+model TransactionSplit {
+  id            String   @id @default(uuid())
+  transactionId String   @map("transaction_id")
+  userId        String   @map("user_id")
+  percentage    Float
+  amount        Float
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([transactionId, userId])
+  @@map("transaction_splits")
+}
+
+model Settlement {
+  id             String   @id @default(uuid())
+  fromUserId     String   @map("from_user_id")
+  toUserId       String   @map("to_user_id")
+  propertyId     String   @map("property_id")
+  amount         Float
+  settlementDate DateTime @map("settlement_date")
+  notes          String?
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  fromUser User     @relation("SettlementsFrom", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUser   User     @relation("SettlementsTo", fields: [toUserId], references: [id], onDelete: Cascade)
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@map("settlements")
 }
 
 model BankAccount {

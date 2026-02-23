@@ -1082,6 +1082,394 @@ describe('Transactions Routes', () => {
     });
   });
 
+  describe('Transaction with splits', () => {
+    let userA: any;
+    let userB: any;
+    let propertyWithOwners: any;
+    let authCookiesUserA: string[];
+
+    beforeEach(async () => {
+      // Create two users (owners) using authService
+      userA = await authService.createUser('usera@test.com', 'password123');
+      userB = await authService.createUser('userb@test.com', 'password123');
+
+      // Login as userA
+      const loginResponse = await request(app).post('/api/auth/login').send({
+        email: 'usera@test.com',
+        password: 'password123',
+      });
+      authCookiesUserA = [loginResponse.headers['set-cookie']];
+
+      // Create property with two owners
+      propertyWithOwners = await prisma.property.create({
+        data: {
+          name: 'Multi-Owner Property',
+          street: '999 Owner Street',
+          city: 'London',
+          county: 'Greater London',
+          postcode: 'SW1A 9XX',
+          propertyType: 'House',
+          status: 'Available',
+        },
+      });
+
+      // Add ownership splits: User A (60%), User B (40%)
+      await prisma.propertyOwnership.create({
+        data: {
+          userId: userA.id,
+          propertyId: propertyWithOwners.id,
+          ownershipPercentage: 60,
+        },
+      });
+
+      await prisma.propertyOwnership.create({
+        data: {
+          userId: userB.id,
+          propertyId: propertyWithOwners.id,
+          ownershipPercentage: 40,
+        },
+      });
+    });
+
+    afterEach(async () => {
+      // Clean up
+      await prisma.propertyOwnership.deleteMany({
+        where: { propertyId: propertyWithOwners.id },
+      });
+      await prisma.property.delete({
+        where: { id: propertyWithOwners.id },
+      });
+      await prisma.user.deleteMany({
+        where: {
+          email: {
+            in: ['usera@test.com', 'userb@test.com'],
+          },
+        },
+      });
+    });
+
+    it('should create transaction with auto-generated splits from property ownership', async () => {
+      const response = await request(app)
+        .post('/api/transactions')
+        .set('Cookie', authCookiesUserA)
+        .send({
+          propertyId: propertyWithOwners.id,
+          type: 'Expense',
+          category: 'Repair',
+          amount: 1000,
+          transactionDate: new Date().toISOString(),
+          description: 'Repair work',
+          paidByUserId: userA.id,
+        });
+
+      expect(response.status).toBe(201);
+      expect(response.body.success).toBe(true);
+      expect(response.body.transaction.paidByUserId).toBe(userA.id);
+      expect(response.body.transaction.paidBy.email).toBe('usera@test.com');
+      expect(response.body.transaction.splits).toHaveLength(2);
+
+      // Check splits are auto-generated correctly
+      const splitA = response.body.transaction.splits.find((s: any) => s.userId === userA.id);
+      const splitB = response.body.transaction.splits.find((s: any) => s.userId === userB.id);
+
+      expect(splitA.percentage).toBe(60);
+      expect(splitA.amount).toBe(600);
+      expect(splitA.user.email).toBe('usera@test.com');
+
+      expect(splitB.percentage).toBe(40);
+      expect(splitB.amount).toBe(400);
+      expect(splitB.user.email).toBe('userb@test.com');
+    });
+
+    it('should create transaction with custom splits', async () => {
+      const response = await request(app)
+        .post('/api/transactions')
+        .set('Cookie', authCookiesUserA)
+        .send({
+          propertyId: propertyWithOwners.id,
+          type: 'Expense',
+          category: 'Maintenance',
+          amount: 1000,
+          transactionDate: new Date().toISOString(),
+          description: 'Special repair - custom split',
+          paidByUserId: userA.id,
+          splits: [
+            { userId: userA.id, percentage: 70, amount: 700 },
+            { userId: userB.id, percentage: 30, amount: 300 },
+          ],
+        });
+
+      expect(response.status).toBe(201);
+      expect(response.body.success).toBe(true);
+      expect(response.body.transaction.splits).toHaveLength(2);
+
+      const splitA = response.body.transaction.splits.find((s: any) => s.userId === userA.id);
+      const splitB = response.body.transaction.splits.find((s: any) => s.userId === userB.id);
+
+      expect(splitA.percentage).toBe(70);
+      expect(splitA.amount).toBe(700);
+
+      expect(splitB.percentage).toBe(30);
+      expect(splitB.amount).toBe(300);
+    });
+
+    it('should reject transaction when paidByUserId is not a property owner', async () => {
+      const nonOwner = await authService.createUser('nonowner@test.com', 'password');
+
+      const response = await request(app)
+        .post('/api/transactions')
+        .set('Cookie', authCookiesUserA)
+        .send({
+          propertyId: propertyWithOwners.id,
+          type: 'Expense',
+          category: 'Repair',
+          amount: 1000,
+          transactionDate: new Date().toISOString(),
+          description: 'Repair',
+          paidByUserId: nonOwner.id,
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toContain('paidByUserId must be a property owner');
+
+      await prisma.user.delete({ where: { id: nonOwner.id } });
+    });
+
+    it('should reject transaction when split user is not a property owner', async () => {
+      const nonOwner = await authService.createUser('nonowner2@test.com', 'password');
+
+      const response = await request(app)
+        .post('/api/transactions')
+        .set('Cookie', authCookiesUserA)
+        .send({
+          propertyId: propertyWithOwners.id,
+          type: 'Expense',
+          category: 'Repair',
+          amount: 1000,
+          transactionDate: new Date().toISOString(),
+          description: 'Repair',
+          paidByUserId: userA.id,
+          splits: [
+            { userId: userA.id, percentage: 50, amount: 500 },
+            { userId: nonOwner.id, percentage: 50, amount: 500 },
+          ],
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toContain('is not a property owner');
+
+      await prisma.user.delete({ where: { id: nonOwner.id } });
+    });
+
+    it('should reject transaction with invalid splits (not summing to 100%)', async () => {
+      const response = await request(app)
+        .post('/api/transactions')
+        .set('Cookie', authCookiesUserA)
+        .send({
+          propertyId: propertyWithOwners.id,
+          type: 'Expense',
+          category: 'Repair',
+          amount: 1000,
+          transactionDate: new Date().toISOString(),
+          description: 'Repair',
+          paidByUserId: userA.id,
+          splits: [
+            { userId: userA.id, percentage: 60, amount: 600 },
+            { userId: userB.id, percentage: 30, amount: 300 }, // Only 90% total
+          ],
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toContain('must sum to 100%');
+    });
+
+    it('should create income transaction without paidByUserId', async () => {
+      const response = await request(app)
+        .post('/api/transactions')
+        .set('Cookie', authCookiesUserA)
+        .send({
+          propertyId: propertyWithOwners.id,
+          type: 'Income',
+          category: 'Rent',
+          amount: 2000,
+          transactionDate: new Date().toISOString(),
+          description: 'Monthly rent',
+        });
+
+      expect(response.status).toBe(201);
+      expect(response.body.success).toBe(true);
+      expect(response.body.transaction.paidByUserId).toBeNull();
+      expect(response.body.transaction.splits).toHaveLength(2);
+    });
+
+    it('should support paidByUserId being null explicitly', async () => {
+      const response = await request(app)
+        .post('/api/transactions')
+        .set('Cookie', authCookiesUserA)
+        .send({
+          propertyId: propertyWithOwners.id,
+          type: 'Income',
+          category: 'Rent',
+          amount: 2000,
+          transactionDate: new Date().toISOString(),
+          description: 'Monthly rent',
+          paidByUserId: null,
+        });
+
+      expect(response.status).toBe(201);
+      expect(response.body.success).toBe(true);
+      expect(response.body.transaction.paidByUserId).toBeNull();
+    });
+
+    it('should allow transaction for property without owners (backward compatible)', async () => {
+      const response = await request(app)
+        .post('/api/transactions')
+        .set('Cookie', authCookies)
+        .send({
+          propertyId: testProperty.id, // Original test property with no owners
+          type: 'Expense',
+          category: 'Repair',
+          amount: 1000,
+          transactionDate: new Date().toISOString(),
+          description: 'Repair work',
+        });
+
+      expect(response.status).toBe(201);
+      expect(response.body.success).toBe(true);
+      expect(response.body.transaction.splits).toBeUndefined();
+    });
+
+    it('should update transaction splits', async () => {
+      // Create transaction with auto-generated splits
+      const createResponse = await request(app)
+        .post('/api/transactions')
+        .set('Cookie', authCookiesUserA)
+        .send({
+          propertyId: propertyWithOwners.id,
+          type: 'Expense',
+          category: 'Repair',
+          amount: 1000,
+          transactionDate: new Date().toISOString(),
+          description: 'Repair work',
+          paidByUserId: userA.id,
+        });
+
+      const transactionId = createResponse.body.transaction.id;
+
+      // Update with custom splits
+      const updateResponse = await request(app)
+        .put(`/api/transactions/${transactionId}`)
+        .set('Cookie', authCookiesUserA)
+        .send({
+          splits: [
+            { userId: userA.id, percentage: 80, amount: 800 },
+            { userId: userB.id, percentage: 20, amount: 200 },
+          ],
+        });
+
+      expect(updateResponse.status).toBe(200);
+      expect(updateResponse.body.success).toBe(true);
+      expect(updateResponse.body.transaction.splits).toHaveLength(2);
+
+      const splitA = updateResponse.body.transaction.splits.find((s: any) => s.userId === userA.id);
+      const splitB = updateResponse.body.transaction.splits.find((s: any) => s.userId === userB.id);
+
+      expect(splitA.percentage).toBe(80);
+      expect(splitB.percentage).toBe(20);
+    });
+
+    it('should update paidByUserId', async () => {
+      // Create transaction
+      const createResponse = await request(app)
+        .post('/api/transactions')
+        .set('Cookie', authCookiesUserA)
+        .send({
+          propertyId: propertyWithOwners.id,
+          type: 'Expense',
+          category: 'Repair',
+          amount: 1000,
+          transactionDate: new Date().toISOString(),
+          description: 'Repair work',
+          paidByUserId: userA.id,
+        });
+
+      const transactionId = createResponse.body.transaction.id;
+
+      // Update paidByUserId
+      const updateResponse = await request(app)
+        .put(`/api/transactions/${transactionId}`)
+        .set('Cookie', authCookiesUserA)
+        .send({
+          paidByUserId: userB.id,
+        });
+
+      expect(updateResponse.status).toBe(200);
+      expect(updateResponse.body.success).toBe(true);
+      expect(updateResponse.body.transaction.paidByUserId).toBe(userB.id);
+      expect(updateResponse.body.transaction.paidBy.email).toBe('userb@test.com');
+    });
+
+    it('should fetch transaction with splits', async () => {
+      // Create transaction
+      const createResponse = await request(app)
+        .post('/api/transactions')
+        .set('Cookie', authCookiesUserA)
+        .send({
+          propertyId: propertyWithOwners.id,
+          type: 'Expense',
+          category: 'Repair',
+          amount: 1000,
+          transactionDate: new Date().toISOString(),
+          description: 'Repair work',
+          paidByUserId: userA.id,
+        });
+
+      const transactionId = createResponse.body.transaction.id;
+
+      // Fetch transaction
+      const getResponse = await request(app).get(`/api/transactions/${transactionId}`);
+
+      expect(getResponse.status).toBe(200);
+      expect(getResponse.body.success).toBe(true);
+      expect(getResponse.body.transaction.splits).toHaveLength(2);
+      expect(getResponse.body.transaction.paidBy).toBeDefined();
+      expect(getResponse.body.transaction.paidBy.email).toBe('usera@test.com');
+    });
+
+    it('should list transactions with splits', async () => {
+      // Create transaction with splits
+      await request(app)
+        .post('/api/transactions')
+        .set('Cookie', authCookiesUserA)
+        .send({
+          propertyId: propertyWithOwners.id,
+          type: 'Expense',
+          category: 'Repair',
+          amount: 1000,
+          transactionDate: new Date().toISOString(),
+          description: 'Repair work',
+          paidByUserId: userA.id,
+        });
+
+      // List transactions
+      const listResponse = await request(app)
+        .get('/api/transactions')
+        .query({ property_id: propertyWithOwners.id });
+
+      expect(listResponse.status).toBe(200);
+      expect(listResponse.body.success).toBe(true);
+      expect(listResponse.body.transactions.length).toBeGreaterThan(0);
+
+      const txWithSplits = listResponse.body.transactions[0];
+      expect(txWithSplits.splits).toBeDefined();
+      expect(txWithSplits.splits).toHaveLength(2);
+      expect(txWithSplits.paidBy).toBeDefined();
+    });
+  });
+
   describe('Integration scenarios', () => {
     it('should create, read, update, and delete a transaction', async () => {
       // Create

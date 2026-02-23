@@ -43,6 +43,7 @@ import {
   UpdateTransactionRequest,
   TransactionFilters,
   TransactionSummary,
+  TransactionSplit,
 } from '../types/api.types';
 import TransactionRow from '../components/shared/TransactionRow';
 import StatsCard from '../components/shared/StatsCard';
@@ -52,6 +53,8 @@ import FileUpload from '../components/shared/FileUpload';
 import ConfirmDialog from '../components/shared/ConfirmDialog';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
+import { SplitSection } from '../components/Transaction/SplitSection';
+import { propertyOwnershipService, PropertyOwnership } from '../services/api/propertyOwnership.service';
 
 const TRANSACTION_TYPES = ['Income', 'Expense'] as const;
 
@@ -76,6 +79,7 @@ interface TransactionFormData {
   amount: string;
   transactionDate: string;
   description: string;
+  paidByUserId: string;
 }
 
 const initialFormData: TransactionFormData = {
@@ -85,13 +89,14 @@ const initialFormData: TransactionFormData = {
   amount: '',
   transactionDate: format(new Date(), 'yyyy-MM-dd'),
   description: '',
+  paidByUserId: '',
 };
 
 export const Transactions: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const toast = useToast();
-  const { canWrite } = useAuth();
+  const { user, canWrite } = useAuth();
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [summary, setSummary] = useState<TransactionSummary | null>(null);
@@ -112,6 +117,10 @@ export const Transactions: React.FC = () => {
   // Confirm dialog states
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+
+  // Property ownership and splits
+  const [propertyOwnership, setPropertyOwnership] = useState<PropertyOwnership[]>([]);
+  const [splits, setSplits] = useState<TransactionSplit[]>([]);
 
   // Filter states
   const [propertyFilter, setPropertyFilter] = useState('all');
@@ -166,6 +175,58 @@ export const Transactions: React.FC = () => {
     fetchTransactions();
   }, [fetchTransactions]);
 
+  // Load property ownership when property is selected
+  useEffect(() => {
+    const loadPropertyOwnership = async () => {
+      if (!formData.propertyId) {
+        setPropertyOwnership([]);
+        setSplits([]);
+        return;
+      }
+
+      try {
+        const ownerships = await propertyOwnershipService.listOwners(formData.propertyId);
+        setPropertyOwnership(ownerships);
+
+        // When editing a transaction that already has splits loaded,
+        // don't overwrite them with ownership defaults
+        const hasExistingSplits =
+          dialogMode === 'edit' &&
+          selectedTransaction &&
+          selectedTransaction.splits &&
+          selectedTransaction.splits.length > 0 &&
+          selectedTransaction.propertyId === formData.propertyId;
+
+        if (!hasExistingSplits) {
+          // Auto-generate splits from ownership (for new transactions or property changes)
+          const amount = parseFloat(formData.amount) || 0;
+          const generatedSplits = ownerships.map((ownership) => ({
+            userId: ownership.userId,
+            percentage: ownership.ownershipPercentage,
+            amount: (amount * ownership.ownershipPercentage) / 100,
+          }));
+          setSplits(generatedSplits);
+        }
+
+        // Set default paidByUserId to current user if they're an owner
+        // (only when no paidByUserId is already set)
+        if (!formData.paidByUserId && user) {
+          const isOwner = ownerships.some((o) => o.userId === user.id);
+          if (isOwner) {
+            setFormData((prev) => ({ ...prev, paidByUserId: user.id }));
+          }
+        }
+      } catch (err) {
+        console.error('Error loading property ownership:', err);
+        setPropertyOwnership([]);
+        setSplits([]);
+      }
+    };
+
+    loadPropertyOwnership();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData.propertyId]);
+
   const availableCategories = useMemo(() => {
     if (formData.type === 'Income') {
       return INCOME_CATEGORIES;
@@ -176,9 +237,14 @@ export const Transactions: React.FC = () => {
 
   const handleCreateTransaction = () => {
     setSelectedTransaction(null);
-    setFormData(initialFormData);
+    setFormData({
+      ...initialFormData,
+      paidByUserId: user?.id || '',
+    });
     setFormErrors({});
     setSelectedFile(null);
+    setPropertyOwnership([]);
+    setSplits([]);
     setDialogMode('create');
     setDialogOpen(true);
   };
@@ -192,7 +258,23 @@ export const Transactions: React.FC = () => {
       amount: transaction.amount.toString(),
       transactionDate: transaction.transactionDate.split('T')[0],
       description: transaction.description || '',
+      paidByUserId: transaction.paidByUserId || '',
     });
+
+    // Pre-load existing splits from the transaction so the useEffect
+    // doesn't overwrite them with ownership defaults
+    if (transaction.splits && transaction.splits.length > 0) {
+      setSplits(
+        transaction.splits.map((split) => ({
+          userId: split.userId,
+          percentage: split.percentage,
+          amount: split.amount,
+        }))
+      );
+    } else {
+      setSplits([]);
+    }
+
     setFormErrors({});
     setSelectedFile(null);
     setDialogMode('edit');
@@ -253,10 +335,19 @@ export const Transactions: React.FC = () => {
       return;
     }
 
+    // Validate splits if property has ownership
+    if (splits.length > 0) {
+      const totalPercentage = splits.reduce((sum, split) => sum + split.percentage, 0);
+      if (Math.abs(totalPercentage - 100) > 0.01) {
+        toast.error('Split percentages must sum to 100%');
+        return;
+      }
+    }
+
     try {
       setSaveLoading(true);
 
-      const requestData = {
+      const requestData: CreateTransactionRequest | UpdateTransactionRequest = {
         propertyId: formData.propertyId,
         type: formData.type,
         category: formData.category,
@@ -264,6 +355,12 @@ export const Transactions: React.FC = () => {
         transactionDate: formData.transactionDate,
         description: formData.description,
       };
+
+      // Add paidByUserId and splits for expenses with property ownership
+      if (formData.type === 'Expense' && splits.length > 0) {
+        requestData.paidByUserId = formData.paidByUserId || null;
+        requestData.splits = splits;
+      }
 
       let transaction: Transaction;
 
@@ -316,6 +413,16 @@ export const Transactions: React.FC = () => {
     // Clear error for this field
     if (formErrors[field]) {
       setFormErrors((prev) => ({ ...prev, [field]: undefined }));
+    }
+
+    // Recalculate split amounts when amount changes
+    if (field === 'amount' && splits.length > 0) {
+      const amount = parseFloat(value) || 0;
+      const updatedSplits = splits.map((split) => ({
+        ...split,
+        amount: (amount * split.percentage) / 100,
+      }));
+      setSplits(updatedSplits);
     }
   };
 
@@ -628,6 +735,36 @@ export const Transactions: React.FC = () => {
                 onChange={(e) => handleFormChange('description', e.target.value)}
                 error={!!formErrors.description}
                 helperText={formErrors.description}
+              />
+
+              {/* Paid By - only for expenses with property ownership */}
+              {formData.type === 'Expense' && propertyOwnership.length > 0 && (
+                <FormControl fullWidth size="small">
+                  <InputLabel>Paid By (Optional)</InputLabel>
+                  <Select
+                    value={formData.paidByUserId}
+                    label="Paid By (Optional)"
+                    onChange={(e: SelectChangeEvent) => handleFormChange('paidByUserId', e.target.value)}
+                  >
+                    <MenuItem value="">
+                      <em>None</em>
+                    </MenuItem>
+                    {propertyOwnership.map((ownership) => (
+                      <MenuItem key={ownership.userId} value={ownership.userId}>
+                        {ownership.user.email}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              )}
+
+              {/* Transaction Splits */}
+              <SplitSection
+                propertyOwnership={propertyOwnership}
+                amount={parseFloat(formData.amount) || 0}
+                splits={splits}
+                onSplitsChange={setSplits}
+                disabled={!formData.propertyId || !formData.amount}
               />
 
               <Box>

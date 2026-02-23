@@ -24,6 +24,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { propertiesService } from '../services/api/properties.service';
 import { leasesService } from '../services/api/leases.service';
+import { propertyOwnershipService } from '../services/api/propertyOwnership.service';
 import type {
   Property,
   CreatePropertyRequest,
@@ -35,6 +36,7 @@ import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useProperties } from '../contexts/PropertiesContext';
 import type { PropertyWithLease } from '../types/component.types';
+import { OwnershipSection } from '../components/PropertyOwnership/OwnershipSection';
 
 type PropertyStatus = 'Available' | 'Occupied' | 'Under Maintenance' | 'For Sale';
 type PropertyType = 'House' | 'Flat' | 'Studio' | 'Bungalow' | 'Terraced' | 'Semi-Detached' | 'Detached' | 'Maisonette' | 'Commercial';
@@ -92,6 +94,7 @@ export const Properties: React.FC = () => {
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [formData, setFormData] = useState<PropertyFormData>(initialFormData);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [owners, setOwners] = useState<Array<{ userId: string; percentage: number }>>([]);
 
   // Delete dialog states
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -145,7 +148,7 @@ export const Properties: React.FC = () => {
     }
   };
 
-  const handleOpenDialog = (mode: 'create' | 'edit', property?: Property) => {
+  const handleOpenDialog = async (mode: 'create' | 'edit', property?: Property) => {
     setDialogMode(mode);
     if (mode === 'edit' && property) {
       setSelectedProperty(property);
@@ -161,9 +164,18 @@ export const Properties: React.FC = () => {
         purchasePrice: property.purchasePrice?.toString() || '',
         notes: property.notes || '',
       });
+      // Load existing owners
+      try {
+        const existingOwners = await propertyOwnershipService.listOwners(property.id);
+        setOwners(existingOwners.map((o) => ({ userId: o.userId, percentage: o.ownershipPercentage })));
+      } catch (err) {
+        console.error('Error loading property owners:', err);
+        setOwners([]);
+      }
     } else {
       setSelectedProperty(null);
       setFormData(initialFormData);
+      setOwners([]);
     }
     setFormErrors({});
     setDialogOpen(true);
@@ -174,6 +186,7 @@ export const Properties: React.FC = () => {
     setSelectedProperty(null);
     setFormData(initialFormData);
     setFormErrors({});
+    setOwners([]);
   };
 
   const validateForm = (): boolean => {
@@ -203,6 +216,28 @@ export const Properties: React.FC = () => {
       errors.purchasePrice = 'Purchase price must be 0 or greater';
     }
 
+    // Validate ownership configuration
+    if (owners.length > 0) {
+      // Check for empty user selections
+      const hasEmptyUsers = owners.some((o) => !o.userId);
+      if (hasEmptyUsers) {
+        errors.ownership = 'All owners must have a user selected';
+      }
+
+      // Check for duplicate users
+      const userIds = owners.map((o) => o.userId);
+      const hasDuplicates = userIds.some((id, index) => id && userIds.indexOf(id) !== index);
+      if (hasDuplicates) {
+        errors.ownership = 'Each user can only be added once as an owner';
+      }
+
+      // Check total percentage
+      const totalPercentage = owners.reduce((sum, o) => sum + o.percentage, 0);
+      if (Math.abs(totalPercentage - 100) > 0.01) {
+        errors.ownership = `Total ownership must equal 100%. Current total: ${totalPercentage.toFixed(2)}%`;
+      }
+    }
+
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -226,15 +261,57 @@ export const Properties: React.FC = () => {
         notes: formData.notes.trim() || null,
       };
 
+      let propertyId: string;
+
       if (dialogMode === 'create') {
-        await propertiesService.createProperty(dataToSubmit);
+        const createdProperty = await propertiesService.createProperty(dataToSubmit);
+        propertyId = createdProperty.id;
         toast.success('Property created successfully');
       } else if (selectedProperty) {
         await propertiesService.updateProperty(
           selectedProperty.id,
           dataToSubmit as UpdatePropertyRequest
         );
+        propertyId = selectedProperty.id;
         toast.success('Property updated successfully');
+      } else {
+        return;
+      }
+
+      // Sync ownership configuration if owners are configured
+      if (owners.length > 0) {
+        try {
+          const existingOwners = await propertyOwnershipService.listOwners(propertyId);
+
+          // Remove owners not in new list
+          for (const existing of existingOwners) {
+            if (!owners.find((o) => o.userId === existing.userId)) {
+              await propertyOwnershipService.removeOwner(propertyId, existing.userId);
+            }
+          }
+
+          // Add or update owners
+          for (const owner of owners) {
+            const existing = existingOwners.find((o) => o.userId === owner.userId);
+            if (existing) {
+              if (Math.abs(existing.ownershipPercentage - owner.percentage) > 0.01) {
+                await propertyOwnershipService.updateOwner(propertyId, owner.userId, {
+                  ownershipPercentage: owner.percentage,
+                });
+              }
+            } else {
+              await propertyOwnershipService.addOwner(propertyId, {
+                userId: owner.userId,
+                propertyId,
+                ownershipPercentage: owner.percentage,
+              });
+            }
+          }
+        } catch (err) {
+          console.error('Error syncing ownership:', err);
+          const errorMessage = err instanceof ApiError ? err.message : 'Failed to sync ownership';
+          toast.error(errorMessage);
+        }
       }
 
       handleCloseDialog();
@@ -600,6 +677,20 @@ export const Properties: React.FC = () => {
               rows={3}
               fullWidth
             />
+
+            {/* Ownership Configuration */}
+            <Box sx={{ mt: 3, pt: 3, borderTop: 1, borderColor: 'divider' }}>
+              <OwnershipSection
+                owners={owners}
+                onChange={setOwners}
+                disabled={false}
+              />
+              {formErrors.ownership && (
+                <Alert severity="error" sx={{ mt: 2 }}>
+                  {formErrors.ownership}
+                </Alert>
+              )}
+            </Box>
           </Box>
         </DialogContent>
         <DialogActions>
