@@ -8,11 +8,16 @@
       "jsx": true
     }
   },
-  "plugins": ["@typescript-eslint", "react-hooks", "react-refresh"],
+  "plugins": [
+    "@typescript-eslint",
+    "react-hooks",
+    "react-refresh"
+  ],
   "extends": [
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",
-    "plugin:react-hooks/recommended"
+    "plugin:react-hooks/recommended",
+    "plugin:storybook/recommended"
   ],
   "env": {
     "browser": true,
@@ -21,12 +26,19 @@
   "rules": {
     "react-refresh/only-export-components": [
       "warn",
-      { "allowConstantExport": true }
+      {
+        "allowConstantExport": true
+      }
     ],
     "@typescript-eslint/no-unused-vars": [
       "error",
-      { "argsIgnorePattern": "^_" }
+      {
+        "argsIgnorePattern": "^_"
+      }
     ]
   },
-  "ignorePatterns": ["dist", "node_modules"]
+  "ignorePatterns": [
+    "dist",
+    "node_modules"
+  ]
 }
