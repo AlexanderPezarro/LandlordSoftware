@@ -1,0 +1,21 @@
+@use '../../../styles/variables' as *;
+
+.divider {
+  border: none;
+}
+
+.horizontal {
+  border-top: 1px solid $color-divider;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+
+.vertical {
+  display: inline-block;
+  border-left: 1px solid $color-divider;
+  height: auto;
+  align-self: stretch;
+  margin: 0;
+  padding: 0;
+}
