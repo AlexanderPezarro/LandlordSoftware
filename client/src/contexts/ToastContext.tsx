@@ -1,10 +1,9 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import { Snackbar, Alert, AlertColor, IconButton } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
+import { Toast } from '../components/primitives/Toast';
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
 
-interface Toast {
+interface ToastState {
   id: string;
   message: string;
   type: ToastType;
@@ -78,7 +77,7 @@ interface ToastProviderProps {
 }
 
 export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
-  const [toast, setToast] = useState<Toast | null>(null);
+  const [toast, setToast] = useState<ToastState | null>(null);
 
   const showToast = useCallback((message: string, type: ToastType = 'info') => {
     const id = Date.now().toString();
@@ -101,10 +100,7 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
     showToast(message, 'info');
   }, [showToast]);
 
-  const handleClose = useCallback((_event?: React.SyntheticEvent | Event, reason?: string) => {
-    if (reason === 'clickaway') {
-      return;
-    }
+  const handleClose = useCallback(() => {
     setToast(null);
   }, []);
 
@@ -127,30 +123,13 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
   return (
     <ToastContext.Provider value={value}>
       {children}
-      <Snackbar
+      <Toast
         open={toast !== null}
-        autoHideDuration={6000}
+        severity={toast?.type || 'info'}
+        message={toast?.message || ''}
         onClose={handleClose}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert
-          severity={toast?.type as AlertColor}
-          variant="filled"
-          sx={{ width: '100%' }}
-          action={
-            <IconButton
-              size="small"
-              aria-label="close"
-              color="inherit"
-              onClick={handleClose}
-            >
-              <CloseIcon fontSize="small" />
-            </IconButton>
-          }
-        >
-          {toast?.message}
-        </Alert>
-      </Snackbar>
+        autoHideDuration={6000}
+      />
     </ToastContext.Provider>
   );
 };
