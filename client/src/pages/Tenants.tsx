@@ -1,28 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import {
-  Container,
-  Typography,
-  Box,
-  Button,
-  Tabs,
-  Tab,
-  CircularProgress,
-  Alert,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  MenuItem,
-} from '@mui/material';
-import { Add as AddIcon } from '@mui/icons-material';
+import { UserPlus, AlertCircle } from 'lucide-react';
+import { Container } from '../components/primitives/Container';
+import { Button } from '../components/primitives/Button';
+import { Dialog } from '../components/primitives/Dialog';
+import { TextField } from '../components/primitives/TextField';
+import { Select } from '../components/primitives/Select';
+import { Spinner } from '../components/primitives/Spinner';
+import { TenantCard } from '../components/composed/TenantCard';
 import { tenantsService } from '../services/api/tenants.service';
 import { leasesService } from '../services/api/leases.service';
 import type { Tenant, CreateTenantRequest, UpdateTenantRequest, Property } from '../types/api.types';
 import { ApiError } from '../types/api.types';
-import TenantCard from '../components/shared/TenantCard';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
+import styles from './Tenants.module.scss';
 
 type TenantStatus = 'Prospective' | 'Active' | 'Former';
 
@@ -30,34 +21,24 @@ interface TenantWithProperty extends Tenant {
   currentProperty?: Property;
 }
 
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
+interface TabOption {
+  key: string;
+  label: string;
+  status?: TenantStatus;
 }
 
-function TabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
+const TAB_OPTIONS: TabOption[] = [
+  { key: 'all', label: 'All' },
+  { key: 'active', label: 'Active', status: 'Active' },
+  { key: 'prospective', label: 'Prospective', status: 'Prospective' },
+  { key: 'former', label: 'Former', status: 'Former' },
+];
 
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`tenant-tabpanel-${index}`}
-      aria-labelledby={`tenant-tab-${index}`}
-      {...other}
-    >
-      {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
-    </div>
-  );
-}
-
-function a11yProps(index: number) {
-  return {
-    id: `tenant-tab-${index}`,
-    'aria-controls': `tenant-tabpanel-${index}`,
-  };
-}
+const STATUS_OPTIONS = [
+  { value: 'Prospective', label: 'Prospective' },
+  { value: 'Active', label: 'Active' },
+  { value: 'Former', label: 'Former' },
+];
 
 export const Tenants: React.FC = () => {
   const toast = useToast();
@@ -65,7 +46,7 @@ export const Tenants: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tenants, setTenants] = useState<TenantWithProperty[]>([]);
-  const [tabValue, setTabValue] = useState(0);
+  const [activeTab, setActiveTab] = useState('all');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<'create' | 'edit'>('create');
   const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
@@ -127,10 +108,6 @@ export const Tenants: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
-    setTabValue(newValue);
   };
 
   const handleOpenDialog = (mode: 'create' | 'edit', tenant?: Tenant) => {
@@ -289,35 +266,29 @@ export const Tenants: React.FC = () => {
     return tenants.filter(tenant => tenant.status === status);
   };
 
-  const allTenants = getFilteredTenants();
-  const activeTenants = getFilteredTenants('Active');
-  const prospectiveTenants = getFilteredTenants('Prospective');
-  const formerTenants = getFilteredTenants('Former');
+  const getCountForTab = (tabKey: string): number => {
+    const tab = TAB_OPTIONS.find(t => t.key === tabKey);
+    if (!tab || tabKey === 'all') return tenants.length;
+    return getFilteredTenants(tab.status).length;
+  };
+
+  const getActiveTabTenants = (): TenantWithProperty[] => {
+    const tab = TAB_OPTIONS.find(t => t.key === activeTab);
+    if (!tab || activeTab === 'all') return tenants;
+    return getFilteredTenants(tab.status);
+  };
 
   const renderTenantGrid = (filteredTenants: TenantWithProperty[]) => {
     if (filteredTenants.length === 0) {
       return (
-        <Box sx={{ textAlign: 'center', py: 4 }}>
-          <Typography variant="body1" color="text.secondary">
-            No tenants found
-          </Typography>
-        </Box>
+        <p className={styles.emptyState}>
+          No tenants found
+        </p>
       );
     }
 
     return (
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: {
-            xs: '1fr',
-            sm: 'repeat(2, 1fr)',
-            md: 'repeat(3, 1fr)',
-            lg: 'repeat(4, 1fr)',
-          },
-          gap: 3,
-        }}
-      >
+      <div className={styles.tenantGrid}>
         {filteredTenants.map((tenant) => (
           <TenantCard
             key={tenant.id}
@@ -326,16 +297,16 @@ export const Tenants: React.FC = () => {
             onClick={canWrite() ? () => handleOpenDialog('edit', tenant) : undefined}
           />
         ))}
-      </Box>
+      </div>
     );
   };
 
   if (loading) {
     return (
       <Container maxWidth="lg">
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
-          <CircularProgress />
-        </Box>
+        <div className={styles.loadingWrapper}>
+          <Spinner />
+        </div>
       </Container>
     );
   }
@@ -343,74 +314,70 @@ export const Tenants: React.FC = () => {
   if (error) {
     return (
       <Container maxWidth="lg">
-        <Box sx={{ mb: 4 }}>
-          <Typography variant="h4" component="h1" gutterBottom>
-            Tenants
-          </Typography>
-          <Alert severity="error">{error}</Alert>
-        </Box>
+        <h1 className={styles.errorTitle}>Tenants</h1>
+        <div className={`${styles.alert} ${styles.alertError}`}>
+          <AlertCircle size={20} className={styles.alertIcon} />
+          <span>{error}</span>
+        </div>
       </Container>
     );
   }
 
   return (
     <Container maxWidth="lg">
-      <Box sx={{ mb: 4 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Typography variant="h4" component="h1">
-            Tenants
-          </Typography>
+      <div className={styles.page}>
+        <div className={styles.header}>
+          <h1 className={styles.title}>Tenants</h1>
           {canWrite() && (
             <Button
-              variant="contained"
-              color="primary"
-              startIcon={<AddIcon />}
+              variant="primary"
+              startIcon={<UserPlus size={18} />}
               onClick={() => handleOpenDialog('create')}
             >
               Add Tenant
             </Button>
           )}
-        </Box>
+        </div>
 
-        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
-          <Tabs value={tabValue} onChange={handleTabChange} aria-label="tenant tabs">
-            <Tab label={`All (${allTenants.length})`} {...a11yProps(0)} />
-            <Tab label={`Active (${activeTenants.length})`} {...a11yProps(1)} />
-            <Tab label={`Prospective (${prospectiveTenants.length})`} {...a11yProps(2)} />
-            <Tab label={`Former (${formerTenants.length})`} {...a11yProps(3)} />
-          </Tabs>
-        </Box>
+        <div className={styles.tabsWrapper}>
+          <div className={styles.tabList} role="tablist" aria-label="tenant tabs">
+            {TAB_OPTIONS.map((tab) => (
+              <button
+                key={tab.key}
+                role="tab"
+                id={`tenant-tab-${tab.key}`}
+                aria-selected={activeTab === tab.key}
+                aria-controls={`tenant-tabpanel-${tab.key}`}
+                className={`${styles.tab} ${activeTab === tab.key ? styles.tabActive : ''}`}
+                onClick={() => setActiveTab(tab.key)}
+              >
+                {tab.label} ({getCountForTab(tab.key)})
+              </button>
+            ))}
+          </div>
+        </div>
 
-        <TabPanel value={tabValue} index={0}>
-          {renderTenantGrid(allTenants)}
-        </TabPanel>
-        <TabPanel value={tabValue} index={1}>
-          {renderTenantGrid(activeTenants)}
-        </TabPanel>
-        <TabPanel value={tabValue} index={2}>
-          {renderTenantGrid(prospectiveTenants)}
-        </TabPanel>
-        <TabPanel value={tabValue} index={3}>
-          {renderTenantGrid(formerTenants)}
-        </TabPanel>
-      </Box>
+        <div
+          role="tabpanel"
+          id={`tenant-tabpanel-${activeTab}`}
+          aria-labelledby={`tenant-tab-${activeTab}`}
+          className={styles.tabPanel}
+        >
+          {renderTenantGrid(getActiveTabTenants())}
+        </div>
+      </div>
 
       {/* Create/Edit Dialog */}
-      <Dialog
-        open={dialogOpen}
-        onClose={handleCloseDialog}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>
+      <Dialog open={dialogOpen} onClose={handleCloseDialog} size="medium">
+        <Dialog.Title>
           {dialogMode === 'create' ? 'Add New Tenant' : 'Edit Tenant'}
-        </DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+        </Dialog.Title>
+        <Dialog.Content>
+          <div className={styles.formFields}>
             <TextField
               label="First Name"
               value={formData.firstName}
-              onChange={(e) => handleFormChange('firstName', e.target.value)}
+              onChange={(e) => handleFormChange('firstName', (e.target as HTMLInputElement).value)}
               error={!!formErrors.firstName}
               helperText={formErrors.firstName}
               required
@@ -419,7 +386,7 @@ export const Tenants: React.FC = () => {
             <TextField
               label="Last Name"
               value={formData.lastName}
-              onChange={(e) => handleFormChange('lastName', e.target.value)}
+              onChange={(e) => handleFormChange('lastName', (e.target as HTMLInputElement).value)}
               error={!!formErrors.lastName}
               helperText={formErrors.lastName}
               required
@@ -429,7 +396,7 @@ export const Tenants: React.FC = () => {
               label="Email"
               type="email"
               value={formData.email}
-              onChange={(e) => handleFormChange('email', e.target.value)}
+              onChange={(e) => handleFormChange('email', (e.target as HTMLInputElement).value)}
               error={!!formErrors.email}
               helperText={formErrors.email}
               required
@@ -437,102 +404,99 @@ export const Tenants: React.FC = () => {
             />
             <TextField
               label="Phone"
-              value={formData.phone}
-              onChange={(e) => handleFormChange('phone', e.target.value)}
+              value={formData.phone ?? ''}
+              onChange={(e) => handleFormChange('phone', (e.target as HTMLInputElement).value)}
               fullWidth
             />
-            <TextField
+            <Select
               label="Status"
-              select
               value={formData.status}
-              onChange={(e) => handleFormChange('status', e.target.value)}
-              required
+              onChange={(value) => handleFormChange('status', value)}
+              options={STATUS_OPTIONS}
               fullWidth
-            >
-              <MenuItem value="Prospective">Prospective</MenuItem>
-              <MenuItem value="Active">Active</MenuItem>
-              <MenuItem value="Former">Former</MenuItem>
-            </TextField>
+              name="status"
+            />
             <TextField
               label="Emergency Contact Name"
-              value={formData.emergencyContactName}
-              onChange={(e) => handleFormChange('emergencyContactName', e.target.value)}
+              value={formData.emergencyContactName ?? ''}
+              onChange={(e) => handleFormChange('emergencyContactName', (e.target as HTMLInputElement).value)}
               fullWidth
             />
             <TextField
               label="Emergency Contact Phone"
-              value={formData.emergencyContactPhone}
-              onChange={(e) => handleFormChange('emergencyContactPhone', e.target.value)}
+              value={formData.emergencyContactPhone ?? ''}
+              onChange={(e) => handleFormChange('emergencyContactPhone', (e.target as HTMLInputElement).value)}
               fullWidth
             />
             <TextField
               label="Notes"
-              value={formData.notes}
-              onChange={(e) => handleFormChange('notes', e.target.value)}
+              value={formData.notes ?? ''}
+              onChange={(e) => handleFormChange('notes', (e.target as HTMLInputElement).value)}
               multiline
               rows={3}
               fullWidth
             />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog} color="inherit">
+          </div>
+        </Dialog.Content>
+        <Dialog.Actions>
+          <Button variant="text" onClick={handleCloseDialog}>
             Cancel
           </Button>
           {canWrite() && dialogMode === 'edit' && selectedTenant && (
             <Button
+              variant="secondary"
+              className={styles.btnDanger}
               onClick={() => handleDeleteClick(selectedTenant)}
-              color="error"
-              variant="outlined"
             >
               Delete
             </Button>
           )}
           {canWrite() && (
-            <Button onClick={handleSubmit} variant="contained" color="primary">
+            <Button variant="primary" onClick={handleSubmit}>
               {dialogMode === 'create' ? 'Create' : 'Save'}
             </Button>
           )}
-        </DialogActions>
+        </Dialog.Actions>
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={deleteDialogOpen} onClose={handleDeleteCancel} maxWidth="sm" fullWidth>
-        <DialogTitle>Delete Tenant</DialogTitle>
-        <DialogContent>
-          <Typography>
+      <Dialog open={deleteDialogOpen} onClose={handleDeleteCancel} size="small">
+        <Dialog.Title>Delete Tenant</Dialog.Title>
+        <Dialog.Content>
+          <p>
             What would you like to do with {tenantToDelete?.firstName} {tenantToDelete?.lastName}?
-          </Typography>
-          <Box sx={{ mt: 2 }}>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-              <strong>Archive:</strong> Changes status to 'Former' and preserves all data
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
+          </p>
+          <div className={styles.deleteInfo}>
+            <p className={styles.deleteOption}>
+              <strong>Archive:</strong> Changes status to &apos;Former&apos; and preserves all data
+            </p>
+            <p className={styles.deleteOption}>
               <strong>Permanently Delete:</strong> Removes tenant and all related data (leases, etc.)
-            </Typography>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleDeleteCancel} disabled={deleteLoading}>
+            </p>
+          </div>
+        </Dialog.Content>
+        <Dialog.Actions>
+          <Button variant="text" onClick={handleDeleteCancel} disabled={deleteLoading}>
             Cancel
           </Button>
           <Button
+            variant="secondary"
+            className={styles.btnWarning}
             onClick={() => handleDeleteConfirm(true)}
-            color="warning"
-            variant="outlined"
             disabled={deleteLoading}
           >
             Archive
           </Button>
           <Button
+            variant="primary"
+            className={styles.btnDanger}
             onClick={() => handleDeleteConfirm(false)}
-            color="error"
-            variant="contained"
             disabled={deleteLoading}
+            loading={deleteLoading}
           >
-            {deleteLoading ? <CircularProgress size={24} /> : 'Permanently Delete'}
+            Permanently Delete
           </Button>
-        </DialogActions>
+        </Dialog.Actions>
       </Dialog>
     </Container>
   );

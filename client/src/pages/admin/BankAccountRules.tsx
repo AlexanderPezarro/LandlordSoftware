@@ -1,35 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  Container,
-  Typography,
-  Box,
-  Button,
-  CircularProgress,
-  Alert,
-  Paper,
-  List,
-  ListItem,
-  ListItemText,
-  IconButton,
-  Chip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Tooltip,
-  Divider,
-} from '@mui/material';
-import {
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  DragIndicator as DragIcon,
-  ArrowBack as BackIcon,
-  Check as CheckIcon,
-  Close as CloseIcon,
-} from '@mui/icons-material';
+  Plus,
+  Pencil,
+  Trash2,
+  GripVertical,
+  ArrowLeft,
+  Check,
+  X,
+} from 'lucide-react';
 import {
   DndContext,
   closestCenter,
@@ -47,6 +26,14 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { Container } from '../../components/primitives/Container';
+import { Button } from '../../components/primitives/Button';
+import { Spinner } from '../../components/primitives/Spinner';
+import { Chip } from '../../components/primitives/Chip';
+import { Dialog } from '../../components/primitives/Dialog';
+import { TextField } from '../../components/primitives/TextField';
+import { Tooltip } from '../../components/primitives/Tooltip';
+import { Divider } from '../../components/primitives/Divider';
 import { useToast } from '../../contexts/ToastContext';
 import { ApiError, Property } from '../../types/api.types';
 import {
@@ -54,7 +41,9 @@ import {
   MatchingRule,
 } from '../../services/api/matchingRules.service';
 import { propertiesService } from '../../services/api/properties.service';
-import { RuleEditor, RuleData } from '../../components/bank/RuleEditor';
+import { RuleEditor, RuleData } from '../../components/composed/bank';
+import { ConfirmDialog } from '../../components/composed/ConfirmDialog';
+import styles from './BankAccountRules.module.scss';
 
 interface SortableRuleItemProps {
   rule: MatchingRule;
@@ -90,90 +79,63 @@ const SortableRuleItem: React.FC<SortableRuleItemProps> = ({ rule, onEdit, onDel
   };
 
   return (
-    <ListItem
+    <div
       ref={setNodeRef}
       style={style}
-      sx={{
-        bgcolor: 'background.paper',
-        mb: 1,
-        border: '1px solid',
-        borderColor: 'divider',
-        borderRadius: 1,
-        '&:hover': {
-          bgcolor: 'action.hover',
-        },
-      }}
-      secondaryAction={
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <Tooltip title="Edit">
-            <IconButton edge="end" onClick={() => onEdit(rule)} size="small">
-              <EditIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Delete">
-            <IconButton
-              edge="end"
-              onClick={() => onDelete(rule)}
-              color="error"
-              size="small"
-              disabled={rule.bankAccountId === null}
-            >
-              <DeleteIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        </Box>
-      }
+      className={styles.ruleItem}
     >
-      <Box
+      <div
         {...attributes}
         {...listeners}
-        sx={{
-          cursor: 'grab',
-          mr: 2,
-          display: 'flex',
-          alignItems: 'center',
-          '&:active': { cursor: 'grabbing' },
-        }}
+        className={styles.dragHandle}
       >
-        <DragIcon color="action" />
-      </Box>
-      <ListItemText
-        primary={
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Typography variant="body1" component="span" fontWeight={500}>
-              {rule.name}
-            </Typography>
-            {!rule.enabled && (
-              <Chip label="Disabled" size="small" color="default" />
-            )}
-            {rule.bankAccountId === null && (
-              <Chip label="Global" size="small" color="primary" />
-            )}
-          </Box>
-        }
-        secondary={
-          <Box sx={{ mt: 0.5 }}>
-            <Typography variant="caption" display="block" color="text.secondary">
-              {parseConditions()}
-            </Typography>
-            {(rule.propertyId || rule.type || rule.category) && (
-              <Box sx={{ display: 'flex', gap: 1, mt: 0.5, flexWrap: 'wrap' }}>
-                {rule.type && (
-                  <Chip
-                    label={rule.type === 'INCOME' ? 'Income' : 'Expense'}
-                    size="small"
-                    variant="outlined"
-                  />
-                )}
-                {rule.category && (
-                  <Chip label={rule.category} size="small" variant="outlined" />
-                )}
-              </Box>
-            )}
-          </Box>
-        }
-      />
-    </ListItem>
+        <GripVertical size={20} />
+      </div>
+      <div className={styles.ruleContent}>
+        <div className={styles.ruleName}>
+          <span className={styles.ruleNameText}>{rule.name}</span>
+          {!rule.enabled && (
+            <Chip label="Disabled" size="small" color="default" />
+          )}
+          {rule.bankAccountId === null && (
+            <Chip label="Global" size="small" color="primary" />
+          )}
+        </div>
+        <div className={styles.ruleDetails}>
+          <span className={styles.ruleConditions}>{parseConditions()}</span>
+          {(rule.propertyId || rule.type || rule.category) && (
+            <div className={styles.ruleChips}>
+              {rule.type && (
+                <Chip
+                  label={rule.type === 'INCOME' ? 'Income' : 'Expense'}
+                  size="small"
+                />
+              )}
+              {rule.category && (
+                <Chip label={rule.category} size="small" />
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+      <div className={styles.ruleActions}>
+        <Tooltip content="Edit">
+          <Button variant="icon" size="small" onClick={() => onEdit(rule)}>
+            <Pencil size={16} />
+          </Button>
+        </Tooltip>
+        <Tooltip content="Delete">
+          <Button
+            variant="icon"
+            size="small"
+            onClick={() => onDelete(rule)}
+            disabled={rule.bankAccountId === null}
+          >
+            <Trash2 size={16} />
+          </Button>
+        </Tooltip>
+      </div>
+    </div>
   );
 };
 
@@ -397,16 +359,9 @@ export const BankAccountRules: React.FC = () => {
   if (loading) {
     return (
       <Container maxWidth="lg">
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            minHeight: 400,
-          }}
-        >
-          <CircularProgress />
-        </Box>
+        <div className={styles.loadingWrapper}>
+          <Spinner />
+        </div>
       </Container>
     );
   }
@@ -414,70 +369,56 @@ export const BankAccountRules: React.FC = () => {
   if (error) {
     return (
       <Container maxWidth="lg">
-        <Box sx={{ mb: 4 }}>
-          <Typography variant="h4" component="h1" gutterBottom>
-            Matching Rules
-          </Typography>
-          <Alert severity="error">{error}</Alert>
-        </Box>
+        <div className={styles.page}>
+          <h1 className={styles.title}>Matching Rules</h1>
+          <div className={styles.alert}>{error}</div>
+        </div>
       </Container>
     );
   }
 
   return (
     <Container maxWidth="lg">
-      <Box sx={{ mb: 4 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 2 }}>
-          <IconButton onClick={() => navigate('/admin/bank-accounts')}>
-            <BackIcon />
-          </IconButton>
-          <Typography variant="h4" component="h1">
-            Matching Rules
-          </Typography>
-        </Box>
+      <div className={styles.page}>
+        <div className={styles.headerRow}>
+          <Button variant="icon" onClick={() => navigate('/admin/bank-accounts')}>
+            <ArrowLeft size={20} />
+          </Button>
+          <h1 className={styles.title}>Matching Rules</h1>
+        </div>
 
         {!editorOpen ? (
           <>
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                mb: 3,
-              }}
-            >
-              <Typography variant="body2" color="text.secondary">
+            <div className={styles.subheader}>
+              <p className={styles.description}>
                 Create rules to automatically categorize and assign transactions.
                 Rules are evaluated in priority order (drag to reorder).
-              </Typography>
+              </p>
               <Button
-                variant="contained"
-                color="primary"
-                startIcon={<AddIcon />}
+                variant="primary"
+                startIcon={<Plus size={18} />}
                 onClick={handleCreateRule}
               >
                 Create Rule
               </Button>
-            </Box>
+            </div>
 
             {rules.length === 0 ? (
-              <Paper sx={{ p: 4, textAlign: 'center' }}>
-                <Typography variant="h6" color="text.secondary" gutterBottom>
-                  No rules configured
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              <div className={styles.emptyCard}>
+                <h2 className={styles.emptyTitle}>No rules configured</h2>
+                <p className={styles.emptyText}>
                   Create your first rule to start automatically categorizing transactions.
-                </Typography>
+                </p>
                 <Button
-                  variant="contained"
-                  startIcon={<AddIcon />}
+                  variant="primary"
+                  startIcon={<Plus size={18} />}
                   onClick={handleCreateRule}
                 >
                   Create Your First Rule
                 </Button>
-              </Paper>
+              </div>
             ) : (
-              <Paper sx={{ p: 2 }}>
+              <div className={styles.rulesCard}>
                 <DndContext
                   sensors={sensors}
                   collisionDetection={closestCenter}
@@ -487,19 +428,17 @@ export const BankAccountRules: React.FC = () => {
                     items={rules.map((r) => r.id)}
                     strategy={verticalListSortingStrategy}
                   >
-                    <List>
-                      {rules.map((rule) => (
-                        <SortableRuleItem
-                          key={rule.id}
-                          rule={rule}
-                          onEdit={handleEditRule}
-                          onDelete={handleDeleteClick}
-                        />
-                      ))}
-                    </List>
+                    {rules.map((rule) => (
+                      <SortableRuleItem
+                        key={rule.id}
+                        rule={rule}
+                        onEdit={handleEditRule}
+                        onDelete={handleDeleteClick}
+                      />
+                    ))}
                   </SortableContext>
                 </DndContext>
-              </Paper>
+              </div>
             )}
           </>
         ) : (
@@ -523,59 +462,42 @@ export const BankAccountRules: React.FC = () => {
             properties={properties.map((p) => ({ id: p.id, name: p.name }))}
           />
         )}
-      </Box>
+      </div>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog
+      <ConfirmDialog
         open={deleteDialogOpen}
-        onClose={() => !deleteLoading && setDeleteDialogOpen(false)}
-      >
-        <DialogTitle>Delete Rule</DialogTitle>
-        <DialogContent>
-          <Typography>
-            Are you sure you want to delete the rule "{ruleToDelete?.name}"? This action
-            cannot be undone.
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)} disabled={deleteLoading}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleDeleteConfirm}
-            color="error"
-            variant="contained"
-            disabled={deleteLoading}
-          >
-            {deleteLoading ? <CircularProgress size={24} /> : 'Delete'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        title="Delete Rule"
+        message={`Are you sure you want to delete the rule "${ruleToDelete?.name}"? This action cannot be undone.`}
+        severity="danger"
+        confirmLabel={deleteLoading ? 'Deleting...' : 'Delete'}
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => !deleteLoading && setDeleteDialogOpen(false)}
+      />
 
       {/* Test Rule Dialog */}
       <Dialog
         open={testDialogOpen}
         onClose={() => !testLoading && setTestDialogOpen(false)}
-        maxWidth="sm"
-        fullWidth
+        size="medium"
       >
-        <DialogTitle>Test Rule</DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+        <Dialog.Title>Test Rule</Dialog.Title>
+        <Dialog.Content>
+          <div className={styles.testForm}>
             <TextField
               label="Description"
               value={testData.description}
               onChange={(e) =>
-                setTestData({ ...testData, description: e.target.value })
+                setTestData({ ...testData, description: (e.target as HTMLInputElement).value })
               }
               fullWidth
               required
             />
             <TextField
               label="Amount"
-              value={testData.amount}
+              value={String(testData.amount)}
               onChange={(e) =>
-                setTestData({ ...testData, amount: Number(e.target.value) || 0 })
+                setTestData({ ...testData, amount: Number((e.target as HTMLInputElement).value) || 0 })
               }
               type="number"
               fullWidth
@@ -585,64 +507,69 @@ export const BankAccountRules: React.FC = () => {
               label="Counterparty Name"
               value={testData.counterpartyName}
               onChange={(e) =>
-                setTestData({ ...testData, counterpartyName: e.target.value })
+                setTestData({ ...testData, counterpartyName: (e.target as HTMLInputElement).value })
               }
               fullWidth
             />
             <TextField
               label="Merchant"
               value={testData.merchant}
-              onChange={(e) => setTestData({ ...testData, merchant: e.target.value })}
+              onChange={(e) => setTestData({ ...testData, merchant: (e.target as HTMLInputElement).value })}
               fullWidth
             />
             <TextField
               label="Reference"
               value={testData.reference}
-              onChange={(e) => setTestData({ ...testData, reference: e.target.value })}
+              onChange={(e) => setTestData({ ...testData, reference: (e.target as HTMLInputElement).value })}
               fullWidth
             />
 
             {testResult && (
               <>
-                <Divider sx={{ my: 1 }} />
-                <Alert
-                  severity={testResult.matches ? 'success' : 'info'}
-                  icon={testResult.matches ? <CheckIcon /> : <CloseIcon />}
+                <Divider spacing={1} />
+                <div
+                  className={`${styles.testResult} ${
+                    testResult.matches ? styles.testResultSuccess : styles.testResultInfo
+                  }`}
                 >
-                  <Typography variant="subtitle2" gutterBottom>
-                    {testResult.matches ? 'Rule matches!' : 'Rule does not match'}
-                  </Typography>
-                  {testResult.matches && testResult.result && (
-                    <Box sx={{ mt: 1 }}>
-                      {testResult.result.suggestedType && (
-                        <Typography variant="body2">
-                          Type: {testResult.result.suggestedType}
-                        </Typography>
-                      )}
-                      {testResult.result.suggestedCategory && (
-                        <Typography variant="body2">
-                          Category: {testResult.result.suggestedCategory}
-                        </Typography>
-                      )}
-                    </Box>
-                  )}
-                </Alert>
+                  {testResult.matches ? <Check size={20} /> : <X size={20} />}
+                  <div>
+                    <p className={styles.testResultTitle}>
+                      {testResult.matches ? 'Rule matches!' : 'Rule does not match'}
+                    </p>
+                    {testResult.matches && testResult.result && (
+                      <div className={styles.testResultDetails}>
+                        {testResult.result.suggestedType && (
+                          <p className={styles.testResultDetail}>
+                            Type: {testResult.result.suggestedType}
+                          </p>
+                        )}
+                        {testResult.result.suggestedCategory && (
+                          <p className={styles.testResultDetail}>
+                            Category: {testResult.result.suggestedCategory}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
               </>
             )}
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setTestDialogOpen(false)} disabled={testLoading}>
+          </div>
+        </Dialog.Content>
+        <Dialog.Actions>
+          <Button variant="text" onClick={() => setTestDialogOpen(false)} disabled={testLoading}>
             Close
           </Button>
           <Button
+            variant="primary"
             onClick={handleRunTest}
-            variant="contained"
             disabled={testLoading || !testData.description}
+            loading={testLoading}
           >
-            {testLoading ? <CircularProgress size={24} /> : 'Test'}
+            Test
           </Button>
-        </DialogActions>
+        </Dialog.Actions>
       </Dialog>
     </Container>
   );
