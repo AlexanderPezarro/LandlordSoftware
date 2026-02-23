@@ -29,6 +29,7 @@
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.71.0",
     "react-router-dom": "^7.12.0",
+    "sass": "^1.97.3",
     "zod": "^4.3.5"
   },
   "devDependencies": {
