@@ -1,0 +1,74 @@
+@use '../../../styles/variables' as *;
+
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.toast {
+  position: fixed;
+  bottom: $spacing-6;
+  right: $spacing-6;
+  z-index: $z-index-snackbar;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  border-radius: $radius-sm;
+  padding: $spacing-3 $spacing-4;
+  color: #ffffff;
+  box-shadow: $shadow-4;
+  animation: slideInFromRight $transition-duration $transition-easing;
+}
+
+.icon {
+  flex-shrink: 0;
+  margin-right: $spacing-3;
+}
+
+.message {
+  flex: 1;
+  font-size: $font-size-body2;
+  line-height: $line-height-body2;
+}
+
+.close {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: $spacing-3;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: opacity $transition-duration $transition-easing;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
+// Severity background colors
+.success {
+  background-color: $color-success;
+}
+
+.error {
+  background-color: $color-error;
+}
+
+.warning {
+  background-color: $color-warning;
+}
+
+.info {
+  background-color: $color-info;
+}
