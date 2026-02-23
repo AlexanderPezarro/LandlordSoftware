@@ -1,32 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Container,
-  Typography,
-  Box,
-  Paper,
-  Card,
-  CardContent,
-  Button,
-  CircularProgress,
-  Alert,
-  List,
-  ListItem,
-  ListItemText,
-  Divider,
-  Chip,
-  Pagination,
-} from '@mui/material';
-import {
-  Home as HomeIcon,
-  TrendingUp as TrendingUpIcon,
-  TrendingDown as TrendingDownIcon,
-  AccountBalance as AccountBalanceIcon,
-  Add as AddIcon,
-  PersonAdd as PersonAddIcon,
-  AddBusiness as AddBusinessIcon,
-  Event as EventIcon,
-} from '@mui/icons-material';
+  Home,
+  TrendingUp,
+  TrendingDown,
+  Landmark,
+  Building2,
+  UserPlus,
+  Plus,
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react';
+import { Container } from '../components/primitives/Container';
+import { Card } from '../components/primitives/Card';
+import { Button } from '../components/primitives/Button';
+import { Chip } from '../components/primitives/Chip';
+import { Divider } from '../components/primitives/Divider';
+import { Spinner } from '../components/primitives/Spinner';
 import { api } from '../services/api';
 import {
   Transaction,
@@ -37,6 +28,7 @@ import {
   EventsResponse,
 } from '../types/api.types';
 import { ApiError } from '../types/api.types';
+import styles from './Dashboard.module.scss';
 
 interface DashboardData {
   propertiesCount: number;
@@ -142,16 +134,16 @@ export const Dashboard: React.FC = () => {
     transactionPage * transactionsPerPage
   );
 
-  const handleTransactionPageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
-    setTransactionPage(value);
+  const handleTransactionPageChange = (page: number) => {
+    setTransactionPage(page);
   };
 
   if (loading) {
     return (
       <Container maxWidth="lg">
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
-          <CircularProgress />
-        </Box>
+        <div className={styles.loadingWrapper}>
+          <Spinner size="large" />
+        </div>
       </Container>
     );
   }
@@ -159,289 +151,236 @@ export const Dashboard: React.FC = () => {
   if (error) {
     return (
       <Container maxWidth="lg">
-        <Box sx={{ mb: 4 }}>
-          <Typography variant="h4" component="h1" gutterBottom>
-            Dashboard
-          </Typography>
-          <Alert severity="error">{error}</Alert>
-        </Box>
+        <div className={styles.page}>
+          <h1 className={styles.title}>Dashboard</h1>
+          <div className={styles.alert}>{error}</div>
+        </div>
       </Container>
     );
   }
 
   return (
     <Container maxWidth="lg">
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Dashboard
-        </Typography>
+      <div className={styles.page}>
+        <h1 className={styles.title}>Dashboard</h1>
 
         {/* Overview Cards */}
-        {/* Note: Using CSS Grid instead of MUI Grid for MUI v7 compatibility (Grid component deprecated in v7) */}
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: {
-              xs: '1fr',
-              sm: 'repeat(2, 1fr)',
-              md: 'repeat(4, 1fr)',
-            },
-            gap: 3,
-            mb: 4,
-          }}
-        >
+        <div className={styles.statsGrid}>
           {/* Properties Count Card */}
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <HomeIcon sx={{ fontSize: 40, color: 'primary.main', mr: 2 }} />
-                <Box>
-                  <Typography color="text.secondary" variant="body2">
-                    Properties
-                  </Typography>
-                  <Typography variant="h4">{data.propertiesCount}</Typography>
-                </Box>
-              </Box>
-            </CardContent>
+          <Card className={styles.statCard}>
+            <Card.Content>
+              <div className={styles.statCardInner}>
+                <Home size={40} className={`${styles.statIcon} ${styles.statIconPrimary}`} />
+                <div>
+                  <span className={styles.statLabel}>Properties</span>
+                  <span className={styles.statValueH4}>{data.propertiesCount}</span>
+                </div>
+              </div>
+            </Card.Content>
           </Card>
 
           {/* Income Card */}
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <TrendingUpIcon sx={{ fontSize: 40, color: 'success.main', mr: 2 }} />
-                <Box>
-                  <Typography color="text.secondary" variant="body2">
-                    Income (This Month)
-                  </Typography>
-                  <Typography variant="h5">{formatCurrency(data.income)}</Typography>
-                </Box>
-              </Box>
-            </CardContent>
+          <Card className={styles.statCard}>
+            <Card.Content>
+              <div className={styles.statCardInner}>
+                <TrendingUp size={40} className={`${styles.statIcon} ${styles.statIconSuccess}`} />
+                <div>
+                  <span className={styles.statLabel}>Income (This Month)</span>
+                  <span className={styles.statValueH5}>{formatCurrency(data.income)}</span>
+                </div>
+              </div>
+            </Card.Content>
           </Card>
 
           {/* Expenses Card */}
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <TrendingDownIcon sx={{ fontSize: 40, color: 'error.main', mr: 2 }} />
-                <Box>
-                  <Typography color="text.secondary" variant="body2">
-                    Expenses (This Month)
-                  </Typography>
-                  <Typography variant="h5">{formatCurrency(data.expenses)}</Typography>
-                </Box>
-              </Box>
-            </CardContent>
+          <Card className={styles.statCard}>
+            <Card.Content>
+              <div className={styles.statCardInner}>
+                <TrendingDown size={40} className={`${styles.statIcon} ${styles.statIconError}`} />
+                <div>
+                  <span className={styles.statLabel}>Expenses (This Month)</span>
+                  <span className={styles.statValueH5}>{formatCurrency(data.expenses)}</span>
+                </div>
+              </div>
+            </Card.Content>
           </Card>
 
           {/* Net Card */}
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <AccountBalanceIcon sx={{ fontSize: 40, color: 'primary.main', mr: 2 }} />
-                <Box>
-                  <Typography color="text.secondary" variant="body2">
-                    Net (This Month)
-                  </Typography>
-                  <Typography
-                    variant="h5"
-                    sx={{
-                      color: data.net >= 0 ? 'success.main' : 'error.main',
-                    }}
+          <Card className={styles.statCard}>
+            <Card.Content>
+              <div className={styles.statCardInner}>
+                <Landmark size={40} className={`${styles.statIcon} ${styles.statIconPrimary}`} />
+                <div>
+                  <span className={styles.statLabel}>Net (This Month)</span>
+                  <span
+                    className={`${styles.statValueH5} ${data.net >= 0 ? styles.netPositive : styles.netNegative}`}
                   >
                     {formatCurrency(data.net)}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
+                  </span>
+                </div>
+              </div>
+            </Card.Content>
           </Card>
-        </Box>
+        </div>
 
         {/* Quick Actions */}
-        <Paper sx={{ p: 3, mb: 4 }}>
-          <Typography variant="h6" gutterBottom>
-            Quick Actions
-          </Typography>
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: {
-                xs: '1fr',
-                sm: 'repeat(2, 1fr)',
-                md: 'repeat(4, 1fr)',
-              },
-              gap: 2,
-            }}
-          >
+        <div className={styles.quickActions}>
+          <h2 className={styles.quickActionsTitle}>Quick Actions</h2>
+          <div className={styles.quickActionsGrid}>
             <Button
-              variant="contained"
-              color="primary"
+              variant="primary"
               fullWidth
-              startIcon={<AddBusinessIcon />}
+              startIcon={<Building2 size={18} />}
               onClick={() => navigate('/properties')}
             >
               Add Property
             </Button>
             <Button
-              variant="contained"
-              color="primary"
+              variant="primary"
               fullWidth
-              startIcon={<PersonAddIcon />}
+              startIcon={<UserPlus size={18} />}
               onClick={() => navigate('/tenants')}
             >
               Add Tenant
             </Button>
             <Button
-              variant="contained"
-              color="primary"
+              variant="primary"
               fullWidth
-              startIcon={<AddIcon />}
+              startIcon={<Plus size={18} />}
               onClick={() => navigate('/transactions')}
             >
               Add Transaction
             </Button>
             <Button
-              variant="contained"
-              color="primary"
+              variant="primary"
               fullWidth
-              startIcon={<EventIcon />}
+              startIcon={<Calendar size={18} />}
               onClick={() => navigate('/events')}
             >
               Add Event
             </Button>
-          </Box>
-        </Paper>
+          </div>
+        </div>
 
         {/* Two Column Layout for Events and Transactions */}
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: {
-              xs: '1fr',
-              md: 'repeat(2, 1fr)',
-            },
-            gap: 3,
-          }}
-        >
+        <div className={styles.twoColumnGrid}>
           {/* Upcoming Events */}
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom>
-              Upcoming Events
-            </Typography>
+          <div className={styles.sectionPanel}>
+            <h2 className={styles.sectionTitle}>Upcoming Events</h2>
             {data.upcomingEvents.length === 0 ? (
-              <Typography color="text.secondary" sx={{ mt: 2 }}>
-                No upcoming events
-              </Typography>
+              <p className={styles.emptyText}>No upcoming events</p>
             ) : (
-              <List>
+              <div>
                 {data.upcomingEvents.map((event, index) => (
                   <React.Fragment key={event.id}>
                     {index > 0 && <Divider />}
-                    <ListItem sx={{ px: 0 }}>
-                      <ListItemText
-                        primary={
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Chip
-                              label={event.eventType}
-                              size="small"
-                              color="primary"
-                              variant="outlined"
-                            />
-                            <Typography variant="body2">
-                              {formatDate(event.scheduledDate)}
-                            </Typography>
-                          </Box>
-                        }
-                        secondary={event.description || 'No description'}
-                      />
-                    </ListItem>
+                    <div className={styles.listItem}>
+                      <div className={styles.eventPrimary}>
+                        <Chip
+                          label={event.eventType}
+                          size="small"
+                          color="primary"
+                        />
+                        <span className={styles.eventDate}>
+                          {formatDate(event.scheduledDate)}
+                        </span>
+                      </div>
+                      <div className={styles.eventDescription}>
+                        {event.description || 'No description'}
+                      </div>
+                    </div>
                   </React.Fragment>
                 ))}
-              </List>
+              </div>
             )}
-          </Paper>
+          </div>
 
           {/* Recent Transactions */}
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom>
-              Recent Transactions
-            </Typography>
+          <div className={styles.sectionPanel}>
+            <h2 className={styles.sectionTitle}>Recent Transactions</h2>
             {data.recentTransactions.length === 0 ? (
-              <Typography color="text.secondary" sx={{ mt: 2 }}>
-                No recent transactions
-              </Typography>
+              <p className={styles.emptyText}>No recent transactions</p>
             ) : (
               <>
-                <List>
+                <div>
                   {paginatedTransactions.map((transaction, index) => (
                     <React.Fragment key={transaction.id}>
                       {index > 0 && <Divider />}
-                      <ListItem sx={{ px: 0 }}>
-                        <ListItemText
-                          primary={
-                            <Box
-                              sx={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                              }}
-                            >
-                              <Box>
-                                <Chip
-                                  label={transaction.type}
-                                  size="small"
-                                  color={transaction.type === 'Income' ? 'success' : 'error'}
-                                  sx={{ mr: 1 }}
-                                />
-                                <Typography variant="body2" component="span">
-                                  {transaction.category}
-                                </Typography>
-                              </Box>
-                              <Typography
-                                variant="body1"
-                                fontWeight="bold"
-                                sx={{
-                                  color:
-                                    transaction.type === 'Income' ? 'success.main' : 'error.main',
-                                }}
-                              >
-                                {transaction.type === 'Income' ? '+' : '-'}
-                                {formatCurrency(transaction.amount)}
-                              </Typography>
-                            </Box>
-                          }
-                          secondary={
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5 }}>
-                              <Typography variant="caption">
-                                {transaction.description || 'No description'}
-                              </Typography>
-                              <Typography variant="caption">
-                                {formatDate(transaction.transactionDate)}
-                              </Typography>
-                            </Box>
-                          }
-                          slotProps={{ secondary: { component: 'div' } }}
-                        />
-                      </ListItem>
+                      <div className={styles.listItem}>
+                        <div className={styles.transactionPrimary}>
+                          <div className={styles.transactionLeft}>
+                            <Chip
+                              label={transaction.type}
+                              size="small"
+                              color={transaction.type === 'Income' ? 'success' : 'error'}
+                            />
+                            <span className={styles.transactionCategory}>
+                              {transaction.category}
+                            </span>
+                          </div>
+                          <span
+                            className={`${styles.transactionAmount} ${
+                              transaction.type === 'Income'
+                                ? styles.amountIncome
+                                : styles.amountExpense
+                            }`}
+                          >
+                            {transaction.type === 'Income' ? '+' : '-'}
+                            {formatCurrency(transaction.amount)}
+                          </span>
+                        </div>
+                        <div className={styles.transactionSecondary}>
+                          <span className={styles.transactionDescription}>
+                            {transaction.description || 'No description'}
+                          </span>
+                          <span className={styles.transactionDate}>
+                            {formatDate(transaction.transactionDate)}
+                          </span>
+                        </div>
+                      </div>
                     </React.Fragment>
                   ))}
-                </List>
+                </div>
                 {totalTransactionPages > 1 && (
-                  <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-                    <Pagination
-                      count={totalTransactionPages}
-                      page={transactionPage}
-                      onChange={handleTransactionPageChange}
-                      color="primary"
-                    />
-                  </Box>
+                  <div className={styles.paginationWrapper}>
+                    <button
+                      className={styles.paginationButton}
+                      onClick={() => handleTransactionPageChange(transactionPage - 1)}
+                      disabled={transactionPage <= 1}
+                      aria-label="Previous page"
+                    >
+                      <ChevronLeft size={18} />
+                    </button>
+                    {Array.from({ length: totalTransactionPages }, (_, i) => i + 1).map(
+                      (page) => (
+                        <button
+                          key={page}
+                          className={`${styles.paginationButton} ${
+                            page === transactionPage ? styles.paginationButtonActive : ''
+                          }`}
+                          onClick={() => handleTransactionPageChange(page)}
+                          aria-label={`Page ${page}`}
+                          aria-current={page === transactionPage ? 'page' : undefined}
+                        >
+                          {page}
+                        </button>
+                      )
+                    )}
+                    <button
+                      className={styles.paginationButton}
+                      onClick={() => handleTransactionPageChange(transactionPage + 1)}
+                      disabled={transactionPage >= totalTransactionPages}
+                      aria-label="Next page"
+                    >
+                      <ChevronRight size={18} />
+                    </button>
+                  </div>
                 )}
               </>
             )}
-          </Paper>
-        </Box>
-      </Box>
+          </div>
+        </div>
+      </div>
     </Container>
   );
 };

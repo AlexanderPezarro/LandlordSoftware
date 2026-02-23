@@ -1,0 +1,205 @@
+@use '../styles/variables' as *;
+@use '../styles/mixins' as *;
+
+// ---------------------------------------------------------------------------
+// Page Layout
+// ---------------------------------------------------------------------------
+
+.page {
+  margin-bottom: $spacing-8;
+}
+
+// ---------------------------------------------------------------------------
+// Page Header
+// ---------------------------------------------------------------------------
+
+.pageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-6;
+}
+
+.pageTitle {
+  font-size: $font-size-h4;
+  font-weight: $font-weight-regular;
+  line-height: $line-height-h4;
+  letter-spacing: $letter-spacing-h4;
+  color: $color-text-primary;
+  margin: 0;
+}
+
+// ---------------------------------------------------------------------------
+// Error Alert
+// ---------------------------------------------------------------------------
+
+.errorAlert {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: $spacing-3 $spacing-4;
+  border-radius: $radius-sm;
+  font-size: $font-size-body2;
+  line-height: $line-height-body2;
+  margin-bottom: $spacing-4;
+  background-color: rgba($color-error, 0.1);
+  color: darken($color-error, 5%);
+}
+
+.errorAlertText {
+  flex: 1;
+}
+
+.errorAlertClose {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  padding: $spacing-1;
+  display: flex;
+  align-items: center;
+  border-radius: $radius-sm;
+
+  &:hover {
+    background-color: rgba($color-error, 0.15);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Filters Section
+// ---------------------------------------------------------------------------
+
+.filtersCard {
+  margin-bottom: $spacing-6;
+}
+
+.filtersTitle {
+  font-size: $font-size-body2;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+  margin: 0 0 $spacing-4;
+}
+
+.filtersContent {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+}
+
+.filterRow {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+
+  @include respond-to(md) {
+    flex-direction: row;
+  }
+}
+
+.filterField {
+  flex: 1;
+  min-width: 0;
+}
+
+.clearFiltersRow {
+  display: flex;
+  justify-content: flex-end;
+}
+
+// ---------------------------------------------------------------------------
+// Calendar Toolbar / Controls
+// ---------------------------------------------------------------------------
+
+.controlsCard {
+  margin-bottom: $spacing-4;
+}
+
+.controlsRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: $spacing-2;
+}
+
+.eventsCount {
+  font-size: $font-size-body2;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+  margin: 0;
+}
+
+.viewControls {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  flex-wrap: wrap;
+}
+
+.refreshButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-1;
+  background: none;
+  border: 1px solid $color-divider;
+  border-radius: $radius-sm;
+  color: $color-text-secondary;
+  cursor: pointer;
+  transition: background-color $transition-duration $transition-easing,
+              color $transition-duration $transition-easing;
+
+  &:hover:not(:disabled) {
+    background-color: rgba($color-text-primary, 0.04);
+    color: $color-text-primary;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Calendar Container
+// ---------------------------------------------------------------------------
+
+.calendarCard {
+  // No extra styles; height is controlled by .calendarWrapper inside
+}
+
+.calendarWrapper {
+  padding: $spacing-4;
+  height: 500px;
+
+  @include respond-to(md) {
+    height: 700px;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Loading State
+// ---------------------------------------------------------------------------
+
+.loadingContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
+
+// ---------------------------------------------------------------------------
+// EventComponent (inline calendar event)
+// ---------------------------------------------------------------------------
+
+.eventInner {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  overflow: hidden;
+}
+
+.eventCompleted {
+  font-size: $font-size-caption;
+  margin-left: $spacing-1;
+}

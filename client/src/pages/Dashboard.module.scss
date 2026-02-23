@@ -1,0 +1,336 @@
+@use '../styles/variables' as *;
+@use '../styles/mixins' as *;
+
+// ---------------------------------------------------------------------------
+// Layout
+// ---------------------------------------------------------------------------
+
+.page {
+  margin-bottom: $spacing-8;
+}
+
+.title {
+  font-size: $font-size-h4;
+  font-weight: $font-weight-regular;
+  line-height: $line-height-h4;
+  letter-spacing: $letter-spacing-h4;
+  color: $color-text-primary;
+  margin: 0 0 $spacing-4;
+}
+
+// ---------------------------------------------------------------------------
+// Loading & Error states
+// ---------------------------------------------------------------------------
+
+.loadingWrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
+
+.alert {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  width: 100%;
+  padding: $spacing-3 $spacing-4;
+  border-radius: $radius-sm;
+  font-size: $font-size-body2;
+  line-height: $line-height-body2;
+  margin-top: $spacing-4;
+  background-color: rgba($color-error, 0.1);
+  color: darken($color-error, 5%);
+}
+
+// ---------------------------------------------------------------------------
+// Stats Cards Grid
+// ---------------------------------------------------------------------------
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: $spacing-6;
+  margin-bottom: $spacing-8;
+
+  @include respond-to(sm) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @include respond-to(md) {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Stats Card (custom layout with icon + text)
+// ---------------------------------------------------------------------------
+
+.statCard {
+  height: 100%;
+}
+
+.statCardInner {
+  display: flex;
+  align-items: center;
+  gap: $spacing-4;
+}
+
+.statIcon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.statIconPrimary {
+  color: $color-primary;
+}
+
+.statIconSuccess {
+  color: $color-success;
+}
+
+.statIconError {
+  color: $color-error;
+}
+
+.statLabel {
+  display: block;
+  font-size: $font-size-body2;
+  line-height: $line-height-body2;
+  letter-spacing: $letter-spacing-body2;
+  color: $color-text-secondary;
+}
+
+.statValueH4 {
+  display: block;
+  font-size: $font-size-h4;
+  font-weight: $font-weight-regular;
+  line-height: $line-height-h4;
+  letter-spacing: $letter-spacing-h4;
+  color: $color-text-primary;
+}
+
+.statValueH5 {
+  display: block;
+  font-size: $font-size-h5;
+  font-weight: $font-weight-regular;
+  line-height: $line-height-h5;
+  letter-spacing: $letter-spacing-h5;
+  color: $color-text-primary;
+}
+
+.netPositive {
+  color: $color-success;
+}
+
+.netNegative {
+  color: $color-error;
+}
+
+// ---------------------------------------------------------------------------
+// Quick Actions
+// ---------------------------------------------------------------------------
+
+.quickActions {
+  background: $color-paper;
+  border-radius: $radius-sm;
+  box-shadow: $shadow-1;
+  padding: $spacing-6;
+  margin-bottom: $spacing-8;
+}
+
+.quickActionsTitle {
+  font-size: $font-size-h6;
+  font-weight: $font-weight-medium;
+  line-height: $line-height-h6;
+  letter-spacing: $letter-spacing-h6;
+  color: $color-text-primary;
+  margin: 0 0 $spacing-4;
+}
+
+.quickActionsGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: $spacing-4;
+
+  @include respond-to(sm) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @include respond-to(md) {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Two Column Layout (Events + Transactions)
+// ---------------------------------------------------------------------------
+
+.twoColumnGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: $spacing-6;
+
+  @include respond-to(md) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Section Panel (Events / Transactions)
+// ---------------------------------------------------------------------------
+
+.sectionPanel {
+  background: $color-paper;
+  border-radius: $radius-sm;
+  box-shadow: $shadow-1;
+  padding: $spacing-6;
+}
+
+.sectionTitle {
+  font-size: $font-size-h6;
+  font-weight: $font-weight-medium;
+  line-height: $line-height-h6;
+  letter-spacing: $letter-spacing-h6;
+  color: $color-text-primary;
+  margin: 0 0 $spacing-4;
+}
+
+.emptyText {
+  font-size: $font-size-body1;
+  line-height: $line-height-body1;
+  color: $color-text-secondary;
+  margin-top: $spacing-4;
+}
+
+// ---------------------------------------------------------------------------
+// Event list items
+// ---------------------------------------------------------------------------
+
+.listItem {
+  padding: $spacing-3 0;
+}
+
+.eventPrimary {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+}
+
+.eventDate {
+  font-size: $font-size-body2;
+  line-height: $line-height-body2;
+  color: $color-text-primary;
+}
+
+.eventDescription {
+  font-size: $font-size-body2;
+  line-height: $line-height-body2;
+  color: $color-text-secondary;
+  margin-top: $spacing-1;
+}
+
+// ---------------------------------------------------------------------------
+// Transaction list items
+// ---------------------------------------------------------------------------
+
+.transactionPrimary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.transactionLeft {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+}
+
+.transactionCategory {
+  font-size: $font-size-body2;
+  line-height: $line-height-body2;
+  color: $color-text-primary;
+}
+
+.transactionAmount {
+  font-size: $font-size-body1;
+  line-height: $line-height-body1;
+  font-weight: $font-weight-bold;
+}
+
+.amountIncome {
+  color: $color-success;
+}
+
+.amountExpense {
+  color: $color-error;
+}
+
+.transactionSecondary {
+  display: flex;
+  justify-content: space-between;
+  margin-top: $spacing-1;
+}
+
+.transactionDescription {
+  font-size: $font-size-caption;
+  line-height: $line-height-caption;
+  color: $color-text-secondary;
+}
+
+.transactionDate {
+  font-size: $font-size-caption;
+  line-height: $line-height-caption;
+  color: $color-text-secondary;
+}
+
+// ---------------------------------------------------------------------------
+// Pagination
+// ---------------------------------------------------------------------------
+
+.paginationWrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: $spacing-2;
+  margin-top: $spacing-4;
+}
+
+.paginationButton {
+  min-width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: $radius-full;
+  background: transparent;
+  font-size: $font-size-body2;
+  color: $color-text-primary;
+  cursor: pointer;
+  transition: background-color $transition-duration $transition-easing;
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.04);
+  }
+
+  &:disabled {
+    color: $color-text-disabled;
+    cursor: default;
+
+    &:hover {
+      background-color: transparent;
+    }
+  }
+}
+
+.paginationButtonActive {
+  background-color: $color-primary;
+  color: $color-primary-contrast;
+
+  &:hover {
+    background-color: $color-primary-dark;
+  }
+}
