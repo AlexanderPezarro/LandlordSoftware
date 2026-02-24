@@ -78,6 +78,11 @@
   transition: color $transition-duration $transition-easing,
     border-color $transition-duration $transition-easing;
 
+  @include respond-down(sm) {
+    padding: $spacing-2 $spacing-3;
+    font-size: $font-size-caption;
+  }
+
   &:hover {
     color: $color-primary;
   }
@@ -91,6 +96,10 @@
 .tabIcon {
   display: inline-flex;
   align-items: center;
+
+  @include respond-down(sm) {
+    display: none;
+  }
 }
 
 // Tab panels
@@ -236,6 +245,10 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: $spacing-4;
+
+  @include respond-down(sm) {
+    grid-template-columns: 1fr;
+  }
 }
 
 // Chip - outlined variant

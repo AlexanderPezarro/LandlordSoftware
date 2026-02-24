@@ -13,6 +13,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: $spacing-3;
   margin-bottom: $spacing-6;
 }
 
@@ -187,6 +189,10 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: $spacing-4;
+
+  @include respond-down(sm) {
+    grid-template-columns: 1fr;
+  }
 }
 
 // ---------------------------------------------------------------------------

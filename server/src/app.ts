@@ -41,7 +41,8 @@ export function createApp() {
 
   // Trust proxy - required for Fly.io and other reverse proxies
   // This allows Express to correctly read X-Forwarded-* headers
-  app.set('trust proxy', true);
+  // Use 1 (single hop) instead of true to satisfy express-rate-limit validation
+  app.set('trust proxy', 1);
 
   // Compression middleware for production
   app.use(compression());

@@ -8,8 +8,12 @@
 
 .main {
   flex-grow: 1;
-  padding: $spacing-6;
+  padding: $spacing-4;
   margin-top: $appbar-height;
+
+  @include respond-to(sm) {
+    padding: $spacing-6;
+  }
 
   @include respond-to(md) {
     margin-left: $drawer-width;

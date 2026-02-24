@@ -315,7 +315,7 @@ describe('Transactions Routes', () => {
 
   describe('GET /api/transactions', () => {
     it('should return empty array when no transactions exist', async () => {
-      const response = await request(app).get('/api/transactions');
+      const response = await request(app).get('/api/transactions').set('Cookie', authCookies);
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -337,7 +337,7 @@ describe('Transactions Routes', () => {
         },
       });
 
-      const response = await request(app).get('/api/transactions');
+      const response = await request(app).get('/api/transactions').set('Cookie', authCookies);
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -378,6 +378,7 @@ describe('Transactions Routes', () => {
 
       const response = await request(app)
         .get('/api/transactions')
+        .set('Cookie', authCookies)
         .query({ property_id: testProperty.id });
 
       expect(response.status).toBe(200);
@@ -399,6 +400,7 @@ describe('Transactions Routes', () => {
 
       const response = await request(app)
         .get('/api/transactions')
+        .set('Cookie', authCookies)
         .query({ type: 'Income' });
 
       expect(response.status).toBe(200);
@@ -421,6 +423,7 @@ describe('Transactions Routes', () => {
 
       const response = await request(app)
         .get('/api/transactions')
+        .set('Cookie', authCookies)
         .query({ category: 'Rent' });
 
       expect(response.status).toBe(200);
@@ -446,6 +449,7 @@ describe('Transactions Routes', () => {
 
       const response = await request(app)
         .get('/api/transactions')
+        .set('Cookie', authCookies)
         .query({ from_date: '2024-01-20' });
 
       expect(response.status).toBe(200);
@@ -473,6 +477,7 @@ describe('Transactions Routes', () => {
 
       const response = await request(app)
         .get('/api/transactions')
+        .set('Cookie', authCookies)
         .query({ to_date: '2024-01-20' });
 
       expect(response.status).toBe(200);
@@ -507,6 +512,7 @@ describe('Transactions Routes', () => {
 
       const response = await request(app)
         .get('/api/transactions')
+        .set('Cookie', authCookies)
         .query({ from_date: '2024-01-10', to_date: '2024-01-20' });
 
       expect(response.status).toBe(200);
@@ -541,6 +547,7 @@ describe('Transactions Routes', () => {
 
       const response = await request(app)
         .get('/api/transactions')
+        .set('Cookie', authCookies)
         .query({
           property_id: testProperty.id,
           type: 'Income',
@@ -560,6 +567,7 @@ describe('Transactions Routes', () => {
     it('should reject invalid query parameters - invalid property_id', async () => {
       const response = await request(app)
         .get('/api/transactions')
+        .set('Cookie', authCookies)
         .query({ property_id: 'invalid-id' });
 
       expect(response.status).toBe(400);
@@ -570,6 +578,7 @@ describe('Transactions Routes', () => {
     it('should reject invalid query parameters - invalid type', async () => {
       const response = await request(app)
         .get('/api/transactions')
+        .set('Cookie', authCookies)
         .query({ type: 'InvalidType' });
 
       expect(response.status).toBe(400);
@@ -580,6 +589,7 @@ describe('Transactions Routes', () => {
     it('should reject invalid query parameters - invalid category', async () => {
       const response = await request(app)
         .get('/api/transactions')
+        .set('Cookie', authCookies)
         .query({ category: 'InvalidCategory' });
 
       expect(response.status).toBe(400);
@@ -590,7 +600,7 @@ describe('Transactions Routes', () => {
 
   describe('GET /api/transactions/summary', () => {
     it('should return summary with zero values when no transactions exist', async () => {
-      const response = await request(app).get('/api/transactions/summary');
+      const response = await request(app).get('/api/transactions/summary').set('Cookie', authCookies);
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -625,7 +635,7 @@ describe('Transactions Routes', () => {
         },
       });
 
-      const response = await request(app).get('/api/transactions/summary');
+      const response = await request(app).get('/api/transactions/summary').set('Cookie', authCookies);
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -667,6 +677,7 @@ describe('Transactions Routes', () => {
 
       const response = await request(app)
         .get('/api/transactions/summary')
+        .set('Cookie', authCookies)
         .query({ property_id: testProperty.id });
 
       expect(response.status).toBe(200);
@@ -698,6 +709,7 @@ describe('Transactions Routes', () => {
 
       const response = await request(app)
         .get('/api/transactions/summary')
+        .set('Cookie', authCookies)
         .query({ type: 'Income' });
 
       expect(response.status).toBe(200);
@@ -737,6 +749,7 @@ describe('Transactions Routes', () => {
 
       const response = await request(app)
         .get('/api/transactions/summary')
+        .set('Cookie', authCookies)
         .query({ from_date: '2024-01-12', to_date: '2024-01-20' });
 
       expect(response.status).toBe(200);
@@ -764,7 +777,7 @@ describe('Transactions Routes', () => {
         },
       });
 
-      const response = await request(app).get('/api/transactions/summary');
+      const response = await request(app).get('/api/transactions/summary').set('Cookie', authCookies);
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -1457,6 +1470,7 @@ describe('Transactions Routes', () => {
       // List transactions
       const listResponse = await request(app)
         .get('/api/transactions')
+        .set('Cookie', authCookies)
         .query({ property_id: propertyWithOwners.id });
 
       expect(listResponse.status).toBe(200);
@@ -1541,7 +1555,7 @@ describe('Transactions Routes', () => {
         });
 
       // List all
-      const listResponse = await request(app).get('/api/transactions');
+      const listResponse = await request(app).get('/api/transactions').set('Cookie', authCookies);
       expect(listResponse.status).toBe(200);
       expect(listResponse.body.transactions).toHaveLength(3);
 
@@ -1553,12 +1567,12 @@ describe('Transactions Routes', () => {
       }
 
       // Filter by type
-      const incomeResponse = await request(app).get('/api/transactions').query({ type: 'Income' });
+      const incomeResponse = await request(app).get('/api/transactions').set('Cookie', authCookies).query({ type: 'Income' });
       expect(incomeResponse.body.transactions).toHaveLength(2);
       expect(incomeResponse.body.transactions.every((t: any) => t.type === 'Income')).toBe(true);
 
       // Get summary
-      const summaryResponse = await request(app).get('/api/transactions/summary');
+      const summaryResponse = await request(app).get('/api/transactions/summary').set('Cookie', authCookies);
       expect(summaryResponse.status).toBe(200);
       expect(summaryResponse.body.summary).toEqual({
         total_income: 1300,
