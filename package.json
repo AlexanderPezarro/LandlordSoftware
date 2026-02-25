@@ -7,6 +7,7 @@
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
     "dev:server": "tsx server/src/server.ts",
     "dev:client": "cd client && npm run dev",
+    "storybook": "cd client && npm run storybook",
     "build": "npm run build:client && npm run build:server",
     "build:server": "tsc -p server/tsconfig.json",
     "build:client": "cd client && npm run build",
