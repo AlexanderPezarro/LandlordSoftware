@@ -84,6 +84,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: $spacing-3;
   padding: $spacing-4;
   border-radius: $radius-sm;
   background-color: rgba(0, 0, 0, 0.04);
@@ -93,6 +95,8 @@
   display: flex;
   align-items: center;
   gap: $spacing-4;
+  flex: 1;
+  min-width: 0;
 }
 
 .bankIcon {

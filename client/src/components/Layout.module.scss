@@ -8,6 +8,7 @@
 
 .main {
   flex-grow: 1;
+  min-width: 0;
   padding: $spacing-4;
   margin-top: $appbar-height;
 
