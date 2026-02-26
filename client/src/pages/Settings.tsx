@@ -1,51 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Container,
-  Typography,
-  Box,
-  Button,
-  Paper,
-  TextField,
-  CircularProgress,
-  Divider,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  FormHelperText,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Alert,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  IconButton,
-  Chip,
-  Tooltip,
-} from '@mui/material';
-import {
-  Add as AddIcon,
-  Delete as DeleteIcon,
-  AccountBalance as BankIcon,
-  CheckCircle as CheckCircleIcon,
-  Error as ErrorIcon,
-  Sync as SyncIcon,
-  Schedule as ScheduleIcon,
-  LinkOff as LinkOffIcon,
-} from '@mui/icons-material';
+  Plus,
+  Trash2,
+  Landmark,
+  CheckCircle,
+  AlertCircle,
+  RefreshCw,
+  Clock,
+  Unlink,
+  Info,
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { Container } from '../components/primitives/Container';
+import { Card } from '../components/primitives/Card';
+import { Button } from '../components/primitives/Button';
+import { TextField } from '../components/primitives/TextField';
+import { Spinner } from '../components/primitives/Spinner';
+import { Divider } from '../components/primitives/Divider';
+import { Select } from '../components/primitives/Select';
+import { Dialog } from '../components/primitives/Dialog';
+import { Table } from '../components/primitives/Table';
+import { Chip } from '../components/primitives/Chip';
+import { Tooltip } from '../components/primitives/Tooltip';
 import { usersService, UserListItem } from '../services/api/users.service';
 import { bankService, BankAccount } from '../services/api/bank.service';
 import { ApiError } from '../types/api.types';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
-import { ImportProgressDialog } from '../components/bank/ImportProgressDialog';
-import ConfirmDialog from '../components/shared/ConfirmDialog';
+import { ImportProgressDialog } from '../components/composed/bank';
+import { ConfirmDialog } from '../components/composed/ConfirmDialog';
+import styles from './Settings.module.scss';
 
 export const Settings: React.FC = () => {
   const toast = useToast();
@@ -74,7 +58,6 @@ export const Settings: React.FC = () => {
   // Delete user dialog state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<UserListItem | null>(null);
-  const [deleteLoading, setDeleteLoading] = useState(false);
 
   // Bank accounts state
   const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
@@ -288,7 +271,6 @@ export const Settings: React.FC = () => {
     if (!userToDelete) return;
 
     try {
-      setDeleteLoading(true);
       await usersService.deleteUser(userToDelete.id);
       toast.success('User deleted successfully');
       setDeleteDialogOpen(false);
@@ -298,8 +280,6 @@ export const Settings: React.FC = () => {
       console.error('Error deleting user:', err);
       const errorMessage = err instanceof ApiError ? err.message : 'Failed to delete user';
       toast.error(errorMessage);
-    } finally {
-      setDeleteLoading(false);
     }
   };
 
@@ -328,15 +308,15 @@ export const Settings: React.FC = () => {
     switch (status.toLowerCase()) {
       case 'synced':
       case 'success':
-        return <CheckCircleIcon fontSize="small" color="success" />;
+        return <CheckCircle size={16} className={styles.syncIconSuccess} />;
       case 'syncing':
       case 'in_progress':
-        return <SyncIcon fontSize="small" color="warning" />;
+        return <RefreshCw size={16} className={styles.syncIconWarning} />;
       case 'error':
       case 'failed':
-        return <ErrorIcon fontSize="small" color="error" />;
+        return <AlertCircle size={16} className={styles.syncIconError} />;
       default:
-        return <ScheduleIcon fontSize="small" color="disabled" />;
+        return <Clock size={16} className={styles.syncIconDefault} />;
     }
   };
 
@@ -427,257 +407,250 @@ export const Settings: React.FC = () => {
     }
   };
 
+  const syncFromDaysOptions = [
+    { value: '30', label: '30 days' },
+    { value: '90', label: '90 days (recommended)' },
+    { value: '180', label: '6 months' },
+    { value: '365', label: '1 year' },
+    { value: '730', label: '2 years' },
+    { value: '1825', label: '5 years (maximum)' },
+  ];
+
   return (
     <Container maxWidth="lg">
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Settings
-        </Typography>
+      <div className={styles.page}>
+        <h1 className={styles.pageTitle}>Settings</h1>
 
         {/* Change Password Section */}
-        <Paper sx={{ p: 3 }}>
-          <Typography variant="h6" gutterBottom>
-            Change Password
-          </Typography>
-          <Divider sx={{ mb: 3 }} />
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, maxWidth: 400 }}>
-            <TextField
-              label="Current Password"
-              type="password"
-              value={currentPassword}
-              onChange={(e) => {
-                setCurrentPassword(e.target.value);
-                if (passwordErrors.currentPassword) {
-                  setPasswordErrors((prev) => {
-                    const newErrors = { ...prev };
-                    delete newErrors.currentPassword;
-                    return newErrors;
-                  });
-                }
-              }}
-              error={!!passwordErrors.currentPassword}
-              helperText={passwordErrors.currentPassword}
-              fullWidth
-            />
-            <TextField
-              label="New Password"
-              type="password"
-              value={newPassword}
-              onChange={(e) => {
-                setNewPassword(e.target.value);
-                if (passwordErrors.newPassword) {
-                  setPasswordErrors((prev) => {
-                    const newErrors = { ...prev };
-                    delete newErrors.newPassword;
-                    return newErrors;
-                  });
-                }
-              }}
-              error={!!passwordErrors.newPassword}
-              helperText={passwordErrors.newPassword || 'Minimum 8 characters'}
-              fullWidth
-            />
-            <TextField
-              label="Confirm New Password"
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => {
-                setConfirmPassword(e.target.value);
-                if (passwordErrors.confirmPassword) {
-                  setPasswordErrors((prev) => {
-                    const newErrors = { ...prev };
-                    delete newErrors.confirmPassword;
-                    return newErrors;
-                  });
-                }
-              }}
-              error={!!passwordErrors.confirmPassword}
-              helperText={passwordErrors.confirmPassword}
-              fullWidth
-            />
-            <Button
-              variant="contained"
-              onClick={handlePasswordChange}
-              disabled={passwordLoading}
-              sx={{ alignSelf: 'flex-start' }}
-            >
-              {passwordLoading ? <CircularProgress size={24} /> : 'Change Password'}
-            </Button>
-          </Box>
-        </Paper>
+        <Card className={styles.section}>
+          <Card.Content>
+            <h2 className={styles.sectionTitle}>Change Password</h2>
+            <Divider spacing={3} />
+            <div className={styles.passwordForm}>
+              <TextField
+                label="Current Password"
+                type="password"
+                value={currentPassword}
+                onChange={(e) => {
+                  setCurrentPassword((e.target as HTMLInputElement).value);
+                  if (passwordErrors.currentPassword) {
+                    setPasswordErrors((prev) => {
+                      const newErrors = { ...prev };
+                      delete newErrors.currentPassword;
+                      return newErrors;
+                    });
+                  }
+                }}
+                error={!!passwordErrors.currentPassword}
+                helperText={passwordErrors.currentPassword}
+                fullWidth
+              />
+              <TextField
+                label="New Password"
+                type="password"
+                value={newPassword}
+                onChange={(e) => {
+                  setNewPassword((e.target as HTMLInputElement).value);
+                  if (passwordErrors.newPassword) {
+                    setPasswordErrors((prev) => {
+                      const newErrors = { ...prev };
+                      delete newErrors.newPassword;
+                      return newErrors;
+                    });
+                  }
+                }}
+                error={!!passwordErrors.newPassword}
+                helperText={passwordErrors.newPassword || 'Minimum 8 characters'}
+                fullWidth
+              />
+              <TextField
+                label="Confirm New Password"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => {
+                  setConfirmPassword((e.target as HTMLInputElement).value);
+                  if (passwordErrors.confirmPassword) {
+                    setPasswordErrors((prev) => {
+                      const newErrors = { ...prev };
+                      delete newErrors.confirmPassword;
+                      return newErrors;
+                    });
+                  }
+                }}
+                error={!!passwordErrors.confirmPassword}
+                helperText={passwordErrors.confirmPassword}
+                fullWidth
+              />
+              <Button
+                variant="primary"
+                onClick={handlePasswordChange}
+                disabled={passwordLoading}
+                loading={passwordLoading}
+                className={styles.passwordButton}
+              >
+                Change Password
+              </Button>
+            </div>
+          </Card.Content>
+        </Card>
 
         {/* Bank Accounts Section */}
-        <Paper sx={{ p: 3, mb: 4 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant="h6">
-              Bank Accounts
-            </Typography>
-            {bankAccounts.length === 0 && !bankAccountsLoading && (
-              <Button
-                variant="contained"
-                startIcon={<BankIcon />}
-                onClick={handleOpenBankDialog}
-              >
-                Connect Monzo
-              </Button>
-            )}
-          </Box>
-          <Divider sx={{ mb: 3 }} />
-
-          {bankAccountsLoading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
-              <CircularProgress size={24} />
-            </Box>
-          ) : bankAccounts.length === 0 ? (
-            <Typography variant="body2" color="text.secondary">
-              Connect your Monzo account to automatically import and categorize transactions.
-            </Typography>
-          ) : (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {bankAccounts.map((account) => (
-                <Box
-                  key={account.id}
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    p: 2,
-                    borderRadius: 1,
-                    bgcolor: 'action.hover',
-                  }}
+        <Card className={styles.section}>
+          <Card.Content>
+            <div className={styles.sectionHeader}>
+              <h2 className={styles.sectionTitle}>Bank Accounts</h2>
+              {bankAccounts.length === 0 && !bankAccountsLoading && (
+                <Button
+                  variant="primary"
+                  startIcon={<Landmark size={18} />}
+                  onClick={handleOpenBankDialog}
                 >
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <BankIcon color="primary" />
-                    <Box>
-                      <Typography
-                        variant="subtitle2"
-                        sx={{ cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
-                        onClick={() => navigate('/admin/bank-accounts')}
-                      >
-                        {account.accountName}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {account.provider.charAt(0).toUpperCase() + account.provider.slice(1)} &middot; {account.accountType}
-                      </Typography>
-                    </Box>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Box sx={{ textAlign: 'right' }}>
-                      <Chip
-                        icon={getSyncStatusIcon(account.lastSyncStatus)}
-                        label={formatSyncStatus(account.lastSyncStatus)}
-                        color={getSyncStatusColor(account.lastSyncStatus)}
-                        size="small"
-                        variant="outlined"
-                      />
-                      <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
-                        {formatLastSync(account.lastSyncAt)}
-                      </Typography>
-                    </Box>
-                    <Tooltip title="Reconnect account">
-                      <IconButton size="small" onClick={handleOpenBankDialog}>
-                        <LinkOffIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  </Box>
-                </Box>
-              ))}
-            </Box>
-          )}
-        </Paper>
+                  Connect Monzo
+                </Button>
+              )}
+            </div>
+            <Divider spacing={3} />
+
+            {bankAccountsLoading ? (
+              <div className={styles.loadingCenter}>
+                <Spinner size="small" />
+              </div>
+            ) : bankAccounts.length === 0 ? (
+              <p className={styles.emptyText}>
+                Connect your Monzo account to automatically import and categorize transactions.
+              </p>
+            ) : (
+              <div className={styles.bankAccountList}>
+                {bankAccounts.map((account) => (
+                  <div key={account.id} className={styles.bankAccountRow}>
+                    <div className={styles.bankAccountInfo}>
+                      <Landmark size={24} className={styles.bankIcon} />
+                      <div>
+                        <p
+                          className={styles.bankAccountName}
+                          onClick={() => navigate('/admin/bank-accounts')}
+                        >
+                          {account.accountName}
+                        </p>
+                        <p className={styles.bankAccountMeta}>
+                          {account.provider.charAt(0).toUpperCase() + account.provider.slice(1)} &middot; {account.accountType}
+                        </p>
+                      </div>
+                    </div>
+                    <div className={styles.bankAccountActions}>
+                      <div className={styles.syncStatusArea}>
+                        <span className={styles.syncStatusChip}>
+                          {getSyncStatusIcon(account.lastSyncStatus)}
+                          <Chip
+                            label={formatSyncStatus(account.lastSyncStatus)}
+                            color={getSyncStatusColor(account.lastSyncStatus)}
+                            size="small"
+                          />
+                        </span>
+                        <span className={styles.syncLastTime}>
+                          {formatLastSync(account.lastSyncAt)}
+                        </span>
+                      </div>
+                      <Tooltip content="Reconnect account">
+                        <button
+                          type="button"
+                          className={styles.reconnectButton}
+                          onClick={handleOpenBankDialog}
+                        >
+                          <Unlink size={18} />
+                        </button>
+                      </Tooltip>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card.Content>
+        </Card>
 
         {/* User Management Section */}
-        <Paper sx={{ p: 3 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant="h6">
-              User Management
-            </Typography>
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={handleOpenCreateDialog}
-            >
-              Add User
-            </Button>
-          </Box>
-          <Divider sx={{ mb: 3 }} />
+        <Card className={styles.section}>
+          <Card.Content>
+            <div className={styles.sectionHeader}>
+              <h2 className={styles.sectionTitle}>User Management</h2>
+              <Button
+                variant="primary"
+                startIcon={<Plus size={18} />}
+                onClick={handleOpenCreateDialog}
+              >
+                Add User
+              </Button>
+            </div>
+            <Divider spacing={3} />
 
-          {usersLoading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-              <CircularProgress />
-            </Box>
-          ) : usersError ? (
-            <Alert severity="error">{usersError}</Alert>
-          ) : (
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Email</TableCell>
-                    <TableCell>Created</TableCell>
-                    <TableCell align="right">Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {users.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell>
-                        {user.email}
-                        {currentUser?.id === user.id && (
-                          <Typography
-                            component="span"
-                            variant="caption"
-                            sx={{ ml: 1, color: 'text.secondary' }}
+            {usersLoading ? (
+              <div className={styles.loadingCenter}>
+                <Spinner />
+              </div>
+            ) : usersError ? (
+              <div className={`${styles.alert} ${styles.alertError}`}>
+                <AlertCircle size={20} />
+                <span>{usersError}</span>
+              </div>
+            ) : (
+              <Table.Container>
+                <Table>
+                  <Table.Head>
+                    <Table.Row>
+                      <Table.Cell sortable={false}>Email</Table.Cell>
+                      <Table.Cell sortable={false}>Created</Table.Cell>
+                      <Table.Cell sortable={false} align="right">Actions</Table.Cell>
+                    </Table.Row>
+                  </Table.Head>
+                  <Table.Body>
+                    {users.map((user) => (
+                      <Table.Row key={user.id}>
+                        <Table.Cell>
+                          {user.email}
+                          {currentUser?.id === user.id && (
+                            <span className={styles.userYouLabel}>(you)</span>
+                          )}
+                        </Table.Cell>
+                        <Table.Cell>{formatDate(user.createdAt)}</Table.Cell>
+                        <Table.Cell align="right">
+                          <button
+                            type="button"
+                            className={styles.deleteButton}
+                            onClick={() => handleDeleteClick(user)}
+                            disabled={currentUser?.id === user.id}
+                            title={currentUser?.id === user.id ? 'Cannot delete yourself' : 'Delete user'}
                           >
-                            (you)
-                          </Typography>
-                        )}
-                      </TableCell>
-                      <TableCell>{formatDate(user.createdAt)}</TableCell>
-                      <TableCell align="right">
-                        <IconButton
-                          color="error"
-                          onClick={() => handleDeleteClick(user)}
-                          disabled={currentUser?.id === user.id}
-                          title={currentUser?.id === user.id ? 'Cannot delete yourself' : 'Delete user'}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {users.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={3} align="center">
-                        <Typography variant="body2" color="text.secondary">
-                          No users found
-                        </Typography>
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
-        </Paper>
-      </Box>
+                            <Trash2 size={20} />
+                          </button>
+                        </Table.Cell>
+                      </Table.Row>
+                    ))}
+                    {users.length === 0 && (
+                      <Table.Empty colSpan={3}>No users found</Table.Empty>
+                    )}
+                  </Table.Body>
+                </Table>
+              </Table.Container>
+            )}
+          </Card.Content>
+        </Card>
+      </div>
 
       {/* Create User Dialog */}
       <Dialog
         open={createDialogOpen}
         onClose={handleCloseCreateDialog}
-        maxWidth="sm"
-        fullWidth
+        size="medium"
       >
-        <DialogTitle>Add New User</DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+        <Dialog.Title>Add New User</Dialog.Title>
+        <Dialog.Content>
+          <div className={styles.dialogForm}>
             <TextField
               label="Email"
               type="email"
               value={newUserEmail}
               onChange={(e) => {
-                setNewUserEmail(e.target.value);
+                setNewUserEmail((e.target as HTMLInputElement).value);
                 if (createUserErrors.email) {
                   setCreateUserErrors((prev) => {
                     const newErrors = { ...prev };
@@ -696,7 +669,7 @@ export const Settings: React.FC = () => {
               type="password"
               value={newUserPassword}
               onChange={(e) => {
-                setNewUserPassword(e.target.value);
+                setNewUserPassword((e.target as HTMLInputElement).value);
                 if (createUserErrors.password) {
                   setCreateUserErrors((prev) => {
                     const newErrors = { ...prev };
@@ -710,20 +683,21 @@ export const Settings: React.FC = () => {
               required
               fullWidth
             />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseCreateDialog} color="inherit">
+          </div>
+        </Dialog.Content>
+        <Dialog.Actions>
+          <Button variant="secondary" onClick={handleCloseCreateDialog}>
             Cancel
           </Button>
           <Button
+            variant="primary"
             onClick={handleCreateUser}
-            variant="contained"
             disabled={createUserLoading}
+            loading={createUserLoading}
           >
-            {createUserLoading ? <CircularProgress size={24} /> : 'Create User'}
+            Create User
           </Button>
-        </DialogActions>
+        </Dialog.Actions>
       </Dialog>
 
       {/* Delete User Confirmation Dialog */}
@@ -733,57 +707,45 @@ export const Settings: React.FC = () => {
         message={`Are you sure you want to delete ${userToDelete?.email}? This action cannot be undone.`}
         onConfirm={handleDeleteConfirm}
         onCancel={handleDeleteCancel}
-        loading={deleteLoading}
       />
 
       {/* Bank Connection Dialog */}
       <Dialog
         open={bankDialogOpen}
         onClose={handleCloseBankDialog}
-        maxWidth="sm"
-        fullWidth
+        size="medium"
       >
-        <DialogTitle>Connect Monzo Account</DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-            <Typography variant="body2" color="text.secondary">
+        <Dialog.Title>Connect Monzo Account</Dialog.Title>
+        <Dialog.Content>
+          <div className={styles.dialogForm}>
+            <p className={styles.emptyText}>
               Select how far back to import your transaction history. You can import transactions from the last 30 days up to 5 years.
-            </Typography>
-            <FormControl fullWidth>
-              <InputLabel id="sync-from-days-label">Import History</InputLabel>
-              <Select
-                labelId="sync-from-days-label"
-                id="sync-from-days"
-                value={syncFromDays}
-                label="Import History"
-                onChange={(e) => setSyncFromDays(Number(e.target.value))}
-              >
-                <MenuItem value={30}>30 days</MenuItem>
-                <MenuItem value={90}>90 days (recommended)</MenuItem>
-                <MenuItem value={180}>6 months</MenuItem>
-                <MenuItem value={365}>1 year</MenuItem>
-                <MenuItem value={730}>2 years</MenuItem>
-                <MenuItem value={1825}>5 years (maximum)</MenuItem>
-              </Select>
-              <FormHelperText>
-                Default: 90 days. Importing more history may take longer to process.
-              </FormHelperText>
-            </FormControl>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseBankDialog} color="inherit" disabled={bankConnectLoading}>
+            </p>
+            <Select
+              label="Import History"
+              name="sync-from-days"
+              value={String(syncFromDays)}
+              onChange={(value) => setSyncFromDays(Number(value))}
+              options={syncFromDaysOptions}
+              helperText="Default: 90 days. Importing more history may take longer to process."
+              fullWidth
+            />
+          </div>
+        </Dialog.Content>
+        <Dialog.Actions>
+          <Button variant="secondary" onClick={handleCloseBankDialog} disabled={bankConnectLoading}>
             Cancel
           </Button>
           <Button
+            variant="primary"
             onClick={handleConnectMonzo}
-            variant="contained"
             disabled={bankConnectLoading}
-            startIcon={<BankIcon />}
+            loading={bankConnectLoading}
+            startIcon={<Landmark size={18} />}
           >
-            {bankConnectLoading ? <CircularProgress size={24} /> : 'Connect to Monzo'}
+            Connect to Monzo
           </Button>
-        </DialogActions>
+        </Dialog.Actions>
       </Dialog>
 
       {/* SCA Pending Approval Dialog */}
@@ -793,41 +755,42 @@ export const Settings: React.FC = () => {
           setPendingApprovalOpen(false);
           setPendingId(null);
         }}
-        maxWidth="sm"
-        fullWidth
+        size="medium"
       >
-        <DialogTitle>Approve in Monzo App</DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, py: 2 }}>
-            <BankIcon sx={{ fontSize: 48, color: 'primary.main' }} />
-            <Typography variant="body1" textAlign="center">
+        <Dialog.Title>Approve in Monzo App</Dialog.Title>
+        <Dialog.Content>
+          <div className={styles.pendingApprovalContent}>
+            <Landmark size={48} className={styles.pendingApprovalIcon} />
+            <p className={styles.pendingApprovalText}>
               Monzo requires you to approve this connection in your mobile app.
-            </Typography>
-            <Alert severity="info" sx={{ width: '100%' }}>
-              Open your Monzo app, approve the access request, then click the button below.
-            </Alert>
-          </Box>
-        </DialogContent>
-        <DialogActions>
+            </p>
+            <div className={`${styles.alert} ${styles.alertInfo}`}>
+              <Info size={20} />
+              <span>Open your Monzo app, approve the access request, then click the button below.</span>
+            </div>
+          </div>
+        </Dialog.Content>
+        <Dialog.Actions>
           <Button
+            variant="secondary"
             onClick={() => {
               setPendingApprovalOpen(false);
               setPendingId(null);
             }}
-            color="inherit"
             disabled={completeConnectionLoading}
           >
             Cancel
           </Button>
           <Button
+            variant="primary"
             onClick={handleCompleteConnection}
-            variant="contained"
             disabled={completeConnectionLoading}
-            startIcon={completeConnectionLoading ? <CircularProgress size={20} /> : <BankIcon />}
+            loading={completeConnectionLoading}
+            startIcon={!completeConnectionLoading ? <Landmark size={18} /> : undefined}
           >
             {completeConnectionLoading ? "Connecting..." : "I've Approved It"}
           </Button>
-        </DialogActions>
+        </Dialog.Actions>
       </Dialog>
 
       {/* Import Progress Dialog */}

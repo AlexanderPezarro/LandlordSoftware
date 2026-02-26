@@ -1,41 +1,29 @@
 import React, { useEffect, useState } from 'react';
-import {
-  Container,
-  Typography,
-  Box,
-  Button,
-  Tabs,
-  Tab,
-  CircularProgress,
-  Alert,
-  Paper,
-  Chip,
-  useTheme,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  MenuItem,
-  InputAdornment,
-} from '@mui/material';
-import {
-  ArrowBack as ArrowBackIcon,
-  Edit as EditIcon,
-  CalendarMonth as CalendarIcon,
-  AccountBalance as AccountBalanceIcon,
-  Description as DescriptionIcon,
-  Add as AddIcon,
-  MonetizationOn as MonetizationOnIcon,
-} from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { format } from 'date-fns';
+import {
+  ArrowLeft,
+  Pencil,
+  FileText,
+  Landmark,
+  Calendar,
+  DollarSign,
+  Plus,
+  AlertCircle,
+} from 'lucide-react';
+import { Container } from '../components/primitives/Container';
+import { Button } from '../components/primitives/Button';
+import { TextField } from '../components/primitives/TextField';
+import { Select } from '../components/primitives/Select';
+import { Card } from '../components/primitives/Card';
+import { Chip } from '../components/primitives/Chip';
+import { Table } from '../components/primitives/Table';
+import { Dialog } from '../components/primitives/Dialog';
+import { Spinner } from '../components/primitives/Spinner';
+import { EventBadge } from '../components/composed/EventBadge/EventBadge';
+import { BalanceCard } from '../components/composed/Settlement/BalanceCard';
+import { SettlementForm } from '../components/composed/Settlement/SettlementForm';
+import { SettlementHistory } from '../components/composed/Settlement/SettlementHistory';
 import { propertiesService } from '../services/api/properties.service';
 import { leasesService } from '../services/api/leases.service';
 import { transactionsService } from '../services/api/transactions.service';
@@ -52,41 +40,9 @@ import type {
   UpdatePropertyRequest,
 } from '../types/api.types';
 import { ApiError } from '../types/api.types';
-import EventBadge from '../components/shared/EventBadge';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
-import { BalanceCard } from '../components/Settlement/BalanceCard';
-import { SettlementForm } from '../components/Settlement/SettlementForm';
-import { SettlementHistory } from '../components/Settlement/SettlementHistory';
-
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
-}
-
-function TabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
-
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`property-tabpanel-${index}`}
-      aria-labelledby={`property-tab-${index}`}
-      {...other}
-    >
-      {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
-    </div>
-  );
-}
-
-function a11yProps(index: number) {
-  return {
-    id: `property-tab-${index}`,
-    'aria-controls': `property-tabpanel-${index}`,
-  };
-}
+import styles from './PropertyDetail.module.scss';
 
 type PropertyStatus = 'Available' | 'Occupied' | 'Under Maintenance' | 'For Sale';
 type PropertyType = 'House' | 'Flat' | 'Studio' | 'Bungalow' | 'Terraced' | 'Semi-Detached' | 'Detached' | 'Maisonette' | 'Commercial';
@@ -94,11 +50,18 @@ type PropertyType = 'House' | 'Flat' | 'Studio' | 'Bungalow' | 'Terraced' | 'Sem
 const PROPERTY_STATUSES: PropertyStatus[] = ['Available', 'Occupied', 'Under Maintenance', 'For Sale'];
 const PROPERTY_TYPES: PropertyType[] = ['House', 'Flat', 'Studio', 'Bungalow', 'Terraced', 'Semi-Detached', 'Detached', 'Maisonette', 'Commercial'];
 
+const PROPERTY_TYPE_OPTIONS = PROPERTY_TYPES.map((t) => ({ value: t, label: t }));
+const PROPERTY_STATUS_OPTIONS = PROPERTY_STATUSES.map((s) => ({ value: s, label: s }));
+
+interface TabDef {
+  label: string;
+  icon: React.ReactNode;
+}
+
 export const PropertyDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const toast = useToast();
-  const theme = useTheme();
   const { user } = useAuth();
 
   const [loading, setLoading] = useState(true);
@@ -120,6 +83,14 @@ export const PropertyDetail: React.FC = () => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [formData, setFormData] = useState<UpdatePropertyRequest>({});
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+  const tabs: TabDef[] = [
+    { label: 'Overview', icon: <FileText size={18} /> },
+    { label: `Leases (${leases.length})`, icon: <Landmark size={18} /> },
+    { label: `Transactions (${transactions.length})`, icon: <Landmark size={18} /> },
+    { label: `Events (${events.length})`, icon: <Calendar size={18} /> },
+    { label: 'Balances & Settlements', icon: <DollarSign size={18} /> },
+  ];
 
   useEffect(() => {
     if (id) {
@@ -155,7 +126,7 @@ export const PropertyDetail: React.FC = () => {
     }
   };
 
-  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
+  const handleTabChange = (newValue: number) => {
     setTabValue(newValue);
     // Load settlement data when Balances tab is selected
     if (newValue === 4 && id) {
@@ -177,8 +148,8 @@ export const PropertyDetail: React.FC = () => {
       setBalances(balancesData);
       setSettlements(settlementsData);
       setOwners(ownersData);
-    } catch (error) {
-      console.error('Failed to load balances:', error);
+    } catch (loadError) {
+      console.error('Failed to load balances:', loadError);
       toast.error('Failed to load settlement data');
     } finally {
       setSettlementLoading(false);
@@ -246,7 +217,7 @@ export const PropertyDetail: React.FC = () => {
 
   const formatCurrency = (amount: number | null | undefined) => {
     if (amount === null || amount === undefined) return 'N/A';
-    return `£${amount.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    return `\u00A3${amount.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
   const formatDate = (dateString: string) => {
@@ -257,14 +228,14 @@ export const PropertyDetail: React.FC = () => {
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string): 'default' | 'primary' | 'success' | 'warning' | 'error' => {
     switch (status) {
       case 'Available':
         return 'warning';
       case 'Occupied':
         return 'success';
       case 'For Sale':
-        return 'info';
+        return 'primary';
       case 'Under Maintenance':
         return 'error';
       case 'Active':
@@ -283,9 +254,9 @@ export const PropertyDetail: React.FC = () => {
   if (loading) {
     return (
       <Container maxWidth="lg">
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
-          <CircularProgress />
-        </Box>
+        <div className={styles.loadingWrapper}>
+          <Spinner />
+        </div>
       </Container>
     );
   }
@@ -293,291 +264,339 @@ export const PropertyDetail: React.FC = () => {
   if (error || !property) {
     return (
       <Container maxWidth="lg">
-        <Box sx={{ mb: 4 }}>
-          <Button startIcon={<ArrowBackIcon />} onClick={handleBack} sx={{ mb: 2 }}>
-            Back to Properties
-          </Button>
-          <Alert severity="error">{error || 'Property not found'}</Alert>
-        </Box>
+        <div className={styles.page}>
+          <div className={styles.backButton}>
+            <Button variant="text" startIcon={<ArrowLeft size={18} />} onClick={handleBack}>
+              Back to Properties
+            </Button>
+          </div>
+          <div className={styles.alert}>
+            <AlertCircle size={20} />
+            {error || 'Property not found'}
+          </div>
+        </div>
       </Container>
     );
   }
 
   return (
     <Container maxWidth="lg">
-      <Box sx={{ mb: 4 }}>
-        <Button startIcon={<ArrowBackIcon />} onClick={handleBack} sx={{ mb: 2 }}>
-          Back to Properties
-        </Button>
+      <div className={styles.page}>
+        <div className={styles.backButton}>
+          <Button variant="text" startIcon={<ArrowLeft size={18} />} onClick={handleBack}>
+            Back to Properties
+          </Button>
+        </div>
 
-        <Paper sx={{ p: 3, mb: 3 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <Box>
-              <Typography variant="h4" component="h1" gutterBottom>
-                {property.name}
-              </Typography>
-              <Typography variant="body1" color="text.secondary" gutterBottom>
-                {property.street}, {property.city}, {property.county} {property.postcode}
-              </Typography>
-              <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
-                <Chip label={property.status} color={getStatusColor(property.status) as any} size="small" />
-                <Chip label={property.propertyType} variant="outlined" size="small" />
-              </Box>
-            </Box>
-            <Button variant="contained" startIcon={<EditIcon />} onClick={handleEditClick}>
-              Edit
-            </Button>
-          </Box>
-        </Paper>
+        {/* Property Header Card */}
+        <Card className={styles.headerCard}>
+          <Card.Content>
+            <div className={styles.headerContent}>
+              <div className={styles.headerInfo}>
+                <h1 className={styles.propertyName}>{property.name}</h1>
+                <p className={styles.propertyAddress}>
+                  {property.street}, {property.city}, {property.county} {property.postcode}
+                </p>
+                <div className={styles.chipRow}>
+                  <Chip label={property.status} color={getStatusColor(property.status)} size="small" />
+                  <Chip label={property.propertyType} color="default" size="small" />
+                </div>
+              </div>
+              <Button variant="primary" startIcon={<Pencil size={18} />} onClick={handleEditClick}>
+                Edit
+              </Button>
+            </div>
+          </Card.Content>
+        </Card>
 
-        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
-          <Tabs value={tabValue} onChange={handleTabChange} aria-label="property tabs">
-            <Tab icon={<DescriptionIcon />} iconPosition="start" label="Overview" {...a11yProps(0)} />
-            <Tab icon={<AccountBalanceIcon />} iconPosition="start" label={`Leases (${leases.length})`} {...a11yProps(1)} />
-            <Tab icon={<AccountBalanceIcon />} iconPosition="start" label={`Transactions (${transactions.length})`} {...a11yProps(2)} />
-            <Tab icon={<CalendarIcon />} iconPosition="start" label={`Events (${events.length})`} {...a11yProps(3)} />
-            <Tab icon={<MonetizationOnIcon />} iconPosition="start" label="Balances & Settlements" {...a11yProps(4)} />
-          </Tabs>
-        </Box>
+        {/* Tab Navigation */}
+        <div className={styles.tabBar} role="tablist" aria-label="property tabs">
+          {tabs.map((tab, index) => (
+            <button
+              key={index}
+              role="tab"
+              id={`property-tab-${index}`}
+              aria-controls={`property-tabpanel-${index}`}
+              aria-selected={tabValue === index}
+              className={`${styles.tab} ${tabValue === index ? styles.tabActive : ''}`}
+              onClick={() => handleTabChange(index)}
+            >
+              <span className={styles.tabIcon}>{tab.icon}</span>
+              {tab.label}
+            </button>
+          ))}
+        </div>
 
-        <TabPanel value={tabValue} index={0}>
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom>
-              Property Details
-            </Typography>
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2, mt: 2 }}>
-              <Box>
-                <Typography variant="body2" color="text.secondary">
-                  Property Type
-                </Typography>
-                <Typography variant="body1">{property.propertyType}</Typography>
-              </Box>
-              <Box>
-                <Typography variant="body2" color="text.secondary">
-                  Status
-                </Typography>
-                <Typography variant="body1">{property.status}</Typography>
-              </Box>
-              <Box>
-                <Typography variant="body2" color="text.secondary">
-                  Purchase Date
-                </Typography>
-                <Typography variant="body1">{property.purchaseDate ? formatDate(property.purchaseDate) : 'N/A'}</Typography>
-              </Box>
-              <Box>
-                <Typography variant="body2" color="text.secondary">
-                  Purchase Price
-                </Typography>
-                <Typography variant="body1">{formatCurrency(property.purchasePrice)}</Typography>
-              </Box>
-            </Box>
+        {/* Tab Panel: Overview */}
+        {tabValue === 0 && (
+          <div
+            role="tabpanel"
+            id="property-tabpanel-0"
+            aria-labelledby="property-tab-0"
+            className={styles.tabPanel}
+          >
+            <Card>
+              <Card.Content>
+                <h2 className={styles.detailsTitle}>Property Details</h2>
+                <div className={styles.detailsGrid}>
+                  <div>
+                    <p className={styles.detailLabel}>Property Type</p>
+                    <p className={styles.detailValue}>{property.propertyType}</p>
+                  </div>
+                  <div>
+                    <p className={styles.detailLabel}>Status</p>
+                    <p className={styles.detailValue}>{property.status}</p>
+                  </div>
+                  <div>
+                    <p className={styles.detailLabel}>Purchase Date</p>
+                    <p className={styles.detailValue}>{property.purchaseDate ? formatDate(property.purchaseDate) : 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className={styles.detailLabel}>Purchase Price</p>
+                    <p className={styles.detailValue}>{formatCurrency(property.purchasePrice)}</p>
+                  </div>
+                </div>
 
-            {property.notes && (
-              <Box sx={{ mt: 3 }}>
-                <Typography variant="h6" gutterBottom>
-                  Notes
-                </Typography>
-                <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
-                  {property.notes}
-                </Typography>
-              </Box>
-            )}
-          </Paper>
-        </TabPanel>
-
-        <TabPanel value={tabValue} index={1}>
-          {leases.length === 0 ? (
-            <Paper sx={{ p: 4, textAlign: 'center' }}>
-              <Typography variant="body1" color="text.secondary">
-                No leases found for this property
-              </Typography>
-            </Paper>
-          ) : (
-            <TableContainer component={Paper}>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Tenant</TableCell>
-                    <TableCell>Start Date</TableCell>
-                    <TableCell>End Date</TableCell>
-                    <TableCell>Rent Amount</TableCell>
-                    <TableCell>Security Deposit</TableCell>
-                    <TableCell>Status</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {leases.map((lease) => (
-                    <TableRow key={lease.id}>
-                      <TableCell>
-                        {lease.tenant ? `${lease.tenant.firstName} ${lease.tenant.lastName}` : 'N/A'}
-                      </TableCell>
-                      <TableCell>{formatDate(lease.startDate)}</TableCell>
-                      <TableCell>{lease.endDate ? formatDate(lease.endDate) : 'N/A'}</TableCell>
-                      <TableCell>{formatCurrency(lease.monthlyRent)}</TableCell>
-                      <TableCell>{formatCurrency(lease.securityDepositAmount)}</TableCell>
-                      <TableCell>
-                        <Chip label={lease.status} color={getStatusColor(lease.status) as any} size="small" />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
-        </TabPanel>
-
-        <TabPanel value={tabValue} index={2}>
-          {transactions.length === 0 ? (
-            <Paper sx={{ p: 4, textAlign: 'center' }}>
-              <Typography variant="body1" color="text.secondary">
-                No transactions found for this property
-              </Typography>
-            </Paper>
-          ) : (
-            <TableContainer component={Paper}>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Date</TableCell>
-                    <TableCell>Type</TableCell>
-                    <TableCell>Category</TableCell>
-                    <TableCell>Description</TableCell>
-                    <TableCell>Amount</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {transactions.map((transaction) => (
-                    <TableRow key={transaction.id}>
-                      <TableCell>{formatDate(transaction.transactionDate)}</TableCell>
-                      <TableCell>
-                        <Chip
-                          label={transaction.type}
-                          color={transaction.type === 'Income' ? 'success' : 'error'}
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell>{transaction.category}</TableCell>
-                      <TableCell>{transaction.description || 'N/A'}</TableCell>
-                      <TableCell
-                        sx={{
-                          color:
-                            transaction.type === 'Income'
-                              ? theme.palette.success.main
-                              : theme.palette.error.main,
-                          fontWeight: 600,
-                        }}
-                      >
-                        {transaction.type === 'Income' ? '+' : '-'}
-                        {formatCurrency(transaction.amount)}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
-        </TabPanel>
-
-        <TabPanel value={tabValue} index={3}>
-          {events.length === 0 ? (
-            <Paper sx={{ p: 4, textAlign: 'center' }}>
-              <Typography variant="body1" color="text.secondary">
-                No events found for this property
-              </Typography>
-            </Paper>
-          ) : (
-            <TableContainer component={Paper}>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Event Type</TableCell>
-                    <TableCell>Title</TableCell>
-                    <TableCell>Scheduled Date</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>Description</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {events.map((event) => (
-                    <TableRow key={event.id}>
-                      <TableCell>
-                        <EventBadge event={event} />
-                      </TableCell>
-                      <TableCell>{event.title}</TableCell>
-                      <TableCell>{formatDate(event.scheduledDate)}</TableCell>
-                      <TableCell>
-                        <Chip
-                          label={event.completed ? 'Completed' : 'Pending'}
-                          color={event.completed ? 'success' : 'warning'}
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell>{event.description || 'N/A'}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
-        </TabPanel>
-
-        <TabPanel value={tabValue} index={4}>
-          {settlementLoading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-              <CircularProgress />
-            </Box>
-          ) : (
-            <>
-              <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-                <Typography variant="h5">Balances & Settlements</Typography>
-                {owners.length > 1 && (
-                  <Button
-                    variant="contained"
-                    startIcon={<AddIcon />}
-                    onClick={() => setSettlementFormOpen(true)}
-                  >
-                    Record Settlement
-                  </Button>
+                {property.notes && (
+                  <div className={styles.notesSection}>
+                    <h2 className={styles.notesTitle}>Notes</h2>
+                    <p className={styles.notesText}>{property.notes}</p>
+                  </div>
                 )}
-              </Box>
+              </Card.Content>
+            </Card>
+          </div>
+        )}
 
-              {owners.length < 2 ? (
-                <Paper sx={{ p: 4, textAlign: 'center' }}>
-                  <Typography variant="body1" color="text.secondary">
-                    This property needs at least two owners to track balances and settlements.
-                  </Typography>
-                </Paper>
-              ) : (
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                  <BalanceCard balances={balances} currentUserId={user?.id} />
-                  <SettlementHistory settlements={settlements} />
-                </Box>
-              )}
+        {/* Tab Panel: Leases */}
+        {tabValue === 1 && (
+          <div
+            role="tabpanel"
+            id="property-tabpanel-1"
+            aria-labelledby="property-tab-1"
+            className={styles.tabPanel}
+          >
+            {leases.length === 0 ? (
+              <Card>
+                <Card.Content>
+                  <div className={styles.emptySection}>
+                    <p className={styles.emptyText}>No leases found for this property</p>
+                  </div>
+                </Card.Content>
+              </Card>
+            ) : (
+              <Table.Container>
+                <Table>
+                  <Table.Head>
+                    <Table.Row>
+                      <Table.Cell sortable={false}>Tenant</Table.Cell>
+                      <Table.Cell sortable={false}>Start Date</Table.Cell>
+                      <Table.Cell sortable={false}>End Date</Table.Cell>
+                      <Table.Cell sortable={false}>Rent Amount</Table.Cell>
+                      <Table.Cell sortable={false}>Security Deposit</Table.Cell>
+                      <Table.Cell sortable={false}>Status</Table.Cell>
+                    </Table.Row>
+                  </Table.Head>
+                  <Table.Body>
+                    {leases.map((lease) => (
+                      <Table.Row key={lease.id}>
+                        <Table.Cell>
+                          {lease.tenant ? `${lease.tenant.firstName} ${lease.tenant.lastName}` : 'N/A'}
+                        </Table.Cell>
+                        <Table.Cell>{formatDate(lease.startDate)}</Table.Cell>
+                        <Table.Cell>{lease.endDate ? formatDate(lease.endDate) : 'N/A'}</Table.Cell>
+                        <Table.Cell>{formatCurrency(lease.monthlyRent)}</Table.Cell>
+                        <Table.Cell>{formatCurrency(lease.securityDepositAmount)}</Table.Cell>
+                        <Table.Cell>
+                          <Chip label={lease.status} color={getStatusColor(lease.status)} size="small" />
+                        </Table.Cell>
+                      </Table.Row>
+                    ))}
+                  </Table.Body>
+                </Table>
+              </Table.Container>
+            )}
+          </div>
+        )}
 
-              {id && (
-                <SettlementForm
-                  open={settlementFormOpen}
-                  onClose={() => setSettlementFormOpen(false)}
-                  propertyId={id}
-                  owners={owners}
-                  balances={balances}
-                  onSuccess={handleSettlementSuccess}
-                />
-              )}
-            </>
-          )}
-        </TabPanel>
-      </Box>
+        {/* Tab Panel: Transactions */}
+        {tabValue === 2 && (
+          <div
+            role="tabpanel"
+            id="property-tabpanel-2"
+            aria-labelledby="property-tab-2"
+            className={styles.tabPanel}
+          >
+            {transactions.length === 0 ? (
+              <Card>
+                <Card.Content>
+                  <div className={styles.emptySection}>
+                    <p className={styles.emptyText}>No transactions found for this property</p>
+                  </div>
+                </Card.Content>
+              </Card>
+            ) : (
+              <Table.Container>
+                <Table>
+                  <Table.Head>
+                    <Table.Row>
+                      <Table.Cell sortable={false}>Date</Table.Cell>
+                      <Table.Cell sortable={false}>Type</Table.Cell>
+                      <Table.Cell sortable={false}>Category</Table.Cell>
+                      <Table.Cell sortable={false}>Description</Table.Cell>
+                      <Table.Cell sortable={false}>Amount</Table.Cell>
+                    </Table.Row>
+                  </Table.Head>
+                  <Table.Body>
+                    {transactions.map((transaction) => (
+                      <Table.Row key={transaction.id}>
+                        <Table.Cell>{formatDate(transaction.transactionDate)}</Table.Cell>
+                        <Table.Cell>
+                          <Chip
+                            label={transaction.type}
+                            color={transaction.type === 'Income' ? 'success' : 'error'}
+                            size="small"
+                          />
+                        </Table.Cell>
+                        <Table.Cell>{transaction.category}</Table.Cell>
+                        <Table.Cell>{transaction.description || 'N/A'}</Table.Cell>
+                        <Table.Cell>
+                          <span className={transaction.type === 'Income' ? styles.amountIncome : styles.amountExpense}>
+                            {transaction.type === 'Income' ? '+' : '-'}
+                            {formatCurrency(transaction.amount)}
+                          </span>
+                        </Table.Cell>
+                      </Table.Row>
+                    ))}
+                  </Table.Body>
+                </Table>
+              </Table.Container>
+            )}
+          </div>
+        )}
+
+        {/* Tab Panel: Events */}
+        {tabValue === 3 && (
+          <div
+            role="tabpanel"
+            id="property-tabpanel-3"
+            aria-labelledby="property-tab-3"
+            className={styles.tabPanel}
+          >
+            {events.length === 0 ? (
+              <Card>
+                <Card.Content>
+                  <div className={styles.emptySection}>
+                    <p className={styles.emptyText}>No events found for this property</p>
+                  </div>
+                </Card.Content>
+              </Card>
+            ) : (
+              <Table.Container>
+                <Table>
+                  <Table.Head>
+                    <Table.Row>
+                      <Table.Cell sortable={false}>Event Type</Table.Cell>
+                      <Table.Cell sortable={false}>Title</Table.Cell>
+                      <Table.Cell sortable={false}>Scheduled Date</Table.Cell>
+                      <Table.Cell sortable={false}>Status</Table.Cell>
+                      <Table.Cell sortable={false}>Description</Table.Cell>
+                    </Table.Row>
+                  </Table.Head>
+                  <Table.Body>
+                    {events.map((event) => (
+                      <Table.Row key={event.id}>
+                        <Table.Cell>
+                          <EventBadge event={event} />
+                        </Table.Cell>
+                        <Table.Cell>{event.title}</Table.Cell>
+                        <Table.Cell>{formatDate(event.scheduledDate)}</Table.Cell>
+                        <Table.Cell>
+                          <Chip
+                            label={event.completed ? 'Completed' : 'Pending'}
+                            color={event.completed ? 'success' : 'warning'}
+                            size="small"
+                          />
+                        </Table.Cell>
+                        <Table.Cell>{event.description || 'N/A'}</Table.Cell>
+                      </Table.Row>
+                    ))}
+                  </Table.Body>
+                </Table>
+              </Table.Container>
+            )}
+          </div>
+        )}
+
+        {/* Tab Panel: Balances & Settlements */}
+        {tabValue === 4 && (
+          <div
+            role="tabpanel"
+            id="property-tabpanel-4"
+            aria-labelledby="property-tab-4"
+            className={styles.tabPanel}
+          >
+            {settlementLoading ? (
+              <div className={styles.loadingWrapper}>
+                <Spinner />
+              </div>
+            ) : (
+              <>
+                <div className={styles.sectionHeader}>
+                  <h2 className={styles.sectionTitle}>Balances & Settlements</h2>
+                  {owners.length > 1 && (
+                    <Button
+                      variant="primary"
+                      startIcon={<Plus size={18} />}
+                      onClick={() => setSettlementFormOpen(true)}
+                    >
+                      Record Settlement
+                    </Button>
+                  )}
+                </div>
+
+                {owners.length < 2 ? (
+                  <Card>
+                    <Card.Content>
+                      <div className={styles.emptySection}>
+                        <p className={styles.emptyText}>
+                          This property needs at least two owners to track balances and settlements.
+                        </p>
+                      </div>
+                    </Card.Content>
+                  </Card>
+                ) : (
+                  <div className={styles.settlementStack}>
+                    <BalanceCard balances={balances} currentUserId={user?.id} />
+                    <SettlementHistory settlements={settlements} />
+                  </div>
+                )}
+
+                {id && (
+                  <SettlementForm
+                    open={settlementFormOpen}
+                    onClose={() => setSettlementFormOpen(false)}
+                    propertyId={id}
+                    owners={owners}
+                    balances={balances}
+                    onSuccess={handleSettlementSuccess}
+                  />
+                )}
+              </>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Edit Dialog */}
-      <Dialog open={editDialogOpen} onClose={handleCloseEditDialog} maxWidth="md" fullWidth>
-        <DialogTitle>Edit Property</DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+      <Dialog open={editDialogOpen} onClose={handleCloseEditDialog} size="large">
+        <Dialog.Title>Edit Property</Dialog.Title>
+        <Dialog.Content>
+          <div className={styles.formFields}>
             <TextField
               label="Property Name"
               value={formData.name || ''}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, name: (e.target as HTMLInputElement).value })}
               error={!!formErrors.name}
               helperText={formErrors.name}
               fullWidth
@@ -585,93 +604,78 @@ export const PropertyDetail: React.FC = () => {
             <TextField
               label="Street Address"
               value={formData.street || ''}
-              onChange={(e) => setFormData({ ...formData, street: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, street: (e.target as HTMLInputElement).value })}
               fullWidth
             />
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+            <div className={styles.formRow}>
               <TextField
                 label="City"
                 value={formData.city || ''}
-                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, city: (e.target as HTMLInputElement).value })}
               />
               <TextField
                 label="County"
                 value={formData.county || ''}
-                onChange={(e) => setFormData({ ...formData, county: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, county: (e.target as HTMLInputElement).value })}
               />
-            </Box>
+            </div>
             <TextField
               label="Postcode"
               value={formData.postcode || ''}
-              onChange={(e) => setFormData({ ...formData, postcode: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, postcode: (e.target as HTMLInputElement).value })}
               fullWidth
             />
-            <TextField
+            <Select
               label="Property Type"
-              select
               value={formData.propertyType || property.propertyType}
-              onChange={(e) => setFormData({ ...formData, propertyType: e.target.value as PropertyType })}
+              onChange={(value) => setFormData({ ...formData, propertyType: value as PropertyType })}
+              options={PROPERTY_TYPE_OPTIONS}
               fullWidth
-            >
-              {PROPERTY_TYPES.map((type) => (
-                <MenuItem key={type} value={type}>
-                  {type}
-                </MenuItem>
-              ))}
-            </TextField>
-            <TextField
+            />
+            <Select
               label="Status"
-              select
               value={formData.status || property.status}
-              onChange={(e) => setFormData({ ...formData, status: e.target.value as PropertyStatus })}
+              onChange={(value) => setFormData({ ...formData, status: value as PropertyStatus })}
+              options={PROPERTY_STATUS_OPTIONS}
               fullWidth
-            >
-              {PROPERTY_STATUSES.map((status) => (
-                <MenuItem key={status} value={status}>
-                  {status}
-                </MenuItem>
-              ))}
-            </TextField>
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+            />
+            <div className={styles.formRow}>
               <TextField
                 label="Purchase Date"
                 type="date"
-                value={formData.purchaseDate ?? property.purchaseDate ?? ''}
+                value={(formData.purchaseDate ?? property.purchaseDate ?? '') as string}
                 onChange={(e) =>
-                  setFormData({ ...formData, purchaseDate: e.target.value || null })
+                  setFormData({ ...formData, purchaseDate: (e.target as HTMLInputElement).value || null })
                 }
-                InputLabelProps={{ shrink: true }}
               />
               <TextField
                 label="Purchase Price"
                 type="number"
-                value={formData.purchasePrice ?? property.purchasePrice ?? ''}
+                value={String(formData.purchasePrice ?? property.purchasePrice ?? '')}
                 onChange={(e) =>
-                  setFormData({ ...formData, purchasePrice: e.target.value ? parseFloat(e.target.value) : null })
+                  setFormData({ ...formData, purchasePrice: (e.target as HTMLInputElement).value ? parseFloat((e.target as HTMLInputElement).value) : null })
                 }
-                InputProps={{
-                  startAdornment: <InputAdornment position="start">£</InputAdornment>,
-                }}
+                startAdornment={<span>\u00A3</span>}
               />
-            </Box>
+            </div>
             <TextField
               label="Notes"
-              value={formData.notes ?? property.notes ?? ''}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value || null })}
+              value={(formData.notes ?? property.notes ?? '') as string}
+              onChange={(e) => setFormData({ ...formData, notes: (e.target as HTMLInputElement).value || null })}
               multiline
               rows={3}
               fullWidth
             />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseEditDialog} color="inherit">
+          </div>
+        </Dialog.Content>
+        <Dialog.Actions>
+          <Button variant="text" onClick={handleCloseEditDialog}>
             Cancel
           </Button>
-          <Button onClick={handleSaveEdit} variant="contained" color="primary">
+          <Button variant="primary" onClick={handleSaveEdit}>
             Save
           </Button>
-        </DialogActions>
+        </Dialog.Actions>
       </Dialog>
     </Container>
   );

@@ -1,6 +1,6 @@
 import React, { lazy, Suspense } from 'react';
 import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom';
-import { CircularProgress, Box } from '@mui/material';
+import { Spinner } from './components/primitives/Spinner';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Layout } from './components/Layout';
 
@@ -26,14 +26,9 @@ const NotFound = lazy(() => import('./pages/NotFound').then(m => ({ default: m.N
 
 // Loading fallback component
 const PageLoader: React.FC = () => (
-  <Box
-    display="flex"
-    justifyContent="center"
-    alignItems="center"
-    minHeight="400px"
-  >
-    <CircularProgress />
-  </Box>
+  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+    <Spinner />
+  </div>
 );
 
 // Wrapper for lazy-loaded components

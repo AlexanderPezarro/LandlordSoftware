@@ -1,0 +1,233 @@
+@use '../../../styles/variables' as *;
+
+// ---------------------------------------------------------------------------
+// Wrapper
+// ---------------------------------------------------------------------------
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+  font-family: $font-family;
+}
+
+// ---------------------------------------------------------------------------
+// Label
+// ---------------------------------------------------------------------------
+
+.label {
+  font-size: $font-size-body2;
+  font-weight: $font-weight-regular;
+  color: $color-text-secondary;
+  line-height: $line-height-body2;
+  margin-bottom: $spacing-1;
+
+  .error & {
+    color: $color-error;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Input wrapper (react-datepicker applies this to its own wrapper div)
+// ---------------------------------------------------------------------------
+
+.inputWrapper {
+  display: block;
+  width: 100%;
+}
+
+// ---------------------------------------------------------------------------
+// Input
+// ---------------------------------------------------------------------------
+
+.input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: $spacing-2 $spacing-3;
+  font-family: $font-family;
+  font-size: $font-size-body1;
+  line-height: 1.4375em; // matches MUI TextField
+  color: $color-text-primary;
+  background-color: $color-paper;
+  border: 1px solid $color-divider;
+  border-radius: $radius-sm;
+  outline: none;
+  transition: border-color $transition-duration $transition-easing,
+    box-shadow $transition-duration $transition-easing;
+
+  &::placeholder {
+    color: $color-text-disabled;
+    opacity: 1;
+  }
+
+  &:hover:not(:disabled) {
+    border-color: $color-text-primary;
+  }
+
+  &:focus {
+    border-color: $color-primary;
+    box-shadow: 0 0 0 1px $color-primary;
+  }
+
+  .error & {
+    border-color: $color-error;
+
+    &:focus {
+      border-color: $color-error;
+      box-shadow: 0 0 0 1px $color-error;
+    }
+  }
+
+  .disabled & {
+    color: $color-text-disabled;
+    background-color: $color-background;
+    cursor: not-allowed;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Helper text
+// ---------------------------------------------------------------------------
+
+.helperText {
+  font-size: $font-size-caption;
+  line-height: $line-height-caption;
+  color: $color-text-secondary;
+  margin-top: $spacing-1;
+
+  .error & {
+    color: $color-error;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Calendar popup overrides
+// ---------------------------------------------------------------------------
+
+.calendar {
+  font-family: $font-family;
+  border-radius: $radius-md;
+  box-shadow: $shadow-4;
+  border: 1px solid $color-divider;
+}
+
+// ---------------------------------------------------------------------------
+// Global overrides for react-datepicker (scoped via :global)
+// These target the library's own class names that are not configurable via
+// the calendarClassName / className props.
+// ---------------------------------------------------------------------------
+
+:global {
+  .react-datepicker-popper {
+    z-index: $z-index-modal;
+  }
+
+  .react-datepicker {
+    font-family: $font-family;
+    border: none;
+    border-radius: $radius-md;
+    overflow: hidden;
+  }
+
+  .react-datepicker__header {
+    background-color: $color-primary;
+    border-bottom: none;
+    border-top-left-radius: $radius-md;
+    border-top-right-radius: $radius-md;
+    padding-top: $spacing-2;
+  }
+
+  .react-datepicker__current-month,
+  .react-datepicker-time__header {
+    color: $color-primary-contrast;
+    font-weight: $font-weight-medium;
+    font-size: $font-size-body2;
+    margin-bottom: $spacing-1;
+  }
+
+  .react-datepicker__day-name {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: $font-size-caption;
+    width: 2.25rem;
+    line-height: 2.25rem;
+    margin: 0;
+  }
+
+  .react-datepicker__day {
+    width: 2.25rem;
+    line-height: 2.25rem;
+    margin: 0;
+    border-radius: $radius-full;
+    font-size: $font-size-body2;
+    color: $color-text-primary;
+    transition: background-color $transition-duration $transition-easing,
+      color $transition-duration $transition-easing;
+
+    &:hover {
+      border-radius: $radius-full;
+      background-color: rgba($color-primary, 0.08);
+    }
+  }
+
+  .react-datepicker__day--selected,
+  .react-datepicker__day--keyboard-selected {
+    background-color: $color-primary;
+    color: $color-primary-contrast;
+    border-radius: $radius-full;
+
+    &:hover {
+      background-color: $color-primary-dark;
+    }
+  }
+
+  .react-datepicker__day--today {
+    font-weight: $font-weight-bold;
+  }
+
+  .react-datepicker__day--disabled {
+    color: $color-text-disabled;
+
+    &:hover {
+      background-color: transparent;
+    }
+  }
+
+  .react-datepicker__day--outside-month {
+    color: $color-text-disabled;
+  }
+
+  // Navigation arrows
+  .react-datepicker__navigation {
+    top: $spacing-2;
+  }
+
+  .react-datepicker__navigation-icon::before {
+    border-color: $color-primary-contrast;
+  }
+
+  // Time select list
+  .react-datepicker__time-container {
+    border-left: 1px solid $color-divider;
+  }
+
+  .react-datepicker__time-list-item {
+    font-size: $font-size-body2;
+    font-family: $font-family;
+    transition: background-color $transition-duration $transition-easing;
+
+    &:hover {
+      background-color: rgba($color-primary, 0.08) !important;
+    }
+  }
+
+  .react-datepicker__time-list-item--selected {
+    background-color: $color-primary !important;
+    color: $color-primary-contrast !important;
+    font-weight: $font-weight-medium;
+  }
+
+  // Triangle arrow
+  .react-datepicker__triangle {
+    display: none;
+  }
+}

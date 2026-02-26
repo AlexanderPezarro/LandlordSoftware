@@ -1,0 +1,189 @@
+@use '../../../styles/variables' as *;
+
+// ---------------------------------------------------------------------------
+// Container – horizontal scroll wrapper for narrow screens
+// ---------------------------------------------------------------------------
+
+.container {
+  overflow-x: auto;
+  width: 100%;
+}
+
+// ---------------------------------------------------------------------------
+// Table
+// ---------------------------------------------------------------------------
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: $font-size-body2;
+  line-height: $line-height-body2;
+  color: $color-text-primary;
+}
+
+// ---------------------------------------------------------------------------
+// Head
+// ---------------------------------------------------------------------------
+
+.head {
+  background: $color-background;
+}
+
+// ---------------------------------------------------------------------------
+// Row
+// ---------------------------------------------------------------------------
+
+.row {
+  border-bottom: 1px solid $color-divider;
+  transition: background $transition-duration $transition-easing;
+
+  .body &:hover {
+    background: $color-background;
+  }
+}
+
+.clickableRow {
+  cursor: pointer;
+}
+
+// ---------------------------------------------------------------------------
+// Cell (td and th)
+// ---------------------------------------------------------------------------
+
+.cell {
+  padding: $spacing-3 $spacing-4;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.headerCell {
+  font-weight: $font-weight-medium;
+  color: $color-text-secondary;
+  white-space: nowrap;
+}
+
+.alignCenter {
+  text-align: center;
+}
+
+.alignRight {
+  text-align: right;
+}
+
+// ---------------------------------------------------------------------------
+// Sortable header
+// ---------------------------------------------------------------------------
+
+.sortable {
+  cursor: pointer;
+  user-select: none;
+
+  &:hover {
+    color: $color-text-primary;
+  }
+}
+
+.cellContent {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-1;
+}
+
+.sortIcon {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.sortInactive {
+  opacity: 0.3;
+}
+
+// ---------------------------------------------------------------------------
+// Empty state
+// ---------------------------------------------------------------------------
+
+.emptyRow {
+  padding: $spacing-8 $spacing-4;
+  text-align: center;
+  color: $color-text-secondary;
+  font-size: $font-size-body2;
+}
+
+// ---------------------------------------------------------------------------
+// Pagination
+// ---------------------------------------------------------------------------
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: $spacing-4;
+  padding: $spacing-3 $spacing-4;
+  font-size: $font-size-caption;
+  color: $color-text-secondary;
+}
+
+.rowsPerPage {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+}
+
+.rowsPerPageLabel {
+  white-space: nowrap;
+}
+
+.rowsPerPageSelect {
+  padding: $spacing-1 $spacing-2;
+  border: 1px solid $color-divider;
+  border-radius: $radius-sm;
+  font-size: $font-size-caption;
+  background: $color-paper;
+  color: $color-text-primary;
+  cursor: pointer;
+
+  &:focus {
+    outline: 2px solid $color-primary;
+    outline-offset: 1px;
+  }
+}
+
+.pageInfo {
+  white-space: nowrap;
+}
+
+.pageButtons {
+  display: flex;
+  gap: $spacing-1;
+}
+
+.pageButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid $color-divider;
+  border-radius: $radius-sm;
+  background: $color-paper;
+  color: $color-text-primary;
+  font-size: $font-size-body1;
+  cursor: pointer;
+  transition: background $transition-duration $transition-easing;
+
+  &:hover:not(:disabled) {
+    background: $color-background;
+  }
+
+  &:disabled {
+    opacity: 0.38;
+    cursor: default;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 1px;
+  }
+}

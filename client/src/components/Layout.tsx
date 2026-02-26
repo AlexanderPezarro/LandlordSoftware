@@ -1,63 +1,46 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
 import {
-  AppBar,
-  Box,
-  CssBaseline,
-  Drawer,
-  IconButton,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  Toolbar,
-  Typography,
-  useTheme,
-  useMediaQuery,
-  Button,
-  Badge,
-} from '@mui/material';
-import {
-  Menu as MenuIcon,
-  Dashboard as DashboardIcon,
-  Home as HomeIcon,
-  People as PeopleIcon,
-  Description as DescriptionIcon,
-  AttachMoney as MoneyIcon,
-  Assessment as AssessmentIcon,
-  Event as EventIcon,
-  Folder as FolderIcon,
-  Settings as SettingsIcon,
-  Logout as LogoutIcon,
-  AdminPanelSettings as AdminPanelSettingsIcon,
-  RateReview as ReviewIcon,
-} from '@mui/icons-material';
+  LayoutDashboard,
+  Home,
+  Users,
+  FileText,
+  DollarSign,
+  BarChart3,
+  Calendar,
+  Folder,
+  Settings,
+  LogOut,
+  ShieldCheck,
+  MessageSquare,
+  Menu,
+} from 'lucide-react';
+import { AppBar } from './primitives/AppBar';
+import { Sidebar, type SidebarItem } from './primitives/Sidebar';
+import { Button } from './primitives/Button';
 import { useAuth } from '../contexts/AuthContext';
 import { pendingTransactionsService } from '../services/api/pendingTransactions.service';
+import styles from './Layout.module.scss';
 
-const drawerWidth = 240;
-
-interface NavItem {
-  text: string;
-  icon: React.ReactElement;
+interface NavItemDef {
+  label: string;
+  icon: React.ReactNode;
   path: string;
   adminOnly?: boolean;
   showBadge?: boolean;
 }
 
-const navigationItems: NavItem[] = [
-  { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
-  { text: 'Properties', icon: <HomeIcon />, path: '/properties' },
-  { text: 'Tenants', icon: <PeopleIcon />, path: '/tenants' },
-  { text: 'Leases', icon: <DescriptionIcon />, path: '/leases' },
-  { text: 'Transactions', icon: <MoneyIcon />, path: '/transactions' },
-  { text: 'Reports', icon: <AssessmentIcon />, path: '/finances/reports' },
-  { text: 'Events', icon: <EventIcon />, path: '/events' },
-  { text: 'Documents', icon: <FolderIcon />, path: '/documents' },
-  { text: 'Pending Review', icon: <ReviewIcon />, path: '/admin/pending-transactions', adminOnly: true, showBadge: true },
-  { text: 'Users', icon: <AdminPanelSettingsIcon />, path: '/users', adminOnly: true },
-  { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
+const navigationItems: NavItemDef[] = [
+  { label: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/dashboard' },
+  { label: 'Properties', icon: <Home size={20} />, path: '/properties' },
+  { label: 'Tenants', icon: <Users size={20} />, path: '/tenants' },
+  { label: 'Leases', icon: <FileText size={20} />, path: '/leases' },
+  { label: 'Transactions', icon: <DollarSign size={20} />, path: '/transactions' },
+  { label: 'Reports', icon: <BarChart3 size={20} />, path: '/finances/reports' },
+  { label: 'Events', icon: <Calendar size={20} />, path: '/events' },
+  { label: 'Documents', icon: <Folder size={20} />, path: '/documents' },
+  { label: 'Pending Review', icon: <MessageSquare size={20} />, path: '/admin/pending-transactions', adminOnly: true, showBadge: true },
+  { label: 'Users', icon: <ShieldCheck size={20} />, path: '/users', adminOnly: true },
+  { label: 'Settings', icon: <Settings size={20} />, path: '/settings' },
 ];
 
 interface LayoutProps {
@@ -67,10 +50,15 @@ interface LayoutProps {
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const location = useLocation();
+  const [isMobile, setIsMobile] = useState(window.matchMedia('(max-width: 899px)').matches);
   const { user, logout, isAdmin } = useAuth();
+
+  useEffect(() => {
+    const mql = window.matchMedia('(max-width: 899px)');
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mql.addEventListener('change', handler);
+    return () => mql.removeEventListener('change', handler);
+  }, []);
 
   // Fetch pending count on mount and periodically
   useEffect(() => {
@@ -101,149 +89,55 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     await logout();
   };
 
-  const drawer = (
-    <div>
-      <Toolbar>
-        <Typography variant="h6" noWrap component="div">
-          Landlord System
-        </Typography>
-      </Toolbar>
-      <List>
-        {navigationItems
-          .filter(item => !item.adminOnly || isAdmin())
-          .map((item) => {
-            const isActive = location.pathname === item.path;
-            const showBadgeCount = item.showBadge && pendingCount > 0;
-            return (
-              <ListItem key={item.text} disablePadding>
-                <ListItemButton
-                  component={Link}
-                  to={item.path}
-                  selected={isActive}
-                  onClick={isMobile ? handleDrawerToggle : undefined}
-                  sx={{
-                    '&.Mui-selected': {
-                      backgroundColor: theme.palette.primary.main,
-                      color: theme.palette.primary.contrastText,
-                      '&:hover': {
-                        backgroundColor: theme.palette.primary.dark,
-                      },
-                      '& .MuiListItemIcon-root': {
-                        color: theme.palette.primary.contrastText,
-                      },
-                    },
-                  }}
-                >
-                  <ListItemIcon
-                    sx={{
-                      color: isActive
-                        ? theme.palette.primary.contrastText
-                        : 'inherit',
-                    }}
-                  >
-                    {showBadgeCount ? (
-                      <Badge badgeContent={pendingCount} color="error">
-                        {item.icon}
-                      </Badge>
-                    ) : (
-                      item.icon
-                    )}
-                  </ListItemIcon>
-                  <ListItemText primary={item.text} />
-                </ListItemButton>
-              </ListItem>
-            );
-          })}
-      </List>
-    </div>
-  );
+  // Build sidebar items, filtering by admin and mapping badge counts
+  const sidebarItems: SidebarItem[] = navigationItems
+    .filter(item => !item.adminOnly || isAdmin())
+    .map(item => ({
+      label: item.label,
+      icon: item.icon,
+      path: item.path,
+      badge: item.showBadge ? pendingCount : undefined,
+    }));
 
   return (
-    <Box sx={{ display: 'flex' }}>
-      <CssBaseline />
-      <AppBar
-        position="fixed"
-        sx={{
-          width: { md: `calc(100% - ${drawerWidth}px)` },
-          ml: { md: `${drawerWidth}px` },
-        }}
-      >
-        <Toolbar>
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            edge="start"
-            onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { md: 'none' } }}
-          >
-            <MenuIcon />
-          </IconButton>
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            Landlord Management System
-          </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Typography variant="body2" sx={{ display: { xs: 'none', sm: 'block' } }}>
-              {user?.email}
-            </Typography>
+    <div className={styles.layout}>
+      <AppBar className={styles.appbar}>
+        <div className={styles.toolbar}>
+          {isMobile && (
+            <button
+              className={styles.menuButton}
+              aria-label="open drawer"
+              onClick={handleDrawerToggle}
+            >
+              <Menu size={24} />
+            </button>
+          )}
+          <span className={styles.title}>Landlord Management System</span>
+          <div className={styles.actions}>
+            <span className={styles.email}>{user?.email}</span>
             <Button
-              color="inherit"
-              startIcon={<LogoutIcon />}
-              onClick={handleLogout}
+              variant="text"
               size="small"
+              startIcon={<LogOut size={18} />}
+              onClick={handleLogout}
+              className={styles.logoutButton}
             >
               Logout
             </Button>
-          </Box>
-        </Toolbar>
+          </div>
+        </div>
       </AppBar>
-      <Box
-        component="nav"
-        sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}
-      >
-        {/* Mobile drawer */}
-        <Drawer
-          variant="temporary"
-          open={mobileOpen}
-          onClose={handleDrawerToggle}
-          ModalProps={{
-            keepMounted: true, // Better mobile performance
-          }}
-          sx={{
-            display: { xs: 'block', md: 'none' },
-            '& .MuiDrawer-paper': {
-              boxSizing: 'border-box',
-              width: drawerWidth,
-            },
-          }}
-        >
-          {drawer}
-        </Drawer>
-        {/* Desktop drawer */}
-        <Drawer
-          variant="permanent"
-          sx={{
-            display: { xs: 'none', md: 'block' },
-            '& .MuiDrawer-paper': {
-              boxSizing: 'border-box',
-              width: drawerWidth,
-            },
-          }}
-          open
-        >
-          {drawer}
-        </Drawer>
-      </Box>
-      <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-          p: 3,
-          width: { md: `calc(100% - ${drawerWidth}px)` },
-          mt: 8,
-        }}
-      >
+
+      <Sidebar
+        items={sidebarItems}
+        open={mobileOpen}
+        onClose={handleDrawerToggle}
+        header={<span className={styles.sidebarTitle}>Landlord System</span>}
+      />
+
+      <main className={styles.main}>
         {children}
-      </Box>
-    </Box>
+      </main>
+    </div>
   );
 };

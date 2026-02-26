@@ -1,0 +1,36 @@
+@use '../../../styles/variables' as *;
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+}
+
+.icon {
+  flex-shrink: 0;
+}
+
+.iconWarning {
+  color: $color-warning;
+}
+
+.iconDanger {
+  color: $color-error;
+}
+
+.message {
+  margin: 0;
+  font-size: $font-size-body2;
+  line-height: $line-height-body2;
+  letter-spacing: $letter-spacing-body2;
+  color: $color-text-secondary;
+}
+
+.confirmDanger {
+  background-color: $color-error;
+  color: #ffffff;
+
+  &:hover:not(:disabled) {
+    background-color: darken($color-error, 10%);
+  }
+}

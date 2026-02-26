@@ -1,0 +1,287 @@
+@use '../styles/variables' as *;
+@use '../styles/mixins' as *;
+
+// ---------------------------------------------------------------------------
+// Layout
+// ---------------------------------------------------------------------------
+
+.page {
+  margin-bottom: $spacing-8;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: $spacing-3;
+  margin-bottom: $spacing-6;
+}
+
+.title {
+  font-size: $font-size-h4;
+  font-weight: $font-weight-regular;
+  line-height: $line-height-h4;
+  letter-spacing: $letter-spacing-h4;
+  color: $color-text-primary;
+  margin: 0;
+}
+
+// ---------------------------------------------------------------------------
+// Loading & Error states
+// ---------------------------------------------------------------------------
+
+.loadingWrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
+
+.alert {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  width: 100%;
+  padding: $spacing-3 $spacing-4;
+  border-radius: $radius-sm;
+  font-size: $font-size-body2;
+  line-height: $line-height-body2;
+  margin-top: $spacing-4;
+  background-color: rgba($color-error, 0.1);
+  color: darken($color-error, 5%);
+}
+
+// ---------------------------------------------------------------------------
+// Filters
+// ---------------------------------------------------------------------------
+
+.filters {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+  margin-bottom: $spacing-6;
+
+  @include respond-to(md) {
+    flex-direction: row;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Empty state
+// ---------------------------------------------------------------------------
+
+.emptyState {
+  text-align: center;
+  padding: $spacing-8 * 2 0;
+}
+
+.emptyIcon {
+  color: $color-text-secondary;
+  margin-bottom: $spacing-4;
+}
+
+.emptyTitle {
+  font-size: $font-size-h6;
+  font-weight: $font-weight-medium;
+  line-height: $line-height-h6;
+  letter-spacing: $letter-spacing-h6;
+  color: $color-text-secondary;
+  margin: 0 0 $spacing-2;
+}
+
+.emptyDescription {
+  font-size: $font-size-body2;
+  line-height: $line-height-body2;
+  color: $color-text-secondary;
+  margin: 0 0 $spacing-4;
+}
+
+// ---------------------------------------------------------------------------
+// Documents Grid
+// ---------------------------------------------------------------------------
+
+.documentsGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: $spacing-6;
+
+  @include respond-to(sm) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @include respond-to(md) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Document Card
+// ---------------------------------------------------------------------------
+
+.documentCard {
+  position: relative;
+  transition: box-shadow $transition-duration $transition-easing;
+
+  &:hover {
+    @include elevation(4);
+  }
+}
+
+.cardBody {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-4;
+  margin-bottom: $spacing-4;
+}
+
+.fileIcon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.fileIconPdf {
+  color: $color-error;
+}
+
+.fileIconImage {
+  color: $color-primary;
+}
+
+.fileIconGeneric {
+  color: $color-text-secondary;
+}
+
+.fileInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.fileName {
+  display: block;
+  font-size: $font-size-body1;
+  font-weight: $font-weight-medium;
+  line-height: $line-height-body1;
+  color: $color-text-primary;
+  @include truncate;
+}
+
+.fileSize {
+  display: block;
+  font-size: $font-size-body2;
+  line-height: $line-height-body2;
+  color: $color-text-secondary;
+}
+
+.entitySection {
+  margin-bottom: $spacing-4;
+}
+
+.entityChip {
+  margin-bottom: $spacing-2;
+}
+
+.entityName {
+  display: block;
+  font-size: $font-size-body2;
+  line-height: $line-height-body2;
+  color: $color-text-secondary;
+  @include truncate;
+}
+
+.uploadDate {
+  display: block;
+  font-size: $font-size-caption;
+  line-height: $line-height-caption;
+  color: $color-text-secondary;
+}
+
+// ---------------------------------------------------------------------------
+// Card Actions (download / delete buttons)
+// ---------------------------------------------------------------------------
+
+.cardActions {
+  position: absolute;
+  top: $spacing-2;
+  right: $spacing-2;
+  display: flex;
+  gap: $spacing-1;
+}
+
+.actionButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: $radius-full;
+  background: transparent;
+  cursor: pointer;
+  transition: background-color $transition-duration $transition-easing;
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.04);
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
+.downloadButton {
+  color: $color-primary;
+}
+
+.deleteButton {
+  color: $color-error;
+}
+
+// ---------------------------------------------------------------------------
+// Upload Dialog
+// ---------------------------------------------------------------------------
+
+.uploadForm {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+  margin-top: $spacing-2;
+}
+
+.fileInputError {
+  display: block;
+  font-size: $font-size-caption;
+  line-height: $line-height-caption;
+  color: $color-error;
+  margin-top: $spacing-1;
+}
+
+.fileInputHint {
+  display: block;
+  font-size: $font-size-caption;
+  line-height: $line-height-caption;
+  color: $color-text-secondary;
+  margin-top: $spacing-1;
+}
+
+// ---------------------------------------------------------------------------
+// Delete Confirmation Dialog
+// ---------------------------------------------------------------------------
+
+.deleteDialogTitle {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+}
+
+.deleteIcon {
+  color: $color-warning;
+}
+
+.deleteMessage {
+  font-size: $font-size-body2;
+  line-height: $line-height-body2;
+  color: $color-text-secondary;
+  margin: 0;
+}

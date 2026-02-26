@@ -1,0 +1,690 @@
+{
+  "version": "2.8",
+  "variables": {},
+  "children": [
+    {
+      "id": "leases-root-frame",
+      "type": "frame",
+      "name": "Leases",
+      "x": 0,
+      "y": 0,
+      "width": 1200,
+      "height": 900,
+      "fill": "#f5f5f5",
+      "layout": "vertical",
+      "padding": 24,
+      "gap": 24,
+      "children": [
+        {
+          "id": "leases-header-row",
+          "type": "frame",
+          "name": "Header Row",
+          "width": 1152,
+          "height": 40,
+          "fill": "transparent",
+          "layout": "horizontal",
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "id": "leases-title-text",
+              "type": "text",
+              "name": "Leases Title",
+              "content": "Leases",
+              "fontSize": 34,
+              "fontWeight": 400,
+              "fill": "#000000de"
+            },
+            {
+              "id": "leases-add-button",
+              "type": "frame",
+              "name": "Add Lease Button",
+              "width": 120,
+              "height": 36,
+              "cornerRadius": 4,
+              "fill": "#1976d2",
+              "layout": "horizontal",
+              "alignItems": "center",
+              "justifyContent": "center",
+              "gap": 8,
+              "children": [
+                {
+                  "id": "leases-add-icon",
+                  "type": "icon",
+                  "name": "Add Icon",
+                  "iconSet": "material_symbols",
+                  "iconName": "add",
+                  "fontSize": 18,
+                  "fill": "#ffffff"
+                },
+                {
+                  "id": "leases-add-button-text",
+                  "type": "text",
+                  "name": "Add Lease Text",
+                  "content": "Add Lease",
+                  "fontSize": 14,
+                  "fontWeight": 500,
+                  "fill": "#ffffff"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "leases-search-filters-panel",
+          "type": "frame",
+          "name": "Search and Filters",
+          "width": 1152,
+          "fill": "#ffffff",
+          "cornerRadius": 4,
+          "layout": "vertical",
+          "padding": 16,
+          "gap": 12,
+          "children": [
+            {
+              "id": "leases-search-field",
+              "type": "frame",
+              "name": "Search Field",
+              "width": 1120,
+              "height": 40,
+              "cornerRadius": 4,
+              "fill": "#ffffff",
+              "stroke": "#0000003b",
+              "strokeWidth": 1,
+              "layout": "horizontal",
+              "alignItems": "center",
+              "padding": [0, 14],
+              "gap": 8,
+              "children": [
+                {
+                  "id": "leases-search-icon",
+                  "type": "icon",
+                  "name": "Search Icon",
+                  "iconSet": "material_symbols",
+                  "iconName": "search",
+                  "fontSize": 20,
+                  "fill": "#00000061"
+                },
+                {
+                  "id": "leases-search-placeholder",
+                  "type": "text",
+                  "name": "Search Placeholder",
+                  "content": "Search leases...",
+                  "fontSize": 16,
+                  "fill": "#00000061"
+                }
+              ]
+            },
+            {
+              "id": "leases-filter-row",
+              "type": "frame",
+              "name": "Filter Row",
+              "layout": "horizontal",
+              "gap": 12,
+              "fill": "transparent",
+              "children": [
+                {
+                  "id": "leases-property-select",
+                  "type": "frame",
+                  "name": "Property Select",
+                  "width": 240,
+                  "height": 40,
+                  "cornerRadius": 4,
+                  "fill": "#ffffff",
+                  "stroke": "#0000003b",
+                  "strokeWidth": 1,
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "padding": [0, 14],
+                  "gap": 8,
+                  "children": [
+                    {
+                      "id": "leases-property-select-label",
+                      "type": "text",
+                      "name": "Property Label",
+                      "content": "All Properties",
+                      "fontSize": 14,
+                      "fill": "#00000099"
+                    },
+                    {
+                      "id": "leases-property-select-arrow",
+                      "type": "icon",
+                      "name": "Property Arrow",
+                      "iconSet": "material_symbols",
+                      "iconName": "arrow_drop_down",
+                      "fontSize": 20,
+                      "fill": "#00000099"
+                    }
+                  ]
+                },
+                {
+                  "id": "leases-status-select",
+                  "type": "frame",
+                  "name": "Status Select",
+                  "width": 180,
+                  "height": 40,
+                  "cornerRadius": 4,
+                  "fill": "#ffffff",
+                  "stroke": "#0000003b",
+                  "strokeWidth": 1,
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "padding": [0, 14],
+                  "gap": 8,
+                  "children": [
+                    {
+                      "id": "leases-status-select-label",
+                      "type": "text",
+                      "name": "Status Label",
+                      "content": "All Statuses",
+                      "fontSize": 14,
+                      "fill": "#00000099"
+                    },
+                    {
+                      "id": "leases-status-select-arrow",
+                      "type": "icon",
+                      "name": "Status Arrow",
+                      "iconSet": "material_symbols",
+                      "iconName": "arrow_drop_down",
+                      "fontSize": 20,
+                      "fill": "#00000099"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "leases-cards-grid",
+          "type": "frame",
+          "name": "Leases Grid",
+          "width": 1152,
+          "height": 280,
+          "fill": "transparent",
+          "layout": "horizontal",
+          "gap": 24,
+          "children": [
+            {
+              "id": "lease-card-1",
+              "type": "frame",
+              "name": "Lease Card - 123 Main Street",
+              "width": 352,
+              "height": 280,
+              "cornerRadius": 4,
+              "fill": "#ffffff",
+              "layout": "vertical",
+              "children": [
+                {
+                  "id": "lease-card-1-content",
+                  "type": "frame",
+                  "name": "Card 1 Content",
+                  "height": 244,
+                  "fill": "transparent",
+                  "layout": "vertical",
+                  "padding": 16,
+                  "gap": 8,
+                  "children": [
+                    {
+                      "id": "lease-card-1-property-name",
+                      "type": "text",
+                      "name": "Card 1 Property Name",
+                      "content": "123 Main Street",
+                      "fontSize": 16,
+                      "fontWeight": 700,
+                      "fill": "#000000de"
+                    },
+                    {
+                      "id": "lease-card-1-status-row",
+                      "type": "frame",
+                      "name": "Card 1 Status Row",
+                      "layout": "horizontal",
+                      "gap": 8,
+                      "alignItems": "center",
+                      "fill": "transparent",
+                      "children": [
+                        {
+                          "id": "lease-card-1-status-chip",
+                          "type": "frame",
+                          "name": "Active Chip",
+                          "height": 24,
+                          "width": 70,
+                          "cornerRadius": 12,
+                          "fill": "#2e7d3220",
+                          "layout": "horizontal",
+                          "alignItems": "center",
+                          "justifyContent": "center",
+                          "children": [
+                            {
+                              "id": "lease-card-1-status-chip-text",
+                              "type": "text",
+                              "name": "Active Text",
+                              "content": "Active",
+                              "fontSize": 12,
+                              "fill": "#2e7d32"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": "lease-card-1-tenant-name",
+                      "type": "text",
+                      "name": "Card 1 Tenant Name",
+                      "content": "Alice Johnson",
+                      "fontSize": 14,
+                      "fill": "#00000099"
+                    },
+                    {
+                      "id": "lease-card-1-rent",
+                      "type": "text",
+                      "name": "Card 1 Rent",
+                      "content": "£1,200/month",
+                      "fontSize": 20,
+                      "fontWeight": 500,
+                      "fill": "#1976d2"
+                    },
+                    {
+                      "id": "lease-card-1-date-range",
+                      "type": "text",
+                      "name": "Card 1 Date Range",
+                      "content": "01 Jan 2025 — 31 Dec 2025",
+                      "fontSize": 14,
+                      "fill": "#00000099"
+                    },
+                    {
+                      "id": "lease-card-1-deposit",
+                      "type": "text",
+                      "name": "Card 1 Deposit",
+                      "content": "Deposit: £1,200",
+                      "fontSize": 14,
+                      "fill": "#00000099"
+                    }
+                  ]
+                },
+                {
+                  "id": "lease-card-1-actions",
+                  "type": "frame",
+                  "name": "Card 1 Actions",
+                  "layout": "horizontal",
+                  "padding": [4, 8],
+                  "gap": 4,
+                  "height": 36,
+                  "fill": "transparent",
+                  "stroke": "#0000001f",
+                  "strokeWidth": 1,
+                  "children": [
+                    {
+                      "id": "lease-card-1-edit-btn",
+                      "type": "frame",
+                      "name": "Card 1 Edit Button",
+                      "width": 32,
+                      "height": 28,
+                      "cornerRadius": 4,
+                      "fill": "transparent",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "id": "lease-card-1-edit-icon",
+                          "type": "icon",
+                          "name": "Card 1 Edit Icon",
+                          "iconSet": "material_symbols",
+                          "iconName": "edit",
+                          "fontSize": 18,
+                          "fill": "#00000099"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "lease-card-1-delete-btn",
+                      "type": "frame",
+                      "name": "Card 1 Delete Button",
+                      "width": 32,
+                      "height": 28,
+                      "cornerRadius": 4,
+                      "fill": "transparent",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "id": "lease-card-1-delete-icon",
+                          "type": "icon",
+                          "name": "Card 1 Delete Icon",
+                          "iconSet": "material_symbols",
+                          "iconName": "delete",
+                          "fontSize": 18,
+                          "fill": "#00000099"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "lease-card-2",
+              "type": "frame",
+              "name": "Lease Card - 45 Park Avenue",
+              "width": 352,
+              "height": 280,
+              "cornerRadius": 4,
+              "fill": "#ffffff",
+              "layout": "vertical",
+              "children": [
+                {
+                  "id": "lease-card-2-content",
+                  "type": "frame",
+                  "name": "Card 2 Content",
+                  "height": 244,
+                  "fill": "transparent",
+                  "layout": "vertical",
+                  "padding": 16,
+                  "gap": 8,
+                  "children": [
+                    {
+                      "id": "lease-card-2-property-name",
+                      "type": "text",
+                      "name": "Card 2 Property Name",
+                      "content": "45 Park Avenue",
+                      "fontSize": 16,
+                      "fontWeight": 700,
+                      "fill": "#000000de"
+                    },
+                    {
+                      "id": "lease-card-2-status-row",
+                      "type": "frame",
+                      "name": "Card 2 Status Row",
+                      "layout": "horizontal",
+                      "gap": 8,
+                      "alignItems": "center",
+                      "fill": "transparent",
+                      "children": [
+                        {
+                          "id": "lease-card-2-status-chip",
+                          "type": "frame",
+                          "name": "Draft Chip",
+                          "height": 24,
+                          "width": 60,
+                          "cornerRadius": 12,
+                          "fill": "#ed6c0220",
+                          "layout": "horizontal",
+                          "alignItems": "center",
+                          "justifyContent": "center",
+                          "children": [
+                            {
+                              "id": "lease-card-2-status-chip-text",
+                              "type": "text",
+                              "name": "Draft Text",
+                              "content": "Draft",
+                              "fontSize": 12,
+                              "fill": "#ed6c02"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": "lease-card-2-tenant-name",
+                      "type": "text",
+                      "name": "Card 2 Tenant Name",
+                      "content": "Bob Smith",
+                      "fontSize": 14,
+                      "fill": "#00000099"
+                    },
+                    {
+                      "id": "lease-card-2-rent",
+                      "type": "text",
+                      "name": "Card 2 Rent",
+                      "content": "£1,500/month",
+                      "fontSize": 20,
+                      "fontWeight": 500,
+                      "fill": "#1976d2"
+                    },
+                    {
+                      "id": "lease-card-2-date-range",
+                      "type": "text",
+                      "name": "Card 2 Date Range",
+                      "content": "01 Jan 2025 — 31 Dec 2025",
+                      "fontSize": 14,
+                      "fill": "#00000099"
+                    },
+                    {
+                      "id": "lease-card-2-deposit",
+                      "type": "text",
+                      "name": "Card 2 Deposit",
+                      "content": "Deposit: £1,500",
+                      "fontSize": 14,
+                      "fill": "#00000099"
+                    }
+                  ]
+                },
+                {
+                  "id": "lease-card-2-actions",
+                  "type": "frame",
+                  "name": "Card 2 Actions",
+                  "layout": "horizontal",
+                  "padding": [4, 8],
+                  "gap": 4,
+                  "height": 36,
+                  "fill": "transparent",
+                  "stroke": "#0000001f",
+                  "strokeWidth": 1,
+                  "children": [
+                    {
+                      "id": "lease-card-2-edit-btn",
+                      "type": "frame",
+                      "name": "Card 2 Edit Button",
+                      "width": 32,
+                      "height": 28,
+                      "cornerRadius": 4,
+                      "fill": "transparent",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "id": "lease-card-2-edit-icon",
+                          "type": "icon",
+                          "name": "Card 2 Edit Icon",
+                          "iconSet": "material_symbols",
+                          "iconName": "edit",
+                          "fontSize": 18,
+                          "fill": "#00000099"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "lease-card-2-delete-btn",
+                      "type": "frame",
+                      "name": "Card 2 Delete Button",
+                      "width": 32,
+                      "height": 28,
+                      "cornerRadius": 4,
+                      "fill": "transparent",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "id": "lease-card-2-delete-icon",
+                          "type": "icon",
+                          "name": "Card 2 Delete Icon",
+                          "iconSet": "material_symbols",
+                          "iconName": "delete",
+                          "fontSize": 18,
+                          "fill": "#00000099"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "lease-card-3",
+              "type": "frame",
+              "name": "Lease Card - 7 Garden Close",
+              "width": 352,
+              "height": 280,
+              "cornerRadius": 4,
+              "fill": "#ffffff",
+              "layout": "vertical",
+              "children": [
+                {
+                  "id": "lease-card-3-content",
+                  "type": "frame",
+                  "name": "Card 3 Content",
+                  "height": 244,
+                  "fill": "transparent",
+                  "layout": "vertical",
+                  "padding": 16,
+                  "gap": 8,
+                  "children": [
+                    {
+                      "id": "lease-card-3-property-name",
+                      "type": "text",
+                      "name": "Card 3 Property Name",
+                      "content": "7 Garden Close",
+                      "fontSize": 16,
+                      "fontWeight": 700,
+                      "fill": "#000000de"
+                    },
+                    {
+                      "id": "lease-card-3-status-row",
+                      "type": "frame",
+                      "name": "Card 3 Status Row",
+                      "layout": "horizontal",
+                      "gap": 8,
+                      "alignItems": "center",
+                      "fill": "transparent",
+                      "children": [
+                        {
+                          "id": "lease-card-3-status-chip",
+                          "type": "frame",
+                          "name": "Expired Chip",
+                          "height": 24,
+                          "width": 72,
+                          "cornerRadius": 12,
+                          "fill": "#0000001f",
+                          "layout": "horizontal",
+                          "alignItems": "center",
+                          "justifyContent": "center",
+                          "children": [
+                            {
+                              "id": "lease-card-3-status-chip-text",
+                              "type": "text",
+                              "name": "Expired Text",
+                              "content": "Expired",
+                              "fontSize": 12,
+                              "fill": "#00000099"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": "lease-card-3-tenant-name",
+                      "type": "text",
+                      "name": "Card 3 Tenant Name",
+                      "content": "Dave Brown",
+                      "fontSize": 14,
+                      "fill": "#00000099"
+                    },
+                    {
+                      "id": "lease-card-3-rent",
+                      "type": "text",
+                      "name": "Card 3 Rent",
+                      "content": "£1,200/month",
+                      "fontSize": 20,
+                      "fontWeight": 500,
+                      "fill": "#1976d2"
+                    },
+                    {
+                      "id": "lease-card-3-date-range",
+                      "type": "text",
+                      "name": "Card 3 Date Range",
+                      "content": "01 Jan 2025 — 31 Dec 2025",
+                      "fontSize": 14,
+                      "fill": "#00000099"
+                    },
+                    {
+                      "id": "lease-card-3-deposit",
+                      "type": "text",
+                      "name": "Card 3 Deposit",
+                      "content": "Deposit: £1,200",
+                      "fontSize": 14,
+                      "fill": "#00000099"
+                    }
+                  ]
+                },
+                {
+                  "id": "lease-card-3-actions",
+                  "type": "frame",
+                  "name": "Card 3 Actions",
+                  "layout": "horizontal",
+                  "padding": [4, 8],
+                  "gap": 4,
+                  "height": 36,
+                  "fill": "transparent",
+                  "stroke": "#0000001f",
+                  "strokeWidth": 1,
+                  "children": [
+                    {
+                      "id": "lease-card-3-edit-btn",
+                      "type": "frame",
+                      "name": "Card 3 Edit Button",
+                      "width": 32,
+                      "height": 28,
+                      "cornerRadius": 4,
+                      "fill": "transparent",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "id": "lease-card-3-edit-icon",
+                          "type": "icon",
+                          "name": "Card 3 Edit Icon",
+                          "iconSet": "material_symbols",
+                          "iconName": "edit",
+                          "fontSize": 18,
+                          "fill": "#00000099"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "lease-card-3-delete-btn",
+                      "type": "frame",
+                      "name": "Card 3 Delete Button",
+                      "width": 32,
+                      "height": 28,
+                      "cornerRadius": 4,
+                      "fill": "transparent",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "id": "lease-card-3-delete-icon",
+                          "type": "icon",
+                          "name": "Card 3 Delete Icon",
+                          "iconSet": "material_symbols",
+                          "iconName": "delete",
+                          "fontSize": 18,
+                          "fill": "#00000099"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

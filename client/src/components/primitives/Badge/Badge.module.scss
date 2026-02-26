@@ -1,0 +1,31 @@
+@use '../../../styles/variables' as *;
+
+.wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  transform: translate(50%, -50%);
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  font-size: $font-size-caption;
+  font-weight: $font-weight-medium;
+  line-height: 20px;
+  color: $color-primary-contrast;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.error {
+  background-color: $color-error;
+}
+
+.primary {
+  background-color: $color-primary;
+}

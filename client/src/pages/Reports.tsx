@@ -1,42 +1,23 @@
 // @ts-nocheck - Recharts has type compatibility issues with React 18
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import {
-  Container,
-  Typography,
-  Box,
-  Paper,
-  Button,
-  Stack,
-  MenuItem,
-  TextField,
-  CircularProgress,
-  Alert,
-  useTheme,
-  useMediaQuery,
-  Table,
-  TableHead,
-  TableBody,
-  TableRow,
-  TableCell,
-  TableContainer,
-  TableSortLabel,
-  ToggleButton,
-  ToggleButtonGroup,
-  FormControl,
-  InputLabel,
-  Select,
-  SelectChangeEvent,
-  Chip,
-  Divider,
-} from '@mui/material';
-import {
-  PieChart as PieChartIcon,
-  BarChart as BarChartIcon,
-  Assessment as AssessmentIcon,
-  Person as PersonIcon,
-} from '@mui/icons-material';
+import { BarChart3, PieChart as PieChartIcon, BarChart as BarChartLucide, User, X } from 'lucide-react';
 import { format, startOfYear, endOfYear, subDays, startOfQuarter, subYears } from 'date-fns';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
+import {
+  PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid,
+} from 'recharts';
+import { Container } from '../components/primitives/Container';
+import { Card } from '../components/primitives/Card';
+import { Button } from '../components/primitives/Button';
+import { Select } from '../components/primitives/Select';
+import { Table } from '../components/primitives/Table';
+import { ToggleGroup } from '../components/primitives/ToggleGroup';
+import { Chip } from '../components/primitives/Chip';
+import { Divider } from '../components/primitives/Divider';
+import { Spinner } from '../components/primitives/Spinner';
+import { StatsCard } from '../components/composed/StatsCard';
+import { DateRangePicker } from '../components/composed/DateRangePicker';
+import { PropertySelector } from '../components/composed/PropertySelector';
 import { reportsService } from '../services/api/reports.service';
 import { transactionsService } from '../services/api/transactions.service';
 import {
@@ -48,17 +29,18 @@ import {
   OwnerPLReport,
   ReportOwner,
 } from '../types/api.types';
-import StatsCard from '../components/shared/StatsCard';
-import DateRangePicker from '../components/shared/DateRangePicker';
-import PropertySelector from '../components/shared/PropertySelector';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
+import styles from './Reports.module.scss';
 
 type ChartType = 'pie' | 'bar';
 type SortField = 'propertyName' | 'totalRevenue' | 'totalExpenses' | 'netIncome';
 type SortOrder = 'asc' | 'desc';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#ff7300'];
+
+const CHART_COLOR_SUCCESS = '#2e7d32';
+const CHART_COLOR_ERROR = '#d32f2f';
 
 const INCOME_CATEGORIES = ['Rent', 'Security Deposit', 'Late Fee', 'Lease Fee'];
 const EXPENSE_CATEGORIES = [
@@ -74,8 +56,6 @@ const EXPENSE_CATEGORIES = [
 ];
 
 export const Reports: React.FC = () => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const toast = useToast();
   const { user, isAdmin } = useAuth();
 
@@ -94,8 +74,8 @@ export const Reports: React.FC = () => {
   const [ownerPLReport, setOwnerPLReport] = useState<OwnerPLReport | null>(null);
   const [ownerPLLoading, setOwnerPLLoading] = useState(false);
 
-  // Filter states
-  const [propertyFilter, setPropertyFilter] = useState('all');
+  // Filter states - composed PropertySelector uses '' for all properties
+  const [propertyFilter, setPropertyFilter] = useState('');
   const [dateRangeStart, setDateRangeStart] = useState<Date | null>(startOfYear(new Date()));
   const [dateRangeEnd, setDateRangeEnd] = useState<Date | null>(endOfYear(new Date()));
 
@@ -130,7 +110,7 @@ export const Reports: React.FC = () => {
 
       const filters: TransactionFilters = {};
 
-      if (propertyFilter !== 'all') {
+      if (propertyFilter !== '') {
         filters.propertyId = propertyFilter;
       }
 
@@ -216,8 +196,8 @@ export const Reports: React.FC = () => {
     }
   };
 
-  const handleOwnerChange = (event: SelectChangeEvent) => {
-    setSelectedOwnerId(event.target.value);
+  const handleOwnerChange = (value: string) => {
+    setSelectedOwnerId(value);
   };
 
   const formatCurrency = (amount: number) => {
@@ -423,687 +403,649 @@ export const Reports: React.FC = () => {
     toast.success('Report exported successfully');
   };
 
+  // Build owner options for the Select primitive
+  const ownerOptions = useMemo(() => {
+    if (owners.length === 0) {
+      return [{ value: '', label: 'No owners available' }];
+    }
+    return owners.map((owner) => ({
+      value: owner.id,
+      label: `${owner.email}${owner.id === user?.id ? ' (You)' : ''}`,
+    }));
+  }, [owners, user]);
+
+  // Build export options for the Select primitive
+  const exportOptions = useMemo(() => [
+    { value: 'pl', label: 'Export P&L Report' },
+    { value: 'property', label: 'Export Property Performance' },
+    { value: 'transactions', label: 'Export Transactions' },
+  ], []);
+
+  const handleExport = (value: string) => {
+    switch (value) {
+      case 'pl':
+        exportPLReport();
+        break;
+      case 'property':
+        exportPropertyPerformance();
+        break;
+      case 'transactions':
+        exportTransactions();
+        break;
+    }
+  };
+
   // Get the selected owner's name for display
   const selectedOwner = owners.find(o => o.id === selectedOwnerId);
 
+  // Toggle group options for chart type
+  const chartToggleOptions = useMemo(() => [
+    { value: 'pie', label: '', icon: <PieChartIcon size={18} /> },
+    { value: 'bar', label: '', icon: <BarChartLucide size={18} /> },
+  ], []);
+
   return (
     <Container maxWidth="xl">
-      <Box sx={{ mb: 4 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <AssessmentIcon fontSize="large" />
-            <Typography variant="h4" component="h1">
-              Financial Reports
-            </Typography>
-          </Box>
-          <TextField
-            select
-            size="small"
-            label="Export"
-            defaultValue=""
-            sx={{ minWidth: 200 }}
-          >
-            <MenuItem value="" disabled>Select Report to Export</MenuItem>
-            <MenuItem onClick={exportPLReport}>Export P&L Report</MenuItem>
-            <MenuItem onClick={exportPropertyPerformance}>Export Property Performance</MenuItem>
-            <MenuItem onClick={exportTransactions}>Export Transactions</MenuItem>
-          </TextField>
-        </Box>
+      <div className={styles.page}>
+        {/* Page Header */}
+        <div className={styles.pageHeader}>
+          <div className={styles.pageTitle}>
+            <BarChart3 size={32} className={styles.pageTitleIcon} />
+            <h1 className={styles.pageTitleText}>Financial Reports</h1>
+          </div>
+          <div className={styles.exportSelect}>
+            <Select
+              label="Export"
+              placeholder="Select Report to Export"
+              options={exportOptions}
+              value=""
+              onChange={handleExport}
+              size="small"
+            />
+          </div>
+        </div>
 
+        {/* Error Alert */}
         {error && (
-          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
-            {error}
-          </Alert>
+          <div className={`${styles.alert} ${styles.alertError}`}>
+            <span>{error}</span>
+            <button
+              className={styles.alertCloseButton}
+              onClick={() => setError(null)}
+              aria-label="Close error"
+            >
+              <X size={18} />
+            </button>
+          </div>
         )}
 
         {/* Filters */}
-        <Paper sx={{ p: 2, mb: 3 }}>
-          <Typography variant="subtitle2" gutterBottom>
-            Filters
-          </Typography>
+        <Card className={styles.filtersCard}>
+          <Card.Content>
+            <p className={styles.filtersTitle}>Filters</p>
 
-          <Stack spacing={2}>
-            <Stack direction={isMobile ? 'column' : 'row'} spacing={2}>
-              <PropertySelector
-                value={propertyFilter}
-                onChange={setPropertyFilter}
-                includeAllOption={true}
+            <div className={styles.filtersStack}>
+              <div className={styles.filterRow}>
+                <div className={styles.filterField}>
+                  <PropertySelector
+                    value={propertyFilter}
+                    onChange={setPropertyFilter}
+                    includeAllOption={true}
+                  />
+                </div>
+                <div className={styles.filterField}>
+                  <Select
+                    label="Owner"
+                    name="owner-selector"
+                    options={ownerOptions}
+                    value={selectedOwnerId}
+                    onChange={handleOwnerChange}
+                    size="small"
+                    fullWidth
+                  />
+                </div>
+              </div>
+
+              <DateRangePicker
+                startDate={dateRangeStart}
+                endDate={dateRangeEnd}
+                onStartChange={setDateRangeStart}
+                onEndChange={setDateRangeEnd}
+                label="Report Date Range"
               />
-              <FormControl fullWidth size="small">
-                <InputLabel id="owner-selector-label">Owner</InputLabel>
-                <Select
-                  labelId="owner-selector-label"
-                  id="owner-selector"
-                  value={selectedOwnerId}
-                  label="Owner"
-                  onChange={handleOwnerChange}
-                  startAdornment={<PersonIcon sx={{ mr: 1, color: 'action.active' }} />}
-                >
-                  {owners.length === 0 ? (
-                    <MenuItem disabled>No owners available</MenuItem>
-                  ) : (
-                    owners.map((owner) => (
-                      <MenuItem key={owner.id} value={owner.id}>
-                        {owner.email}
-                        {owner.id === user?.id ? ' (You)' : ''}
-                      </MenuItem>
-                    ))
-                  )}
-                </Select>
-              </FormControl>
-            </Stack>
 
-            <DateRangePicker
-              startDate={dateRangeStart}
-              endDate={dateRangeEnd}
-              onStartDateChange={setDateRangeStart}
-              onEndDateChange={setDateRangeEnd}
-              label="Report Date Range"
-            />
-
-            <Stack direction={isMobile ? 'column' : 'row'} spacing={1} flexWrap="wrap">
-              <Button size="small" variant="outlined" onClick={() => handleDatePreset('last30')}>
-                Last 30 Days
-              </Button>
-              <Button size="small" variant="outlined" onClick={() => handleDatePreset('lastQuarter')}>
-                Last Quarter
-              </Button>
-              <Button size="small" variant="outlined" onClick={() => handleDatePreset('lastYear')}>
-                Last Year
-              </Button>
-              <Button size="small" variant="outlined" onClick={() => handleDatePreset('currentYear')}>
-                Current Year
-              </Button>
-              <Button size="small" variant="outlined" onClick={() => handleDatePreset('allTime')}>
-                All Time
-              </Button>
-            </Stack>
-          </Stack>
-        </Paper>
+              <div className={styles.datePresets}>
+                <Button variant="secondary" size="small" onClick={() => handleDatePreset('last30')}>
+                  Last 30 Days
+                </Button>
+                <Button variant="secondary" size="small" onClick={() => handleDatePreset('lastQuarter')}>
+                  Last Quarter
+                </Button>
+                <Button variant="secondary" size="small" onClick={() => handleDatePreset('lastYear')}>
+                  Last Year
+                </Button>
+                <Button variant="secondary" size="small" onClick={() => handleDatePreset('currentYear')}>
+                  Current Year
+                </Button>
+                <Button variant="secondary" size="small" onClick={() => handleDatePreset('allTime')}>
+                  All Time
+                </Button>
+              </div>
+            </div>
+          </Card.Content>
+        </Card>
 
         {loading ? (
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              minHeight: 400,
-            }}
-          >
-            <CircularProgress />
-          </Box>
+          <div className={styles.loadingWrapper}>
+            <Spinner size="large" />
+          </div>
         ) : (
           <>
             {/* Owner P&L Report Section */}
             {selectedOwnerId && (
-              <Paper sx={{ p: 3, mb: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                  <PersonIcon />
-                  <Typography variant="h6">
-                    Owner P&L Report
-                    {selectedOwner && (
-                      <Chip
-                        label={selectedOwner.email}
-                        size="small"
-                        color="primary"
-                        variant="outlined"
-                        sx={{ ml: 1 }}
-                      />
-                    )}
-                  </Typography>
-                </Box>
+              <Card className={styles.sectionCard}>
+                <Card.Content>
+                  <div className={styles.ownerHeader}>
+                    <User size={24} className={styles.ownerIcon} />
+                    <h2 className={styles.sectionTitle}>
+                      Owner P&L Report
+                      {selectedOwner && (
+                        <Chip
+                          label={selectedOwner.email}
+                          size="small"
+                          color="primary"
+                          className={styles.chipInline}
+                        />
+                      )}
+                    </h2>
+                  </div>
 
-                {!dateRangeStart || !dateRangeEnd ? (
-                  <Alert severity="info" sx={{ mb: 2 }}>
-                    Please select a date range to view the owner P&L report.
-                  </Alert>
-                ) : ownerPLLoading ? (
-                  <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-                    <CircularProgress size={32} />
-                  </Box>
-                ) : !ownerPLReport || ownerPLReport.properties.length === 0 ? (
-                  <Typography variant="body2" color="text.secondary" sx={{ py: 4, textAlign: 'center' }}>
-                    No ownership data found for the selected owner in this date range.
-                  </Typography>
-                ) : (
-                  <>
-                    {/* Owner Summary Cards */}
-                    <Box
-                      sx={{
-                        display: 'grid',
-                        gridTemplateColumns: {
-                          xs: '1fr',
-                          sm: 'repeat(2, 1fr)',
-                          md: 'repeat(3, 1fr)',
-                        },
-                        gap: 2,
-                        mb: 3,
-                      }}
-                    >
-                      <StatsCard
-                        title="Owner's Income Share"
-                        value={formatCurrency(ownerPLReport.summary.totalIncome)}
-                        icon={<AssessmentIcon />}
-                        color={theme.palette.success.main}
-                      />
-                      <StatsCard
-                        title="Owner's Expense Share"
-                        value={formatCurrency(ownerPLReport.summary.totalExpenses)}
-                        icon={<AssessmentIcon />}
-                        color={theme.palette.error.main}
-                      />
-                      <StatsCard
-                        title="Owner's Net Profit"
-                        value={formatCurrency(ownerPLReport.summary.netProfit)}
-                        icon={<AssessmentIcon />}
-                        color={ownerPLReport.summary.netProfit >= 0 ? theme.palette.success.main : theme.palette.error.main}
-                      />
-                    </Box>
+                  {!dateRangeStart || !dateRangeEnd ? (
+                    <div className={`${styles.alert} ${styles.alertInfo}`}>
+                      <span>Please select a date range to view the owner P&L report.</span>
+                    </div>
+                  ) : ownerPLLoading ? (
+                    <div className={styles.loadingSmall}>
+                      <Spinner />
+                    </div>
+                  ) : !ownerPLReport || ownerPLReport.properties.length === 0 ? (
+                    <p className={styles.emptyText}>
+                      No ownership data found for the selected owner in this date range.
+                    </p>
+                  ) : (
+                    <>
+                      {/* Owner Summary Cards */}
+                      <div className={styles.statsGrid}>
+                        <StatsCard
+                          title="Owner's Income Share"
+                          value={formatCurrency(ownerPLReport.summary.totalIncome)}
+                        />
+                        <StatsCard
+                          title="Owner's Expense Share"
+                          value={formatCurrency(ownerPLReport.summary.totalExpenses)}
+                        />
+                        <StatsCard
+                          title="Owner's Net Profit"
+                          value={formatCurrency(ownerPLReport.summary.netProfit)}
+                        />
+                      </div>
 
-                    {/* Per-Property Breakdown */}
-                    {ownerPLReport.properties.map((propReport) => (
-                      <Paper
-                        key={propReport.property.id}
-                        variant="outlined"
-                        sx={{ p: 2, mb: 2 }}
-                      >
-                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-                          <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-                            {propReport.property.name}
-                          </Typography>
-                          <Chip
-                            label={`${propReport.owner.ownershipPercentage}% ownership`}
-                            size="small"
-                            color="info"
-                            variant="outlined"
-                          />
-                        </Box>
-                        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                          {propReport.property.address}
-                        </Typography>
+                      {/* Per-Property Breakdown */}
+                      {ownerPLReport.properties.map((propReport) => (
+                        <div key={propReport.property.id} className={styles.propertyCard}>
+                          <div className={styles.propertyHeader}>
+                            <h3 className={styles.propertyName}>
+                              {propReport.property.name}
+                            </h3>
+                            <Chip
+                              label={`${propReport.owner.ownershipPercentage}% ownership`}
+                              size="small"
+                              color="primary"
+                            />
+                          </div>
+                          <p className={styles.propertyAddress}>
+                            {propReport.property.address}
+                          </p>
 
-                        <TableContainer>
-                          <Table size="small">
-                            <TableHead>
-                              <TableRow>
-                                <TableCell sx={{ fontWeight: 'bold' }}>Category</TableCell>
-                                <TableCell align="right" sx={{ fontWeight: 'bold' }}>Owner's Share</TableCell>
-                              </TableRow>
-                            </TableHead>
-                            <TableBody>
-                              {/* Income */}
-                              <TableRow>
-                                <TableCell
-                                  colSpan={2}
-                                  sx={{ bgcolor: 'success.light', fontWeight: 'bold', py: 0.5 }}
-                                >
-                                  INCOME
-                                </TableCell>
-                              </TableRow>
-                              {Object.entries(propReport.income.byCategory).map(([category, data]) => (
-                                <TableRow key={`income-${category}`}>
-                                  <TableCell>{category}</TableCell>
-                                  <TableCell align="right">
-                                    {formatOwnerShare(data.ownerShare, data.total, propReport.owner.ownershipPercentage)}
-                                  </TableCell>
-                                </TableRow>
+                          <Table.Container>
+                            <Table>
+                              <Table.Head>
+                                <Table.Row>
+                                  <Table.Cell sortable={false} sortDirection={null}>Category</Table.Cell>
+                                  <Table.Cell sortable={false} sortDirection={null} align="right">Owner's Share</Table.Cell>
+                                </Table.Row>
+                              </Table.Head>
+                              <Table.Body>
+                                {/* Income Section Header */}
+                                <Table.Row>
+                                  <td
+                                    colSpan={2}
+                                    className={`${styles.sectionHeaderRow} ${styles.sectionHeaderIncome}`}
+                                  >
+                                    INCOME
+                                  </td>
+                                </Table.Row>
+                                {Object.entries(propReport.income.byCategory).map(([category, data]) => (
+                                  <Table.Row key={`income-${category}`}>
+                                    <Table.Cell>{category}</Table.Cell>
+                                    <Table.Cell align="right">
+                                      {formatOwnerShare(data.ownerShare, data.total, propReport.owner.ownershipPercentage)}
+                                    </Table.Cell>
+                                  </Table.Row>
+                                ))}
+                                {Object.keys(propReport.income.byCategory).length === 0 && (
+                                  <Table.Row>
+                                    <td colSpan={2}>
+                                      <span className={styles.italicText}>No income in this period</span>
+                                    </td>
+                                  </Table.Row>
+                                )}
+                                <Table.Row className={styles.totalRow}>
+                                  <Table.Cell className={styles.boldCell}>Total Income</Table.Cell>
+                                  <Table.Cell align="right" className={styles.boldCell}>
+                                    {formatOwnerShare(
+                                      propReport.income.totalOwnerShare,
+                                      propReport.income.totalOverall,
+                                      propReport.owner.ownershipPercentage
+                                    )}
+                                  </Table.Cell>
+                                </Table.Row>
+
+                                {/* Expenses Section Header */}
+                                <Table.Row>
+                                  <td
+                                    colSpan={2}
+                                    className={`${styles.sectionHeaderRow} ${styles.sectionHeaderExpense}`}
+                                  >
+                                    EXPENSES
+                                  </td>
+                                </Table.Row>
+                                {Object.entries(propReport.expenses.byCategory).map(([category, data]) => (
+                                  <Table.Row key={`expense-${category}`}>
+                                    <Table.Cell>{category}</Table.Cell>
+                                    <Table.Cell align="right">
+                                      {formatOwnerShare(data.ownerShare, data.total, propReport.owner.ownershipPercentage)}
+                                    </Table.Cell>
+                                  </Table.Row>
+                                ))}
+                                {Object.keys(propReport.expenses.byCategory).length === 0 && (
+                                  <Table.Row>
+                                    <td colSpan={2}>
+                                      <span className={styles.italicText}>No expenses in this period</span>
+                                    </td>
+                                  </Table.Row>
+                                )}
+                                <Table.Row className={styles.totalRow}>
+                                  <Table.Cell className={styles.boldCell}>Total Expenses</Table.Cell>
+                                  <Table.Cell align="right" className={styles.boldCell}>
+                                    {formatOwnerShare(
+                                      propReport.expenses.totalOwnerShare,
+                                      propReport.expenses.totalOverall,
+                                      propReport.owner.ownershipPercentage
+                                    )}
+                                  </Table.Cell>
+                                </Table.Row>
+
+                                {/* Net Profit */}
+                                <Table.Row className={styles.netRow}>
+                                  <Table.Cell className={styles.boldCell}>Net Profit</Table.Cell>
+                                  <Table.Cell
+                                    align="right"
+                                    className={`${styles.boldCell} ${propReport.netProfit >= 0 ? styles.textSuccessDark : styles.textErrorDark}`}
+                                  >
+                                    {formatCurrency(propReport.netProfit)}
+                                  </Table.Cell>
+                                </Table.Row>
+                              </Table.Body>
+                            </Table>
+                          </Table.Container>
+
+                          {/* Balance Summary for this property */}
+                          {propReport.balances.length > 0 && (
+                            <div className={styles.balanceSummary}>
+                              <Divider />
+                              <p className={styles.balanceSummaryTitle}>Balance Summary</p>
+                              {propReport.balances.map((balance, idx) => (
+                                <div key={idx} className={styles.balanceRow}>
+                                  <span className={styles.balanceLabel}>
+                                    {balance.amount > 0
+                                      ? `${balance.email} owes you`
+                                      : `You owe ${balance.email}`}
+                                  </span>
+                                  <span
+                                    className={`${styles.balanceAmount} ${balance.amount > 0 ? styles.textSuccessDark : styles.textErrorDark}`}
+                                  >
+                                    {formatCurrency(Math.abs(balance.amount))}
+                                  </span>
+                                </div>
                               ))}
-                              {Object.keys(propReport.income.byCategory).length === 0 && (
-                                <TableRow>
-                                  <TableCell colSpan={2}>
-                                    <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                                      No income in this period
-                                    </Typography>
-                                  </TableCell>
-                                </TableRow>
-                              )}
-                              <TableRow sx={{ bgcolor: 'grey.100' }}>
-                                <TableCell sx={{ fontWeight: 'bold' }}>Total Income</TableCell>
-                                <TableCell align="right" sx={{ fontWeight: 'bold' }}>
-                                  {formatOwnerShare(
-                                    propReport.income.totalOwnerShare,
-                                    propReport.income.totalOverall,
-                                    propReport.owner.ownershipPercentage
-                                  )}
-                                </TableCell>
-                              </TableRow>
-
-                              {/* Expenses */}
-                              <TableRow>
-                                <TableCell
-                                  colSpan={2}
-                                  sx={{ bgcolor: 'error.light', fontWeight: 'bold', py: 0.5 }}
-                                >
-                                  EXPENSES
-                                </TableCell>
-                              </TableRow>
-                              {Object.entries(propReport.expenses.byCategory).map(([category, data]) => (
-                                <TableRow key={`expense-${category}`}>
-                                  <TableCell>{category}</TableCell>
-                                  <TableCell align="right">
-                                    {formatOwnerShare(data.ownerShare, data.total, propReport.owner.ownershipPercentage)}
-                                  </TableCell>
-                                </TableRow>
-                              ))}
-                              {Object.keys(propReport.expenses.byCategory).length === 0 && (
-                                <TableRow>
-                                  <TableCell colSpan={2}>
-                                    <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                                      No expenses in this period
-                                    </Typography>
-                                  </TableCell>
-                                </TableRow>
-                              )}
-                              <TableRow sx={{ bgcolor: 'grey.100' }}>
-                                <TableCell sx={{ fontWeight: 'bold' }}>Total Expenses</TableCell>
-                                <TableCell align="right" sx={{ fontWeight: 'bold' }}>
-                                  {formatOwnerShare(
-                                    propReport.expenses.totalOwnerShare,
-                                    propReport.expenses.totalOverall,
-                                    propReport.owner.ownershipPercentage
-                                  )}
-                                </TableCell>
-                              </TableRow>
-
-                              {/* Net Profit */}
-                              <TableRow sx={{ bgcolor: 'primary.light' }}>
-                                <TableCell sx={{ fontWeight: 'bold' }}>Net Profit</TableCell>
-                                <TableCell
-                                  align="right"
-                                  sx={{
-                                    fontWeight: 'bold',
-                                    color: propReport.netProfit >= 0 ? 'success.dark' : 'error.dark',
-                                  }}
-                                >
-                                  {formatCurrency(propReport.netProfit)}
-                                </TableCell>
-                              </TableRow>
-                            </TableBody>
-                          </Table>
-                        </TableContainer>
-
-                        {/* Balance Summary for this property */}
-                        {propReport.balances.length > 0 && (
-                          <Box sx={{ mt: 2 }}>
-                            <Divider sx={{ mb: 1 }} />
-                            <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                              Balance Summary
-                            </Typography>
-                            {propReport.balances.map((balance, idx) => (
-                              <Box
-                                key={idx}
-                                sx={{
-                                  display: 'flex',
-                                  justifyContent: 'space-between',
-                                  alignItems: 'center',
-                                  py: 0.5,
-                                }}
-                              >
-                                <Typography variant="body2">
-                                  {balance.amount > 0
-                                    ? `${balance.email} owes you`
-                                    : `You owe ${balance.email}`}
-                                </Typography>
-                                <Typography
-                                  variant="body2"
-                                  sx={{
-                                    fontWeight: 'bold',
-                                    color: balance.amount > 0 ? 'success.dark' : 'error.dark',
-                                  }}
-                                >
-                                  {formatCurrency(Math.abs(balance.amount))}
-                                </Typography>
-                              </Box>
-                            ))}
-                          </Box>
-                        )}
-                      </Paper>
-                    ))}
-                  </>
-                )}
-              </Paper>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </>
+                  )}
+                </Card.Content>
+              </Card>
             )}
 
             {/* Summary Cards (overall, not per-owner) */}
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: {
-                  xs: '1fr',
-                  sm: 'repeat(2, 1fr)',
-                  md: 'repeat(3, 1fr)',
-                },
-                gap: 3,
-                mb: 3,
-              }}
-            >
+            <div className={styles.statsGrid}>
               <StatsCard
                 title="Total Income"
                 value={formatCurrency(totals.totalIncome)}
-                icon={<AssessmentIcon />}
-                color={theme.palette.success.main}
               />
               <StatsCard
                 title="Total Expenses"
                 value={formatCurrency(totals.totalExpense)}
-                icon={<AssessmentIcon />}
-                color={theme.palette.error.main}
               />
               <StatsCard
                 title="Net Income"
                 value={formatCurrency(totals.netIncome)}
-                icon={<AssessmentIcon />}
-                color={totals.netIncome >= 0 ? theme.palette.success.main : theme.palette.error.main}
               />
-            </Box>
+            </div>
 
             {/* P&L Report */}
-            <Paper sx={{ p: 3, mb: 3 }}>
-              <Typography variant="h6" gutterBottom>
-                Profit & Loss Report - Monthly Breakdown
-              </Typography>
-              {plTableData.months.length === 0 ? (
-                <Typography variant="body2" color="text.secondary" sx={{ py: 4, textAlign: 'center' }}>
-                  No data available for the selected date range
-                </Typography>
-              ) : (
-                <TableContainer sx={{ maxHeight: 600, overflowX: 'auto' }}>
-                  <Table size="small" stickyHeader>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell sx={{ fontWeight: 'bold', minWidth: 150 }}>Category</TableCell>
-                        {plTableData.months.map(month => (
-                          <TableCell key={month} align="right" sx={{ fontWeight: 'bold', minWidth: 100 }}>
-                            {format(new Date(month + '-01'), 'MMM yyyy')}
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {/* Income Section */}
-                      <TableRow>
-                        <TableCell colSpan={plTableData.months.length + 1} sx={{ bgcolor: 'success.light', fontWeight: 'bold' }}>
-                          INCOME
-                        </TableCell>
-                      </TableRow>
-                      {plTableData.incomeCategories.map(category => (
-                        <TableRow key={category}>
-                          <TableCell>{category}</TableCell>
-                          {plTableData.months.map(month => (
-                            <TableCell key={month} align="right">
-                              {formatCurrency(plData[month]?.income[category] || 0)}
-                            </TableCell>
-                          ))}
-                        </TableRow>
-                      ))}
-                      <TableRow sx={{ bgcolor: 'grey.100' }}>
-                        <TableCell sx={{ fontWeight: 'bold' }}>Total Income</TableCell>
-                        {plTableData.months.map(month => {
-                          const total = Object.values(plData[month]?.income || {}).reduce((sum, val) => sum + val, 0);
-                          return (
-                            <TableCell key={month} align="right" sx={{ fontWeight: 'bold' }}>
-                              {formatCurrency(total)}
-                            </TableCell>
-                          );
-                        })}
-                      </TableRow>
-
-                      {/* Expense Section */}
-                      <TableRow>
-                        <TableCell colSpan={plTableData.months.length + 1} sx={{ bgcolor: 'error.light', fontWeight: 'bold' }}>
-                          EXPENSES
-                        </TableCell>
-                      </TableRow>
-                      {plTableData.expenseCategories.map(category => (
-                        <TableRow key={category}>
-                          <TableCell>{category}</TableCell>
-                          {plTableData.months.map(month => (
-                            <TableCell key={month} align="right">
-                              {formatCurrency(plData[month]?.expense[category] || 0)}
-                            </TableCell>
-                          ))}
-                        </TableRow>
-                      ))}
-                      <TableRow sx={{ bgcolor: 'grey.100' }}>
-                        <TableCell sx={{ fontWeight: 'bold' }}>Total Expenses</TableCell>
-                        {plTableData.months.map(month => {
-                          const total = Object.values(plData[month]?.expense || {}).reduce((sum, val) => sum + val, 0);
-                          return (
-                            <TableCell key={month} align="right" sx={{ fontWeight: 'bold' }}>
-                              {formatCurrency(total)}
-                            </TableCell>
-                          );
-                        })}
-                      </TableRow>
-
-                      {/* Net Income */}
-                      <TableRow sx={{ bgcolor: 'primary.light' }}>
-                        <TableCell sx={{ fontWeight: 'bold' }}>Net Income</TableCell>
-                        {plTableData.months.map(month => {
-                          const income = Object.values(plData[month]?.income || {}).reduce((sum, val) => sum + val, 0);
-                          const expense = Object.values(plData[month]?.expense || {}).reduce((sum, val) => sum + val, 0);
-                          const net = income - expense;
-                          return (
-                            <TableCell
-                              key={month}
-                              align="right"
-                              sx={{
-                                fontWeight: 'bold',
-                                color: net >= 0 ? 'success.dark' : 'error.dark',
-                              }}
+            <Card className={styles.sectionCard}>
+              <Card.Content>
+                <h2 className={styles.sectionTitle}>
+                  Profit &amp; Loss Report - Monthly Breakdown
+                </h2>
+                {plTableData.months.length === 0 ? (
+                  <p className={styles.emptyText}>
+                    No data available for the selected date range
+                  </p>
+                ) : (
+                  <div className={styles.plTableContainer}>
+                    <Table.Container>
+                      <Table>
+                        <Table.Head>
+                          <Table.Row>
+                            <Table.Cell
+                              sortable={false}
+                              sortDirection={null}
+                              className={styles.plTableCategoryCell}
                             >
-                              {formatCurrency(net)}
-                            </TableCell>
-                          );
-                        })}
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              )}
-            </Paper>
+                              Category
+                            </Table.Cell>
+                            {plTableData.months.map(month => (
+                              <Table.Cell
+                                key={month}
+                                sortable={false}
+                                sortDirection={null}
+                                align="right"
+                                className={styles.plTableMonthCell}
+                              >
+                                {format(new Date(month + '-01'), 'MMM yyyy')}
+                              </Table.Cell>
+                            ))}
+                          </Table.Row>
+                        </Table.Head>
+                        <Table.Body>
+                          {/* Income Section */}
+                          <Table.Row>
+                            <td
+                              colSpan={plTableData.months.length + 1}
+                              className={`${styles.sectionHeaderRow} ${styles.sectionHeaderIncome}`}
+                            >
+                              INCOME
+                            </td>
+                          </Table.Row>
+                          {plTableData.incomeCategories.map(category => (
+                            <Table.Row key={category}>
+                              <Table.Cell>{category}</Table.Cell>
+                              {plTableData.months.map(month => (
+                                <Table.Cell key={month} align="right">
+                                  {formatCurrency(plData[month]?.income[category] || 0)}
+                                </Table.Cell>
+                              ))}
+                            </Table.Row>
+                          ))}
+                          <Table.Row className={styles.totalRow}>
+                            <Table.Cell className={styles.boldCell}>Total Income</Table.Cell>
+                            {plTableData.months.map(month => {
+                              const total = Object.values(plData[month]?.income || {}).reduce((sum, val) => sum + val, 0);
+                              return (
+                                <Table.Cell key={month} align="right" className={styles.boldCell}>
+                                  {formatCurrency(total)}
+                                </Table.Cell>
+                              );
+                            })}
+                          </Table.Row>
+
+                          {/* Expense Section */}
+                          <Table.Row>
+                            <td
+                              colSpan={plTableData.months.length + 1}
+                              className={`${styles.sectionHeaderRow} ${styles.sectionHeaderExpense}`}
+                            >
+                              EXPENSES
+                            </td>
+                          </Table.Row>
+                          {plTableData.expenseCategories.map(category => (
+                            <Table.Row key={category}>
+                              <Table.Cell>{category}</Table.Cell>
+                              {plTableData.months.map(month => (
+                                <Table.Cell key={month} align="right">
+                                  {formatCurrency(plData[month]?.expense[category] || 0)}
+                                </Table.Cell>
+                              ))}
+                            </Table.Row>
+                          ))}
+                          <Table.Row className={styles.totalRow}>
+                            <Table.Cell className={styles.boldCell}>Total Expenses</Table.Cell>
+                            {plTableData.months.map(month => {
+                              const total = Object.values(plData[month]?.expense || {}).reduce((sum, val) => sum + val, 0);
+                              return (
+                                <Table.Cell key={month} align="right" className={styles.boldCell}>
+                                  {formatCurrency(total)}
+                                </Table.Cell>
+                              );
+                            })}
+                          </Table.Row>
+
+                          {/* Net Income */}
+                          <Table.Row className={styles.netRow}>
+                            <Table.Cell className={styles.boldCell}>Net Income</Table.Cell>
+                            {plTableData.months.map(month => {
+                              const income = Object.values(plData[month]?.income || {}).reduce((sum, val) => sum + val, 0);
+                              const expense = Object.values(plData[month]?.expense || {}).reduce((sum, val) => sum + val, 0);
+                              const net = income - expense;
+                              return (
+                                <Table.Cell
+                                  key={month}
+                                  align="right"
+                                  className={`${styles.boldCell} ${net >= 0 ? styles.textSuccessDark : styles.textErrorDark}`}
+                                >
+                                  {formatCurrency(net)}
+                                </Table.Cell>
+                              );
+                            })}
+                          </Table.Row>
+                        </Table.Body>
+                      </Table>
+                    </Table.Container>
+                  </div>
+                )}
+              </Card.Content>
+            </Card>
 
             {/* Category Breakdown Charts */}
-            <Paper sx={{ p: 3, mb: 3 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="h6">
-                  Category Breakdown
-                </Typography>
-                <ToggleButtonGroup
-                  value={chartType}
-                  exclusive
-                  onChange={(_, newType) => newType && setChartType(newType)}
-                  size="small"
-                >
-                  <ToggleButton value="pie">
-                    <PieChartIcon fontSize="small" />
-                  </ToggleButton>
-                  <ToggleButton value="bar">
-                    <BarChartIcon fontSize="small" />
-                  </ToggleButton>
-                </ToggleButtonGroup>
-              </Box>
+            <Card className={styles.sectionCard}>
+              <Card.Content>
+                <div className={styles.sectionHeader}>
+                  <h2 className={`${styles.sectionTitle} ${styles.sectionTitleNoMargin}`}>
+                    Category Breakdown
+                  </h2>
+                  <ToggleGroup
+                    options={chartToggleOptions}
+                    value={chartType}
+                    onChange={(value) => setChartType(value as ChartType)}
+                    size="small"
+                  />
+                </div>
 
-              {incomeChartData.length === 0 && expenseChartData.length === 0 ? (
-                <Typography variant="body2" color="text.secondary" sx={{ py: 4, textAlign: 'center' }}>
-                  No data available for the selected date range
-                </Typography>
-              ) : (
-                <Box
-                  sx={{
-                    display: 'grid',
-                    gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' },
-                    gap: 3,
-                  }}
-                >
-                  {/* Income Chart */}
-                  <Box>
-                    <Typography variant="subtitle2" gutterBottom align="center">
-                      Income by Category
-                    </Typography>
-                    {incomeChartData.length === 0 ? (
-                      <Typography variant="body2" color="text.secondary" sx={{ py: 4, textAlign: 'center' }}>
-                        No income data
-                      </Typography>
-                    ) : chartType === 'pie' ? (
-                      <ResponsiveContainer width="100%" height={300}>
-                        <PieChart>
-                          <Pie
-                            data={incomeChartData}
-                            dataKey="value"
-                            nameKey="name"
-                            cx="50%"
-                            cy="50%"
-                            outerRadius={80}
-                            label={(entry) => `${entry.name}: ${formatCurrency(entry.value)}`}
-                          >
-                            {incomeChartData.map((_, index) => (
-                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                            ))}
-                          </Pie>
-                          <Tooltip formatter={(value?: number) => value ? formatCurrency(value) : '\u00A30.00'} />
-                          <Legend />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    ) : (
-                      <ResponsiveContainer width="100%" height={300}>
-                        <BarChart data={incomeChartData}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="name" />
-                          <YAxis />
-                          <Tooltip formatter={(value?: number) => value ? formatCurrency(value) : '\u00A30.00'} />
-                          <Bar dataKey="value" fill={theme.palette.success.main} />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    )}
-                  </Box>
+                {incomeChartData.length === 0 && expenseChartData.length === 0 ? (
+                  <p className={styles.emptyText}>
+                    No data available for the selected date range
+                  </p>
+                ) : (
+                  <div className={styles.chartsGrid}>
+                    {/* Income Chart */}
+                    <div className={styles.chartSection}>
+                      <p className={styles.chartTitle}>Income by Category</p>
+                      {incomeChartData.length === 0 ? (
+                        <p className={styles.emptyText}>No income data</p>
+                      ) : chartType === 'pie' ? (
+                        <ResponsiveContainer width="100%" height={300}>
+                          <PieChart>
+                            <Pie
+                              data={incomeChartData}
+                              dataKey="value"
+                              nameKey="name"
+                              cx="50%"
+                              cy="50%"
+                              outerRadius={80}
+                              label={(entry) => `${entry.name}: ${formatCurrency(entry.value)}`}
+                            >
+                              {incomeChartData.map((_, index) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                              ))}
+                            </Pie>
+                            <Tooltip formatter={(value?: number) => value ? formatCurrency(value) : '\u00A30.00'} />
+                            <Legend />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <ResponsiveContainer width="100%" height={300}>
+                          <BarChart data={incomeChartData}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="name" />
+                            <YAxis />
+                            <Tooltip formatter={(value?: number) => value ? formatCurrency(value) : '\u00A30.00'} />
+                            <Bar dataKey="value" fill={CHART_COLOR_SUCCESS} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      )}
+                    </div>
 
-                  {/* Expense Chart */}
-                  <Box>
-                    <Typography variant="subtitle2" gutterBottom align="center">
-                      Expenses by Category
-                    </Typography>
-                    {expenseChartData.length === 0 ? (
-                      <Typography variant="body2" color="text.secondary" sx={{ py: 4, textAlign: 'center' }}>
-                        No expense data
-                      </Typography>
-                    ) : chartType === 'pie' ? (
-                      <ResponsiveContainer width="100%" height={300}>
-                        <PieChart>
-                          <Pie
-                            data={expenseChartData}
-                            dataKey="value"
-                            nameKey="name"
-                            cx="50%"
-                            cy="50%"
-                            outerRadius={80}
-                            label={(entry) => `${entry.name}: ${formatCurrency(entry.value)}`}
-                          >
-                            {expenseChartData.map((_, index) => (
-                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                            ))}
-                          </Pie>
-                          <Tooltip formatter={(value?: number) => value ? formatCurrency(value) : '\u00A30.00'} />
-                          <Legend />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    ) : (
-                      <ResponsiveContainer width="100%" height={300}>
-                        <BarChart data={expenseChartData}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="name" />
-                          <YAxis />
-                          <Tooltip formatter={(value?: number) => value ? formatCurrency(value) : '\u00A30.00'} />
-                          <Bar dataKey="value" fill={theme.palette.error.main} />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    )}
-                  </Box>
-                </Box>
-              )}
-            </Paper>
+                    {/* Expense Chart */}
+                    <div className={styles.chartSection}>
+                      <p className={styles.chartTitle}>Expenses by Category</p>
+                      {expenseChartData.length === 0 ? (
+                        <p className={styles.emptyText}>No expense data</p>
+                      ) : chartType === 'pie' ? (
+                        <ResponsiveContainer width="100%" height={300}>
+                          <PieChart>
+                            <Pie
+                              data={expenseChartData}
+                              dataKey="value"
+                              nameKey="name"
+                              cx="50%"
+                              cy="50%"
+                              outerRadius={80}
+                              label={(entry) => `${entry.name}: ${formatCurrency(entry.value)}`}
+                            >
+                              {expenseChartData.map((_, index) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                              ))}
+                            </Pie>
+                            <Tooltip formatter={(value?: number) => value ? formatCurrency(value) : '\u00A30.00'} />
+                            <Legend />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <ResponsiveContainer width="100%" height={300}>
+                          <BarChart data={expenseChartData}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="name" />
+                            <YAxis />
+                            <Tooltip formatter={(value?: number) => value ? formatCurrency(value) : '\u00A30.00'} />
+                            <Bar dataKey="value" fill={CHART_COLOR_ERROR} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </Card.Content>
+            </Card>
 
             {/* Property Performance */}
-            <Paper sx={{ p: 3 }}>
-              <Typography variant="h6" gutterBottom>
-                Property Performance Metrics
-              </Typography>
-              {sortedPropertyData.length === 0 ? (
-                <Typography variant="body2" color="text.secondary" sx={{ py: 4, textAlign: 'center' }}>
-                  No data available for the selected date range
-                </Typography>
-              ) : (
-                <TableContainer>
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>
-                          <TableSortLabel
-                            active={sortField === 'propertyName'}
-                            direction={sortField === 'propertyName' ? sortOrder : 'asc'}
-                            onClick={() => handleSort('propertyName')}
+            <Card>
+              <Card.Content>
+                <h2 className={styles.sectionTitle}>
+                  Property Performance Metrics
+                </h2>
+                {sortedPropertyData.length === 0 ? (
+                  <p className={styles.emptyText}>
+                    No data available for the selected date range
+                  </p>
+                ) : (
+                  <Table.Container>
+                    <Table>
+                      <Table.Head>
+                        <Table.Row>
+                          <Table.Cell
+                            sortable
+                            sortDirection={sortField === 'propertyName' ? sortOrder : null}
+                            onSort={() => handleSort('propertyName')}
                           >
                             Property Name
-                          </TableSortLabel>
-                        </TableCell>
-                        <TableCell align="right">
-                          <TableSortLabel
-                            active={sortField === 'totalRevenue'}
-                            direction={sortField === 'totalRevenue' ? sortOrder : 'asc'}
-                            onClick={() => handleSort('totalRevenue')}
+                          </Table.Cell>
+                          <Table.Cell
+                            sortable
+                            sortDirection={sortField === 'totalRevenue' ? sortOrder : null}
+                            onSort={() => handleSort('totalRevenue')}
+                            align="right"
                           >
                             Total Revenue
-                          </TableSortLabel>
-                        </TableCell>
-                        <TableCell align="right">
-                          <TableSortLabel
-                            active={sortField === 'totalExpenses'}
-                            direction={sortField === 'totalExpenses' ? sortOrder : 'asc'}
-                            onClick={() => handleSort('totalExpenses')}
+                          </Table.Cell>
+                          <Table.Cell
+                            sortable
+                            sortDirection={sortField === 'totalExpenses' ? sortOrder : null}
+                            onSort={() => handleSort('totalExpenses')}
+                            align="right"
                           >
                             Total Expenses
-                          </TableSortLabel>
-                        </TableCell>
-                        <TableCell align="right">
-                          <TableSortLabel
-                            active={sortField === 'netIncome'}
-                            direction={sortField === 'netIncome' ? sortOrder : 'asc'}
-                            onClick={() => handleSort('netIncome')}
+                          </Table.Cell>
+                          <Table.Cell
+                            sortable
+                            sortDirection={sortField === 'netIncome' ? sortOrder : null}
+                            onSort={() => handleSort('netIncome')}
+                            align="right"
                           >
                             Net Income
-                          </TableSortLabel>
-                        </TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {sortedPropertyData.map((property) => (
-                        <TableRow key={property.propertyId}>
-                          <TableCell>{property.propertyName}</TableCell>
-                          <TableCell align="right" sx={{ color: 'success.dark' }}>
-                            {formatCurrency(property.totalRevenue)}
-                          </TableCell>
-                          <TableCell align="right" sx={{ color: 'error.dark' }}>
-                            {formatCurrency(property.totalExpenses)}
-                          </TableCell>
-                          <TableCell
-                            align="right"
-                            sx={{
-                              fontWeight: 'bold',
-                              color: property.netIncome >= 0 ? 'success.dark' : 'error.dark',
-                            }}
-                          >
-                            {formatCurrency(property.netIncome)}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              )}
-            </Paper>
+                          </Table.Cell>
+                        </Table.Row>
+                      </Table.Head>
+                      <Table.Body>
+                        {sortedPropertyData.map((property) => (
+                          <Table.Row key={property.propertyId}>
+                            <Table.Cell>{property.propertyName}</Table.Cell>
+                            <Table.Cell align="right" className={styles.textSuccessDark}>
+                              {formatCurrency(property.totalRevenue)}
+                            </Table.Cell>
+                            <Table.Cell align="right" className={styles.textErrorDark}>
+                              {formatCurrency(property.totalExpenses)}
+                            </Table.Cell>
+                            <Table.Cell
+                              align="right"
+                              className={`${styles.boldCell} ${property.netIncome >= 0 ? styles.textSuccessDark : styles.textErrorDark}`}
+                            >
+                              {formatCurrency(property.netIncome)}
+                            </Table.Cell>
+                          </Table.Row>
+                        ))}
+                      </Table.Body>
+                    </Table>
+                  </Table.Container>
+                )}
+              </Card.Content>
+            </Card>
           </>
         )}
-      </Box>
+      </div>
     </Container>
   );
 };

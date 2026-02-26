@@ -1,0 +1,49 @@
+@use '../../../styles/variables' as *;
+
+.statsCard {
+  height: 100%;
+  min-height: 120px;
+}
+
+.title {
+  display: block;
+  font-size: $font-size-body2;
+  line-height: $line-height-body2;
+  letter-spacing: $letter-spacing-body2;
+  color: $color-text-secondary;
+  margin-bottom: $spacing-1;
+}
+
+.value {
+  display: block;
+  font-size: $font-size-h4;
+  line-height: $line-height-h4;
+  letter-spacing: $letter-spacing-h4;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-2;
+}
+
+.trend {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-1;
+}
+
+.trendUp {
+  color: $color-success;
+}
+
+.trendDown {
+  color: $color-error;
+}
+
+.trendNeutral {
+  color: $color-text-secondary;
+}
+
+.trendValue {
+  font-size: $font-size-body2;
+  line-height: $line-height-body2;
+  font-weight: $font-weight-medium;
+}

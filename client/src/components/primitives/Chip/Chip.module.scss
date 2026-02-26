@@ -1,0 +1,97 @@
+@use '../../../styles/variables' as *;
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 16px;
+  font-family: $font-family;
+  font-weight: $font-weight-medium;
+  white-space: nowrap;
+  transition: background-color $transition-duration $transition-easing;
+}
+
+// ---------------------------------------------------------------------------
+// Sizes
+// ---------------------------------------------------------------------------
+
+.small {
+  height: 24px;
+  padding: 0 $spacing-2;
+  font-size: $font-size-caption;
+  gap: $spacing-1;
+}
+
+.medium {
+  height: 32px;
+  padding: 0 $spacing-3;
+  font-size: $font-size-body2;
+  gap: $spacing-1;
+}
+
+// ---------------------------------------------------------------------------
+// Color variants - light opacity backgrounds with colored text
+// ---------------------------------------------------------------------------
+
+.default {
+  background-color: rgba($color-secondary-light, 0.2);
+  color: $color-text-primary;
+}
+
+.primary {
+  background-color: rgba($color-primary, 0.12);
+  color: $color-primary-dark;
+}
+
+.success {
+  background-color: rgba($color-success, 0.12);
+  color: $color-success;
+}
+
+.warning {
+  background-color: rgba($color-warning, 0.12);
+  color: $color-warning;
+}
+
+.error {
+  background-color: rgba($color-error, 0.12);
+  color: $color-error;
+}
+
+// ---------------------------------------------------------------------------
+// Label
+// ---------------------------------------------------------------------------
+
+.label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// ---------------------------------------------------------------------------
+// Delete button
+// ---------------------------------------------------------------------------
+
+.deleteButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 0;
+  border-radius: $radius-full;
+  color: inherit;
+  opacity: 0.7;
+  transition: opacity $transition-duration $transition-easing,
+    background-color $transition-duration $transition-easing;
+
+  &:hover {
+    opacity: 1;
+    background-color: rgba(0, 0, 0, 0.08);
+  }
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 1px;
+  }
+}

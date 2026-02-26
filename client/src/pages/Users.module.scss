@@ -1,0 +1,90 @@
+@use '../styles/variables' as *;
+@use '../styles/mixins' as *;
+
+// ---------------------------------------------------------------------------
+// Layout
+// ---------------------------------------------------------------------------
+
+.page {
+  margin-bottom: $spacing-8;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: $spacing-3;
+  margin-bottom: $spacing-6;
+}
+
+.title {
+  font-size: $font-size-h4;
+  font-weight: $font-weight-regular;
+  line-height: $line-height-h4;
+  letter-spacing: $letter-spacing-h4;
+  color: $color-text-primary;
+  margin: 0;
+}
+
+// ---------------------------------------------------------------------------
+// Loading & Error states
+// ---------------------------------------------------------------------------
+
+.loadingWrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
+
+.alert {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  width: 100%;
+  padding: $spacing-3 $spacing-4;
+  border-radius: $radius-sm;
+  font-size: $font-size-body2;
+  line-height: $line-height-body2;
+  margin-top: $spacing-4;
+  background-color: rgba($color-error, 0.1);
+  color: darken($color-error, 5%);
+}
+
+// ---------------------------------------------------------------------------
+// Empty state
+// ---------------------------------------------------------------------------
+
+.emptyState {
+  text-align: center;
+  padding: $spacing-8 * 2 0;
+}
+
+.emptyTitle {
+  font-size: $font-size-h6;
+  font-weight: $font-weight-regular;
+  line-height: $line-height-h6;
+  letter-spacing: $letter-spacing-h6;
+  color: $color-text-secondary;
+  margin: 0 0 $spacing-4;
+}
+
+// ---------------------------------------------------------------------------
+// Role select in table
+// ---------------------------------------------------------------------------
+
+.roleSelect {
+  min-width: 120px;
+}
+
+// ---------------------------------------------------------------------------
+// Dialog form
+// ---------------------------------------------------------------------------
+
+.dialogForm {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+  margin-top: $spacing-2;
+}

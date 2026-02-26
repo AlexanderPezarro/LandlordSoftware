@@ -1,0 +1,258 @@
+@use '../styles/variables' as *;
+@use '../styles/mixins' as *;
+
+// Page wrapper
+.page {
+  margin-bottom: $spacing-8;
+}
+
+// Back button
+.backButton {
+  margin-bottom: $spacing-4;
+}
+
+// Property header card
+.headerCard {
+  margin-bottom: $spacing-6;
+}
+
+.headerContent {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: $spacing-4;
+}
+
+.headerInfo {
+  flex: 1;
+}
+
+.propertyName {
+  font-size: $font-size-h4;
+  font-weight: $font-weight-regular;
+  line-height: $line-height-h4;
+  letter-spacing: $letter-spacing-h4;
+  color: $color-text-primary;
+  margin: 0 0 $spacing-2;
+}
+
+.propertyAddress {
+  font-size: $font-size-body1;
+  line-height: $line-height-body1;
+  color: $color-text-secondary;
+  margin: 0 0 $spacing-4;
+}
+
+.chipRow {
+  display: flex;
+  gap: $spacing-2;
+  flex-wrap: wrap;
+}
+
+// Tab navigation
+.tabBar {
+  display: flex;
+  border-bottom: 1px solid $color-divider;
+  margin-bottom: $spacing-4;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: $spacing-3 $spacing-4;
+  font-size: $font-size-body2;
+  font-weight: $font-weight-medium;
+  color: $color-text-secondary;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color $transition-duration $transition-easing,
+    border-color $transition-duration $transition-easing;
+
+  @include respond-down(sm) {
+    padding: $spacing-2 $spacing-3;
+    font-size: $font-size-caption;
+  }
+
+  &:hover {
+    color: $color-primary;
+  }
+
+  &.tabActive {
+    color: $color-primary;
+    border-bottom-color: $color-primary;
+  }
+}
+
+.tabIcon {
+  display: inline-flex;
+  align-items: center;
+
+  @include respond-down(sm) {
+    display: none;
+  }
+}
+
+// Tab panels
+.tabPanel {
+  padding: $spacing-6 0;
+}
+
+// Overview tab detail grid
+.detailsCard {
+  padding: 0;
+}
+
+.detailsTitle {
+  font-size: $font-size-h6;
+  font-weight: $font-weight-medium;
+  line-height: $line-height-h6;
+  color: $color-text-primary;
+  margin: 0 0 $spacing-4;
+}
+
+.detailsGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: $spacing-4;
+  margin-top: $spacing-4;
+
+  @include respond-to(md) {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.detailLabel {
+  font-size: $font-size-body2;
+  line-height: $line-height-body2;
+  color: $color-text-secondary;
+  margin: 0 0 $spacing-1;
+}
+
+.detailValue {
+  font-size: $font-size-body1;
+  line-height: $line-height-body1;
+  color: $color-text-primary;
+  margin: 0;
+}
+
+// Notes section
+.notesSection {
+  margin-top: $spacing-6;
+}
+
+.notesTitle {
+  font-size: $font-size-h6;
+  font-weight: $font-weight-medium;
+  line-height: $line-height-h6;
+  color: $color-text-primary;
+  margin: 0 0 $spacing-2;
+}
+
+.notesText {
+  font-size: $font-size-body2;
+  line-height: $line-height-body2;
+  color: $color-text-primary;
+  white-space: pre-wrap;
+  margin: 0;
+}
+
+// Empty section
+.emptySection {
+  text-align: center;
+  padding: $spacing-8;
+}
+
+.emptyText {
+  font-size: $font-size-body1;
+  line-height: $line-height-body1;
+  color: $color-text-secondary;
+  margin: 0;
+}
+
+// Transaction amount styling
+.amountIncome {
+  color: $color-success;
+  font-weight: $font-weight-medium;
+}
+
+.amountExpense {
+  color: $color-error;
+  font-weight: $font-weight-medium;
+}
+
+// Loading state
+.loadingWrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
+
+// Error alert
+.alert {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: $spacing-3 $spacing-4;
+  border-radius: $radius-sm;
+  font-size: $font-size-body2;
+  line-height: $line-height-body2;
+  background-color: rgba($color-error, 0.1);
+  color: darken($color-error, 5%);
+}
+
+// Balances section header
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-6;
+}
+
+.sectionTitle {
+  font-size: $font-size-h5;
+  font-weight: $font-weight-medium;
+  line-height: $line-height-h5;
+  color: $color-text-primary;
+  margin: 0;
+}
+
+.settlementStack {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-6;
+}
+
+// Dialog form layout
+.formFields {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+  margin-top: $spacing-2;
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $spacing-4;
+
+  @include respond-down(sm) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// Chip - outlined variant
+.chipOutlined {
+  border: 1px solid $color-divider;
+  background-color: transparent;
+}

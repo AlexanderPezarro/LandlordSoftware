@@ -1,49 +1,31 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Container, Typography, Box, Paper, Button } from '@mui/material';
-import { Home as HomeIcon } from '@mui/icons-material';
+import { Home } from 'lucide-react';
+import { Container } from '../components/primitives/Container';
+import { Button } from '../components/primitives/Button';
+import styles from './NotFound.module.scss';
 
 export const NotFound: React.FC = () => {
   const navigate = useNavigate();
 
   return (
     <Container maxWidth="md">
-      <Box
-        sx={{
-          marginTop: 8,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
-        <Paper
-          elevation={3}
-          sx={{
-            padding: 4,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            width: '100%',
-          }}
-        >
-          <Typography variant="h1" component="h1" gutterBottom>
-            404
-          </Typography>
-          <Typography variant="h5" component="h2" gutterBottom>
-            Page Not Found
-          </Typography>
-          <Typography variant="body1" sx={{ mb: 3, textAlign: 'center' }}>
+      <div className={styles.wrapper}>
+        <div className={styles.card}>
+          <h1 className={styles.errorCode}>404</h1>
+          <h2 className={styles.title}>Page Not Found</h2>
+          <p className={styles.description}>
             The page you are looking for does not exist or has been moved.
-          </Typography>
+          </p>
           <Button
-            variant="contained"
-            startIcon={<HomeIcon />}
+            variant="primary"
+            startIcon={<Home size={20} />}
             onClick={() => navigate('/dashboard')}
           >
             Go to Dashboard
           </Button>
-        </Paper>
-      </Box>
+        </div>
+      </div>
     </Container>
   );
 };

@@ -1,0 +1,437 @@
+{
+  "version": "2.8",
+  "variables": {},
+  "children": [
+    {
+      "id": "pd-root-frame",
+      "type": "frame",
+      "name": "Property Detail",
+      "x": 0,
+      "y": 0,
+      "width": 1200,
+      "height": 1100,
+      "fill": "#f5f5f5",
+      "layout": "vertical",
+      "padding": 24,
+      "gap": 16,
+      "children": [
+        {
+          "id": "pd-back-row",
+          "type": "frame",
+          "layout": "horizontal",
+          "alignItems": "center",
+          "gap": 4,
+          "height": 36,
+          "fill": "transparent",
+          "children": [
+            {
+              "id": "pd-back-btn",
+              "type": "frame",
+              "width": 40,
+              "height": 40,
+              "cornerRadius": 20,
+              "fill": "transparent",
+              "layout": "horizontal",
+              "alignItems": "center",
+              "justifyContent": "center",
+              "children": [
+                {
+                  "id": "pd-back-icon",
+                  "type": "icon_font",
+                  "family": "material_symbols",
+                  "name": "arrow_back",
+                  "fontSize": 20,
+                  "fill": "#000000de"
+                }
+              ]
+            },
+            {
+              "id": "pd-back-label",
+              "type": "text",
+              "content": "Back to Properties",
+              "fontSize": 14,
+              "fill": "#1976d2"
+            }
+          ]
+        },
+        {
+          "id": "pd-header-card",
+          "type": "frame",
+          "cornerRadius": 4,
+          "fill": "#ffffff",
+          "layout": "horizontal",
+          "alignItems": "center",
+          "justifyContent": "space_between",
+          "padding": 24,
+          "width": 1152,
+          "height": 100,
+          "children": [
+            {
+              "id": "pd-header-left",
+              "type": "frame",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "id": "pd-property-name",
+                  "type": "text",
+                  "content": "123 Main Street",
+                  "fontSize": 28,
+                  "fontWeight": 700,
+                  "fill": "#000000de"
+                },
+                {
+                  "id": "pd-property-meta-row",
+                  "type": "frame",
+                  "layout": "horizontal",
+                  "gap": 8,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "pd-property-address",
+                      "type": "text",
+                      "content": "London, SW1A 1AA",
+                      "fontSize": 14,
+                      "fill": "#00000099"
+                    },
+                    {
+                      "id": "pd-status-chip",
+                      "type": "frame",
+                      "fill": "#2e7d3220",
+                      "cornerRadius": 12,
+                      "height": 24,
+                      "width": 80,
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "id": "pd-status-chip-text",
+                          "type": "text",
+                          "content": "Occupied",
+                          "fontSize": 12,
+                          "fill": "#2e7d32"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "pd-type-chip",
+                      "type": "frame",
+                      "fill": "#1976d220",
+                      "cornerRadius": 12,
+                      "height": 24,
+                      "width": 80,
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "id": "pd-type-chip-text",
+                          "type": "text",
+                          "content": "Apartment",
+                          "fontSize": 12,
+                          "fill": "#1976d2"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "pd-edit-btn",
+              "type": "frame",
+              "cornerRadius": 4,
+              "fill": "transparent",
+              "stroke": "#1976d2",
+              "thickness": 1,
+              "height": 36,
+              "width": 130,
+              "layout": "horizontal",
+              "alignItems": "center",
+              "justifyContent": "center",
+              "gap": 8,
+              "children": [
+                {
+                  "id": "pd-edit-icon",
+                  "type": "icon_font",
+                  "family": "material_symbols",
+                  "name": "edit",
+                  "fontSize": 16,
+                  "fill": "#1976d2"
+                },
+                {
+                  "id": "pd-edit-label",
+                  "type": "text",
+                  "content": "Edit Property",
+                  "fontSize": 14,
+                  "fill": "#1976d2"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "pd-tabs-bar",
+          "type": "frame",
+          "layout": "horizontal",
+          "gap": 0,
+          "width": 1152,
+          "height": 48,
+          "fill": "#ffffff",
+          "cornerRadius": 4,
+          "stroke": "#0000001f",
+          "thickness": 1,
+          "children": [
+            {
+              "id": "pd-tab-overview",
+              "type": "frame",
+              "fill": "#1976d220",
+              "width": 160,
+              "height": 48,
+              "layout": "horizontal",
+              "alignItems": "center",
+              "justifyContent": "center",
+              "children": [
+                {
+                  "id": "pd-tab-overview-text",
+                  "type": "text",
+                  "content": "Overview",
+                  "fontSize": 14,
+                  "fontWeight": 500,
+                  "fill": "#1976d2"
+                }
+              ]
+            },
+            {
+              "id": "pd-tab-leases",
+              "type": "frame",
+              "fill": "transparent",
+              "width": 160,
+              "height": 48,
+              "layout": "horizontal",
+              "alignItems": "center",
+              "justifyContent": "center",
+              "children": [
+                {
+                  "id": "pd-tab-leases-text",
+                  "type": "text",
+                  "content": "Leases (2)",
+                  "fontSize": 14,
+                  "fill": "#00000099"
+                }
+              ]
+            },
+            {
+              "id": "pd-tab-transactions",
+              "type": "frame",
+              "fill": "transparent",
+              "width": 200,
+              "height": 48,
+              "layout": "horizontal",
+              "alignItems": "center",
+              "justifyContent": "center",
+              "children": [
+                {
+                  "id": "pd-tab-transactions-text",
+                  "type": "text",
+                  "content": "Transactions (12)",
+                  "fontSize": 14,
+                  "fill": "#00000099"
+                }
+              ]
+            },
+            {
+              "id": "pd-tab-events",
+              "type": "frame",
+              "fill": "transparent",
+              "width": 140,
+              "height": 48,
+              "layout": "horizontal",
+              "alignItems": "center",
+              "justifyContent": "center",
+              "children": [
+                {
+                  "id": "pd-tab-events-text",
+                  "type": "text",
+                  "content": "Events (3)",
+                  "fontSize": 14,
+                  "fill": "#00000099"
+                }
+              ]
+            },
+            {
+              "id": "pd-tab-balances",
+              "type": "frame",
+              "fill": "transparent",
+              "width": 200,
+              "height": 48,
+              "layout": "horizontal",
+              "alignItems": "center",
+              "justifyContent": "center",
+              "children": [
+                {
+                  "id": "pd-tab-balances-text",
+                  "type": "text",
+                  "content": "Balances & Settlements",
+                  "fontSize": 14,
+                  "fill": "#00000099"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "pd-overview-panel",
+          "type": "frame",
+          "cornerRadius": 4,
+          "fill": "#ffffff",
+          "padding": 24,
+          "gap": 16,
+          "layout": "vertical",
+          "width": 1152,
+          "height": 300,
+          "children": [
+            {
+              "id": "pd-overview-title",
+              "type": "text",
+              "content": "Property Details",
+              "fontSize": 16,
+              "fontWeight": 500,
+              "fill": "#000000de"
+            },
+            {
+              "id": "pd-details-grid",
+              "type": "frame",
+              "layout": "horizontal",
+              "gap": 24,
+              "width": 1104,
+              "children": [
+                {
+                  "id": "pd-details-left-col",
+                  "type": "frame",
+                  "layout": "vertical",
+                  "gap": 12,
+                  "width": 528,
+                  "children": [
+                    {
+                      "id": "pd-detail-type-row",
+                      "type": "frame",
+                      "layout": "vertical",
+                      "gap": 2,
+                      "children": [
+                        {
+                          "id": "pd-detail-type-label",
+                          "type": "text",
+                          "content": "Property Type",
+                          "fontSize": 12,
+                          "fill": "#00000099"
+                        },
+                        {
+                          "id": "pd-detail-type-value",
+                          "type": "text",
+                          "content": "Apartment",
+                          "fontSize": 14,
+                          "fill": "#000000de"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "pd-detail-status-row",
+                      "type": "frame",
+                      "layout": "vertical",
+                      "gap": 2,
+                      "children": [
+                        {
+                          "id": "pd-detail-status-label",
+                          "type": "text",
+                          "content": "Status",
+                          "fontSize": 12,
+                          "fill": "#00000099"
+                        },
+                        {
+                          "id": "pd-detail-status-value",
+                          "type": "text",
+                          "content": "Occupied",
+                          "fontSize": 14,
+                          "fill": "#000000de"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "pd-detail-purchase-date-row",
+                      "type": "frame",
+                      "layout": "vertical",
+                      "gap": 2,
+                      "children": [
+                        {
+                          "id": "pd-detail-purchase-date-label",
+                          "type": "text",
+                          "content": "Purchase Date",
+                          "fontSize": 12,
+                          "fill": "#00000099"
+                        },
+                        {
+                          "id": "pd-detail-purchase-date-value",
+                          "type": "text",
+                          "content": "01 Mar 2020",
+                          "fontSize": 14,
+                          "fill": "#000000de"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "pd-detail-purchase-price-row",
+                      "type": "frame",
+                      "layout": "vertical",
+                      "gap": 2,
+                      "children": [
+                        {
+                          "id": "pd-detail-purchase-price-label",
+                          "type": "text",
+                          "content": "Purchase Price",
+                          "fontSize": 12,
+                          "fill": "#00000099"
+                        },
+                        {
+                          "id": "pd-detail-purchase-price-value",
+                          "type": "text",
+                          "content": "£320,000",
+                          "fontSize": 14,
+                          "fill": "#000000de"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "pd-details-right-col",
+                  "type": "frame",
+                  "layout": "vertical",
+                  "gap": 12,
+                  "width": 528,
+                  "children": [
+                    {
+                      "id": "pd-detail-notes-label",
+                      "type": "text",
+                      "content": "Notes",
+                      "fontSize": 12,
+                      "fill": "#00000099"
+                    },
+                    {
+                      "id": "pd-detail-notes-value",
+                      "type": "text",
+                      "content": "Well-maintained property in central location. Recently refurbished kitchen.",
+                      "fontSize": 14,
+                      "fill": "#000000de"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

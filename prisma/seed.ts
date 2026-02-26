@@ -1,5 +1,6 @@
 import { PrismaClient, Property, Tenant, Lease } from '@prisma/client';
 import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
+import { execSync } from 'node:child_process';
 import bcrypt from 'bcrypt';
 import 'dotenv/config';
 
@@ -851,6 +852,15 @@ async function seedEvents(properties: Property[]) {
 
 async function main() {
   console.log('🌱 Starting database seed...\n');
+
+  // Ensure all migrations are applied before seeding
+  console.log('📦 Running prisma migrate deploy...');
+  try {
+    execSync('npx prisma migrate deploy', { stdio: 'inherit' });
+    console.log('✅ Migrations applied\n');
+  } catch {
+    console.warn('⚠️  Migration failed, continuing with seed...\n');
+  }
 
   try {
     await clearDatabase();

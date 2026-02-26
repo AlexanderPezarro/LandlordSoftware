@@ -1,39 +1,24 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import {
-  Container,
-  Typography,
-  Box,
-  Button,
-  CircularProgress,
-  Alert,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  MenuItem,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Select,
-  IconButton,
-  SelectChangeEvent,
-} from '@mui/material';
-import { Add as AddIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { UserPlus, Trash2 } from 'lucide-react';
 import { usersService, UserListItem } from '../services/api/users.service';
 import { ApiError } from '../types/api.types';
-import ConfirmDialog from '../components/shared/ConfirmDialog';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { Container } from '../components/primitives/Container';
+import { Button } from '../components/primitives/Button';
+import { TextField } from '../components/primitives/TextField';
+import { Select } from '../components/primitives/Select';
+import { Table } from '../components/primitives/Table';
+import { Dialog } from '../components/primitives/Dialog';
+import { Spinner } from '../components/primitives/Spinner';
+import styles from './Users.module.scss';
 
 type Role = 'ADMIN' | 'LANDLORD' | 'VIEWER';
 
 const ROLES: Role[] = ['ADMIN', 'LANDLORD', 'VIEWER'];
+
+const ROLE_OPTIONS = ROLES.map((role) => ({ value: role, label: role }));
 
 interface UserFormData {
   email: string;
@@ -153,9 +138,7 @@ export const Users: React.FC = () => {
     }
   };
 
-  const handleRoleChange = async (userId: string, event: SelectChangeEvent<Role>) => {
-    const newRole = event.target.value as Role;
-
+  const handleRoleChange = async (userId: string, newRole: string) => {
     // Prevent changing own role
     if (user?.id === userId) {
       toast.error('You cannot change your own role');
@@ -164,7 +147,7 @@ export const Users: React.FC = () => {
 
     try {
       setRoleUpdateLoading((prev) => ({ ...prev, [userId]: true }));
-      await usersService.updateUserRole(userId, newRole);
+      await usersService.updateUserRole(userId, newRole as Role);
       toast.success('User role updated successfully');
       await fetchUsers();
     } catch (err) {
@@ -227,9 +210,9 @@ export const Users: React.FC = () => {
   if (loading) {
     return (
       <Container maxWidth="lg">
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
-          <CircularProgress />
-        </Box>
+        <div className={styles.loadingWrapper}>
+          <Spinner />
+        </div>
       </Container>
     );
   }
@@ -237,103 +220,90 @@ export const Users: React.FC = () => {
   if (error) {
     return (
       <Container maxWidth="lg">
-        <Box sx={{ mb: 4 }}>
-          <Typography variant="h4" component="h1" gutterBottom>
-            Users
-          </Typography>
-          <Alert severity="error">{error}</Alert>
-        </Box>
+        <div className={styles.page}>
+          <h1 className={styles.title}>Users</h1>
+          <div className={styles.alert}>{error}</div>
+        </div>
       </Container>
     );
   }
 
   return (
     <Container maxWidth="lg">
-      <Box sx={{ mb: 4 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Typography variant="h4" component="h1">
-            Users
-          </Typography>
+      <div className={styles.page}>
+        <div className={styles.header}>
+          <h1 className={styles.title}>Users</h1>
           <Button
-            variant="contained"
-            color="primary"
-            startIcon={<AddIcon />}
+            variant="primary"
+            startIcon={<UserPlus size={18} />}
             onClick={handleOpenDialog}
           >
             Add User
           </Button>
-        </Box>
+        </div>
 
         {users.length === 0 ? (
-          <Box sx={{ textAlign: 'center', py: 8 }}>
-            <Typography variant="h6" color="text.secondary" gutterBottom>
-              No users found
-            </Typography>
+          <div className={styles.emptyState}>
+            <h2 className={styles.emptyTitle}>No users found</h2>
             <Button
-              variant="outlined"
-              startIcon={<AddIcon />}
+              variant="secondary"
+              startIcon={<UserPlus size={18} />}
               onClick={handleOpenDialog}
-              sx={{ mt: 2 }}
             >
               Add First User
             </Button>
-          </Box>
+          </div>
         ) : (
-          <TableContainer component={Paper}>
+          <Table.Container>
             <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Email</TableCell>
-                  <TableCell>Role</TableCell>
-                  <TableCell>Created At</TableCell>
-                  <TableCell align="right">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
+              <Table.Head>
+                <Table.Row>
+                  <Table.Cell sortable={false}>Email</Table.Cell>
+                  <Table.Cell sortable={false}>Role</Table.Cell>
+                  <Table.Cell sortable={false}>Created At</Table.Cell>
+                  <Table.Cell sortable={false} align="right">Actions</Table.Cell>
+                </Table.Row>
+              </Table.Head>
+              <Table.Body>
                 {users.map((userItem) => (
-                  <TableRow key={userItem.id}>
-                    <TableCell>{userItem.email}</TableCell>
-                    <TableCell>
+                  <Table.Row key={userItem.id}>
+                    <Table.Cell>{userItem.email}</Table.Cell>
+                    <Table.Cell>
                       <Select
+                        options={ROLE_OPTIONS}
                         value={userItem.role}
-                        onChange={(e) => handleRoleChange(userItem.id, e)}
+                        onChange={(value) => handleRoleChange(userItem.id, value)}
                         size="small"
                         disabled={roleUpdateLoading[userItem.id] || user?.id === userItem.id}
-                        sx={{ minWidth: 120 }}
-                      >
-                        {ROLES.map((role) => (
-                          <MenuItem key={role} value={role}>
-                            {role}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </TableCell>
-                    <TableCell>
+                      />
+                    </Table.Cell>
+                    <Table.Cell>
                       {new Date(userItem.createdAt).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell align="right">
-                      <IconButton
-                        color="error"
+                    </Table.Cell>
+                    <Table.Cell align="right">
+                      <Button
+                        variant="icon"
+                        size="small"
                         onClick={() => handleDeleteClick(userItem)}
                         disabled={user?.id === userItem.id}
-                        size="small"
+                        aria-label="Delete user"
                       >
-                        <DeleteIcon />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
+                        <Trash2 size={18} />
+                      </Button>
+                    </Table.Cell>
+                  </Table.Row>
                 ))}
-              </TableBody>
+              </Table.Body>
             </Table>
-          </TableContainer>
+          </Table.Container>
         )}
-      </Box>
+      </div>
 
       {/* Create Dialog */}
-      <Dialog open={dialogOpen} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
-        <DialogTitle>Add New User</DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+      <Dialog open={dialogOpen} onClose={handleCloseDialog} size="medium">
+        <Dialog.Title>Add New User</Dialog.Title>
+        <Dialog.Content>
+          <div className={styles.dialogForm}>
             <TextField
               label="Email"
               type="email"
@@ -355,41 +325,40 @@ export const Users: React.FC = () => {
               required
               fullWidth
             />
-            <TextField
+            <Select
               label="Role"
-              select
+              options={ROLE_OPTIONS}
               value={formData.role}
-              onChange={(e) => handleFormChange('role', e.target.value)}
-              required
+              onChange={(value) => handleFormChange('role', value)}
               fullWidth
-            >
-              {ROLES.map((role) => (
-                <MenuItem key={role} value={role}>
-                  {role}
-                </MenuItem>
-              ))}
-            </TextField>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog} color="inherit" disabled={submitting}>
+            />
+          </div>
+        </Dialog.Content>
+        <Dialog.Actions>
+          <Button variant="text" onClick={handleCloseDialog} disabled={submitting}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit} variant="contained" color="primary" disabled={submitting}>
+          <Button variant="primary" onClick={handleSubmit} disabled={submitting} loading={submitting}>
             {submitting ? 'Creating...' : 'Create'}
           </Button>
-        </DialogActions>
+        </Dialog.Actions>
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
-      <ConfirmDialog
-        open={deleteDialogOpen}
-        title="Delete User"
-        message={`Are you sure you want to delete ${userToDelete?.email}? This action cannot be undone.`}
-        onConfirm={handleDeleteConfirm}
-        onCancel={handleDeleteCancel}
-        loading={deleteLoading}
-      />
+      <Dialog open={deleteDialogOpen} onClose={deleteLoading ? () => {} : handleDeleteCancel} size="small">
+        <Dialog.Title>Delete User</Dialog.Title>
+        <Dialog.Content>
+          <p>{`Are you sure you want to delete ${userToDelete?.email}? This action cannot be undone.`}</p>
+        </Dialog.Content>
+        <Dialog.Actions>
+          <Button variant="text" onClick={handleDeleteCancel} disabled={deleteLoading}>
+            Cancel
+          </Button>
+          <Button variant="primary" onClick={handleDeleteConfirm} disabled={deleteLoading} loading={deleteLoading}>
+            {deleteLoading ? 'Processing...' : 'Confirm'}
+          </Button>
+        </Dialog.Actions>
+      </Dialog>
     </Container>
   );
 };

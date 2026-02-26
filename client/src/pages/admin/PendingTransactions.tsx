@@ -1,42 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import {
-  Container,
-  Typography,
-  Box,
-  Paper,
-  CircularProgress,
-  Alert,
-  TextField,
-  MenuItem,
-  Select,
-  FormControl,
-  InputLabel,
-  Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Chip,
-  InputAdornment,
-  SelectChangeEvent,
-  Checkbox,
-  Toolbar,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  DialogContentText,
-} from '@mui/material';
-import {
-  CheckCircle as ApproveIcon,
-  Search as SearchIcon,
-  AccountBalance as BankIcon,
-  Delete as DeleteIcon,
-  Edit as EditIcon,
-} from '@mui/icons-material';
+import { CheckCircle, Search, Landmark, Trash2, Pencil } from 'lucide-react';
 import { format } from 'date-fns';
+import { Container } from '../../components/primitives/Container';
+import { Button } from '../../components/primitives/Button';
+import { Spinner } from '../../components/primitives/Spinner';
+import { TextField } from '../../components/primitives/TextField';
+import { Select } from '../../components/primitives/Select';
+import { Table } from '../../components/primitives/Table';
+import { Chip } from '../../components/primitives/Chip';
+import { Dialog } from '../../components/primitives/Dialog';
+import { ConfirmDialog } from '../../components/composed/ConfirmDialog';
 import {
   pendingTransactionsService,
   PendingTransaction,
@@ -44,8 +17,9 @@ import {
 import { bankService } from '../../services/api/bank.service';
 import { ApiError } from '../../types/api.types';
 import { useToast } from '../../contexts/ToastContext';
-import PropertySelector from '../../components/shared/PropertySelector';
+import { PropertySelector } from '../../components/composed/PropertySelector';
 import { useProperties } from '../../contexts/PropertiesContext';
+import styles from './PendingTransactions.module.scss';
 
 const TRANSACTION_TYPES = ['Income', 'Expense'] as const;
 const INCOME_CATEGORIES = ['Rent', 'Security Deposit', 'Late Fee', 'Lease Fee'] as const;
@@ -60,6 +34,11 @@ const EXPENSE_CATEGORIES = [
   'Transport',
   'Other',
 ] as const;
+
+const TYPE_OPTIONS = [
+  { value: '', label: 'Select type' },
+  ...TRANSACTION_TYPES.map((type) => ({ value: type, label: type })),
+];
 
 interface BankAccount {
   id: string;
@@ -207,6 +186,14 @@ export const PendingTransactions: React.FC = () => {
     return [];
   };
 
+  const getCategoryOptions = (type: string | null) => {
+    const categories = getCategoriesForType(type);
+    return [
+      { value: '', label: 'Select category' },
+      ...categories.map((cat) => ({ value: cat, label: cat })),
+    ];
+  };
+
   const formatAmount = (amount: number, currency: string) => {
     const absAmount = Math.abs(amount / 100); // Convert from pence to pounds
     const formatted = new Intl.NumberFormat('en-GB', {
@@ -340,12 +327,36 @@ export const PendingTransactions: React.FC = () => {
     }
   };
 
+  const bankAccountOptions = [
+    { value: 'all', label: 'All Accounts' },
+    ...bankAccounts.map((account) => ({
+      value: account.id,
+      label: account.accountName,
+    })),
+  ];
+
+  const statusFilterOptions = [
+    { value: 'pending', label: 'Pending Review' },
+    { value: 'reviewed', label: 'Reviewed' },
+    { value: 'all', label: 'All' },
+  ];
+
+  const bulkTypeOptions = [
+    { value: '', label: 'No change' },
+    ...TRANSACTION_TYPES.map((type) => ({ value: type, label: type })),
+  ];
+
+  const bulkCategoryOptions = [
+    { value: '', label: 'No change' },
+    ...getCategoriesForType(bulkUpdateType).map((cat) => ({ value: cat, label: cat })),
+  ];
+
   if (loading) {
     return (
       <Container maxWidth="xl">
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
-          <CircularProgress />
-        </Box>
+        <div className={styles.loadingWrapper}>
+          <Spinner />
+        </div>
       </Container>
     );
   }
@@ -353,355 +364,286 @@ export const PendingTransactions: React.FC = () => {
   if (error) {
     return (
       <Container maxWidth="xl">
-        <Box sx={{ mb: 4 }}>
-          <Typography variant="h4" component="h1" gutterBottom>
-            Pending Transactions Review
-          </Typography>
-          <Alert severity="error">{error}</Alert>
-        </Box>
+        <div className={styles.page}>
+          <h1 className={styles.title}>Pending Transactions Review</h1>
+          <div className={styles.alert}>{error}</div>
+        </div>
       </Container>
     );
   }
 
   return (
     <Container maxWidth="xl">
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Pending Transactions Review
-        </Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+      <div className={styles.page}>
+        <h1 className={styles.title}>Pending Transactions Review</h1>
+        <p className={styles.subtitle}>
           Review and categorize imported bank transactions before approving them.
-        </Typography>
+        </p>
 
         {/* Filters */}
-        <Paper sx={{ p: 2, mb: 3 }}>
-          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+        <div className={styles.filters}>
+          <div className={styles.searchField}>
             <TextField
               label="Search"
               placeholder="Search by description..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              sx={{ flex: '1 1 300px', minWidth: 200 }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
-              }}
+              onChange={(e) => setSearchQuery((e.target as HTMLInputElement).value)}
+              fullWidth
+              startAdornment={<Search size={18} />}
             />
+          </div>
 
-            <FormControl sx={{ flex: '0 0 200px', minWidth: 200 }}>
-              <InputLabel>Bank Account</InputLabel>
-              <Select
-                value={bankAccountFilter}
-                label="Bank Account"
-                onChange={(e) => setBankAccountFilter(e.target.value)}
-              >
-                <MenuItem value="all">All Accounts</MenuItem>
-                {bankAccounts.map((account) => (
-                  <MenuItem key={account.id} value={account.id}>
-                    {account.accountName}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+          <div className={styles.filterSelect}>
+            <Select
+              label="Bank Account"
+              value={bankAccountFilter}
+              onChange={(value) => setBankAccountFilter(value)}
+              options={bankAccountOptions}
+            />
+          </div>
 
-            <FormControl sx={{ flex: '0 0 200px', minWidth: 200 }}>
-              <InputLabel>Status</InputLabel>
-              <Select
-                value={reviewStatusFilter}
-                label="Status"
-                onChange={(e) => setReviewStatusFilter(e.target.value)}
-              >
-                <MenuItem value="pending">Pending Review</MenuItem>
-                <MenuItem value="reviewed">Reviewed</MenuItem>
-                <MenuItem value="all">All</MenuItem>
-              </Select>
-            </FormControl>
-          </Box>
-        </Paper>
+          <div className={styles.filterSelect}>
+            <Select
+              label="Status"
+              value={reviewStatusFilter}
+              onChange={(value) => setReviewStatusFilter(value)}
+              options={statusFilterOptions}
+            />
+          </div>
+        </div>
 
         {/* Bulk Actions Toolbar */}
         {selectedIds.size > 0 && (
-          <Paper sx={{ mb: 2 }}>
-            <Toolbar sx={{ gap: 2 }}>
-              <Typography variant="subtitle1" sx={{ flex: '1 1 100%' }}>
-                {selectedIds.size} transaction(s) selected
-              </Typography>
-              <Button
-                variant="contained"
-                color="primary"
-                startIcon={<ApproveIcon />}
-                onClick={handleBulkApprove}
-                disabled={bulkUpdating}
-              >
-                Approve Selected
-              </Button>
-              <Button
-                variant="outlined"
-                startIcon={<EditIcon />}
-                onClick={handleOpenBulkUpdate}
-                disabled={bulkUpdating}
-              >
-                Update Selected
-              </Button>
-              <Button
-                variant="outlined"
-                color="error"
-                startIcon={<DeleteIcon />}
-                onClick={handleOpenBulkReject}
-                disabled={bulkUpdating}
-              >
-                Reject Selected
-              </Button>
-            </Toolbar>
-          </Paper>
+          <div className={styles.bulkToolbar}>
+            <span className={styles.bulkLabel}>
+              {selectedIds.size} transaction(s) selected
+            </span>
+            <Button
+              variant="primary"
+              startIcon={<CheckCircle size={18} />}
+              onClick={handleBulkApprove}
+              disabled={bulkUpdating}
+            >
+              Approve Selected
+            </Button>
+            <Button
+              variant="secondary"
+              startIcon={<Pencil size={18} />}
+              onClick={handleOpenBulkUpdate}
+              disabled={bulkUpdating}
+            >
+              Update Selected
+            </Button>
+            <Button
+              variant="secondary"
+              startIcon={<Trash2 size={18} />}
+              onClick={handleOpenBulkReject}
+              disabled={bulkUpdating}
+            >
+              Reject Selected
+            </Button>
+          </div>
         )}
 
         {/* Transactions Table */}
         {pendingTransactions.length === 0 ? (
-          <Paper sx={{ p: 6, textAlign: 'center' }}>
-            <BankIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
-            <Typography variant="h6" color="text.secondary" gutterBottom>
-              No pending transactions
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
+          <div className={styles.empty}>
+            <Landmark size={64} className={styles.emptyIcon} />
+            <h2 className={styles.emptyTitle}>No pending transactions</h2>
+            <p className={styles.emptyText}>
               {reviewStatusFilter === 'pending'
                 ? 'All transactions have been reviewed!'
                 : 'No transactions found matching your filters.'}
-            </Typography>
-          </Paper>
+            </p>
+          </div>
         ) : (
-          <TableContainer component={Paper}>
+          <Table.Container>
             <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell padding="checkbox">
-                    <Checkbox
-                      indeterminate={isSomeSelected}
+              <Table.Head>
+                <Table.Row>
+                  <Table.Cell width="48px">
+                    <input
+                      type="checkbox"
+                      className={styles.checkbox}
+                      ref={(el) => {
+                        if (el) el.indeterminate = isSomeSelected;
+                      }}
                       checked={isAllSelected}
                       onChange={handleSelectAll}
                       disabled={unreviewedCount === 0}
                     />
-                  </TableCell>
-                  <TableCell>Date</TableCell>
-                  <TableCell>Description</TableCell>
-                  <TableCell align="right">Amount</TableCell>
-                  <TableCell>Bank Account</TableCell>
-                  <TableCell sx={{ minWidth: 200 }}>Property</TableCell>
-                  <TableCell sx={{ minWidth: 140 }}>Type</TableCell>
-                  <TableCell sx={{ minWidth: 180 }}>Category</TableCell>
-                  <TableCell align="center">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
+                  </Table.Cell>
+                  <Table.Cell sortable sortDirection={null}>Date</Table.Cell>
+                  <Table.Cell sortable sortDirection={null}>Description</Table.Cell>
+                  <Table.Cell sortable sortDirection={null} align="right">Amount</Table.Cell>
+                  <Table.Cell sortable sortDirection={null}>Bank Account</Table.Cell>
+                  <Table.Cell sortable sortDirection={null} className={styles.propertyCol}>Property</Table.Cell>
+                  <Table.Cell sortable sortDirection={null} className={styles.typeCol}>Type</Table.Cell>
+                  <Table.Cell sortable sortDirection={null} className={styles.categoryCol}>Category</Table.Cell>
+                  <Table.Cell align="center" sortable sortDirection={null}>Actions</Table.Cell>
+                </Table.Row>
+              </Table.Head>
+              <Table.Body>
                 {pendingTransactions.map((tx) => (
-                  <TableRow
+                  <Table.Row
                     key={tx.id}
-                    sx={{
-                      backgroundColor: tx.reviewedAt ? 'action.hover' : 'inherit',
-                      opacity: savingRows[tx.id] ? 0.6 : 1,
-                    }}
+                    className={[
+                      tx.reviewedAt ? styles.reviewedRow : '',
+                      savingRows[tx.id] ? styles.savingRow : '',
+                    ]
+                      .filter(Boolean)
+                      .join(' ')}
                   >
-                    <TableCell padding="checkbox">
-                      <Checkbox
+                    <Table.Cell width="48px">
+                      <input
+                        type="checkbox"
+                        className={styles.checkbox}
                         checked={isSelected(tx.id)}
                         onChange={() => handleSelectOne(tx.id)}
                         disabled={!!tx.reviewedAt}
                       />
-                    </TableCell>
-                    <TableCell>
+                    </Table.Cell>
+                    <Table.Cell>
                       {format(new Date(tx.transactionDate), 'dd/MM/yyyy')}
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2">{tx.description}</Typography>
+                    </Table.Cell>
+                    <Table.Cell>
+                      <span className={styles.description}>{tx.description}</span>
                       {tx.bankTransaction.counterpartyName && (
-                        <Typography variant="caption" color="text.secondary">
+                        <span className={styles.counterparty}>
                           {tx.bankTransaction.counterpartyName}
-                        </Typography>
+                        </span>
                       )}
-                    </TableCell>
-                    <TableCell align="right">
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          fontWeight: 'medium',
-                          color: tx.amount > 0 ? 'success.main' : 'error.main',
-                        }}
+                    </Table.Cell>
+                    <Table.Cell align="right">
+                      <span
+                        className={
+                          tx.amount > 0 ? styles.amountPositive : styles.amountNegative
+                        }
                       >
                         {formatAmount(tx.amount, tx.currency)}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2">{tx.bankAccount.accountName}</Typography>
-                    </TableCell>
-                    <TableCell>
+                      </span>
+                    </Table.Cell>
+                    <Table.Cell>
+                      <span className={styles.accountName}>{tx.bankAccount.accountName}</span>
+                    </Table.Cell>
+                    <Table.Cell className={styles.propertyCol}>
                       <PropertySelector
                         value={tx.propertyId || ''}
                         onChange={(propertyId) => handleUpdateField(tx.id, 'propertyId', propertyId)}
                         disabled={!!tx.reviewedAt || savingRows[tx.id]}
                         includeAllOption={false}
                       />
-                    </TableCell>
-                    <TableCell>
-                      <FormControl fullWidth size="small">
-                        <Select
-                          value={tx.type || ''}
-                          onChange={(e: SelectChangeEvent) =>
-                            handleUpdateField(tx.id, 'type', e.target.value)
-                          }
-                          disabled={!!tx.reviewedAt || savingRows[tx.id]}
-                          displayEmpty
-                        >
-                          <MenuItem value="">
-                            <em>Select type</em>
-                          </MenuItem>
-                          {TRANSACTION_TYPES.map((type) => (
-                            <MenuItem key={type} value={type}>
-                              {type}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    </TableCell>
-                    <TableCell>
-                      <FormControl fullWidth size="small">
-                        <Select
-                          value={tx.category || ''}
-                          onChange={(e: SelectChangeEvent) =>
-                            handleUpdateField(tx.id, 'category', e.target.value)
-                          }
-                          disabled={!tx.type || !!tx.reviewedAt || savingRows[tx.id]}
-                          displayEmpty
-                        >
-                          <MenuItem value="">
-                            <em>Select category</em>
-                          </MenuItem>
-                          {getCategoriesForType(tx.type).map((category) => (
-                            <MenuItem key={category} value={category}>
-                              {category}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    </TableCell>
-                    <TableCell align="center">
+                    </Table.Cell>
+                    <Table.Cell className={styles.typeCol}>
+                      <Select
+                        value={tx.type || ''}
+                        onChange={(value) =>
+                          handleUpdateField(tx.id, 'type', value || null)
+                        }
+                        options={TYPE_OPTIONS}
+                        disabled={!!tx.reviewedAt || savingRows[tx.id]}
+                        size="small"
+                        fullWidth
+                      />
+                    </Table.Cell>
+                    <Table.Cell className={styles.categoryCol}>
+                      <Select
+                        value={tx.category || ''}
+                        onChange={(value) =>
+                          handleUpdateField(tx.id, 'category', value || null)
+                        }
+                        options={getCategoryOptions(tx.type)}
+                        disabled={!tx.type || !!tx.reviewedAt || savingRows[tx.id]}
+                        size="small"
+                        fullWidth
+                      />
+                    </Table.Cell>
+                    <Table.Cell align="center">
                       {tx.reviewedAt ? (
                         <Chip label="Reviewed" size="small" color="success" />
                       ) : (
                         <Button
-                          variant="contained"
-                          color="primary"
+                          variant="primary"
                           size="small"
-                          startIcon={<ApproveIcon />}
+                          startIcon={<CheckCircle size={16} />}
                           onClick={() => handleApprove(tx)}
                           disabled={!isRowComplete(tx) || savingRows[tx.id]}
                         >
                           Approve
                         </Button>
                       )}
-                    </TableCell>
-                  </TableRow>
+                    </Table.Cell>
+                  </Table.Row>
                 ))}
-              </TableBody>
+              </Table.Body>
             </Table>
-          </TableContainer>
+          </Table.Container>
         )}
 
         {/* Bulk Update Dialog */}
         <Dialog
           open={bulkUpdateDialogOpen}
           onClose={handleCloseBulkUpdate}
-          maxWidth="sm"
-          fullWidth
+          size="medium"
         >
-          <DialogTitle>Bulk Update Transactions</DialogTitle>
-          <DialogContent>
-            <DialogContentText sx={{ mb: 3 }}>
+          <Dialog.Title>Bulk Update Transactions</Dialog.Title>
+          <Dialog.Content>
+            <p className={styles.bulkDialogText}>
               Update the following fields for {selectedIds.size} selected transaction(s). Leave
               fields empty to keep existing values.
-            </DialogContentText>
+            </p>
 
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
+            <div className={styles.bulkForm}>
               <PropertySelector
                 value={bulkUpdateProperty}
                 onChange={setBulkUpdateProperty}
                 includeAllOption={false}
               />
 
-              <FormControl fullWidth>
-                <InputLabel>Type (optional)</InputLabel>
-                <Select
-                  value={bulkUpdateType}
-                  label="Type (optional)"
-                  onChange={(e) => setBulkUpdateType(e.target.value)}
-                >
-                  <MenuItem value="">
-                    <em>No change</em>
-                  </MenuItem>
-                  {TRANSACTION_TYPES.map((type) => (
-                    <MenuItem key={type} value={type}>
-                      {type}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+              <Select
+                label="Type (optional)"
+                value={bulkUpdateType}
+                onChange={(value) => setBulkUpdateType(value)}
+                options={bulkTypeOptions}
+                fullWidth
+              />
 
-              <FormControl fullWidth>
-                <InputLabel>Category (optional)</InputLabel>
-                <Select
-                  value={bulkUpdateCategory}
-                  label="Category (optional)"
-                  onChange={(e) => setBulkUpdateCategory(e.target.value)}
-                  disabled={!bulkUpdateType}
-                >
-                  <MenuItem value="">
-                    <em>No change</em>
-                  </MenuItem>
-                  {getCategoriesForType(bulkUpdateType).map((category) => (
-                    <MenuItem key={category} value={category}>
-                      {category}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Box>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleCloseBulkUpdate} disabled={bulkUpdating}>
-              Cancel
-            </Button>
-            <Button onClick={handleBulkUpdate} variant="contained" disabled={bulkUpdating}>
-              {bulkUpdating ? 'Updating...' : 'Update'}
-            </Button>
-          </DialogActions>
-        </Dialog>
-
-        {/* Bulk Reject Confirmation Dialog */}
-        <Dialog open={bulkRejectDialogOpen} onClose={handleCloseBulkReject}>
-          <DialogTitle>Reject Transactions</DialogTitle>
-          <DialogContent>
-            <DialogContentText>
-              Are you sure you want to reject {selectedIds.size} selected transaction(s)? This will
-              permanently delete them and cannot be undone.
-            </DialogContentText>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleCloseBulkReject} disabled={bulkUpdating}>
+              <Select
+                label="Category (optional)"
+                value={bulkUpdateCategory}
+                onChange={(value) => setBulkUpdateCategory(value)}
+                options={bulkCategoryOptions}
+                disabled={!bulkUpdateType}
+                fullWidth
+              />
+            </div>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button variant="text" onClick={handleCloseBulkUpdate} disabled={bulkUpdating}>
               Cancel
             </Button>
             <Button
-              onClick={handleBulkReject}
-              variant="contained"
-              color="error"
+              variant="primary"
+              onClick={handleBulkUpdate}
               disabled={bulkUpdating}
+              loading={bulkUpdating}
             >
-              {bulkUpdating ? 'Rejecting...' : 'Reject'}
+              Update
             </Button>
-          </DialogActions>
+          </Dialog.Actions>
         </Dialog>
-      </Box>
+
+        {/* Bulk Reject Confirmation Dialog */}
+        <ConfirmDialog
+          open={bulkRejectDialogOpen}
+          title="Reject Transactions"
+          message={`Are you sure you want to reject ${selectedIds.size} selected transaction(s)? This will permanently delete them and cannot be undone.`}
+          severity="danger"
+          confirmLabel={bulkUpdating ? 'Rejecting...' : 'Reject'}
+          onConfirm={handleBulkReject}
+          onCancel={handleCloseBulkReject}
+        />
+      </div>
     </Container>
   );
 };

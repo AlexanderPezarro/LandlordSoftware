@@ -1,0 +1,521 @@
+@use '../../../styles/variables' as *;
+
+// ---------------------------------------------------------------------------
+// BankAccountsList
+// ---------------------------------------------------------------------------
+
+.accountsGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: $spacing-6;
+
+  @media (min-width: $breakpoint-sm) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (min-width: $breakpoint-md) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.accountCard {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.accountHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: $spacing-4;
+}
+
+.accountName {
+  font-size: $font-size-h6;
+  line-height: $line-height-h6;
+  letter-spacing: $letter-spacing-h6;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+  margin: 0;
+}
+
+.accountMeta {
+  font-size: $font-size-caption;
+  line-height: $line-height-caption;
+  letter-spacing: $letter-spacing-caption;
+  color: $color-text-secondary;
+}
+
+.accountDetails {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+}
+
+.detailLabel {
+  display: block;
+  font-size: $font-size-caption;
+  line-height: $line-height-caption;
+  letter-spacing: $letter-spacing-caption;
+  color: $color-text-secondary;
+  margin-bottom: $spacing-1;
+}
+
+.detailValue {
+  font-size: $font-size-body2;
+  line-height: $line-height-body2;
+  letter-spacing: $letter-spacing-body2;
+  color: $color-text-primary;
+}
+
+.accountActions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+// ---------------------------------------------------------------------------
+// ImportProgressDialog
+// ---------------------------------------------------------------------------
+
+.progressBody {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-6;
+  padding: $spacing-4 0;
+}
+
+.statusIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.statusIconFetching,
+.statusIconProcessing {
+  color: $color-primary;
+}
+
+.statusIconCompleted {
+  color: $color-success;
+}
+
+.statusIconFailed {
+  color: $color-error;
+}
+
+.statusText {
+  font-size: $font-size-h6;
+  line-height: $line-height-h6;
+  letter-spacing: $letter-spacing-h6;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+  text-align: center;
+  margin: 0;
+}
+
+.progressBarContainer {
+  width: 100%;
+  height: 4px;
+  background-color: rgba(0, 0, 0, 0.08);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progressBar {
+  width: 100%;
+  height: 100%;
+  background-color: $color-primary;
+  animation: indeterminate 1.5s ease-in-out infinite;
+  transform-origin: left;
+}
+
+@keyframes indeterminate {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.progressMessage {
+  font-size: $font-size-body2;
+  line-height: $line-height-body2;
+  letter-spacing: $letter-spacing-body2;
+  color: $color-text-secondary;
+  text-align: center;
+}
+
+.statsGrid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $spacing-4;
+  margin-top: $spacing-4;
+  padding: $spacing-4;
+  background-color: $color-background;
+  border-radius: $radius-sm;
+}
+
+.statLabel {
+  display: block;
+  font-size: $font-size-caption;
+  line-height: $line-height-caption;
+  letter-spacing: $letter-spacing-caption;
+  color: $color-text-secondary;
+}
+
+.statValue {
+  display: block;
+  font-size: $font-size-h6;
+  line-height: $line-height-h6;
+  letter-spacing: $letter-spacing-h6;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+}
+
+.alertError {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-2;
+  width: 100%;
+  padding: $spacing-3;
+  background-color: #fdecea;
+  border-radius: $radius-sm;
+  border-left: 4px solid $color-error;
+}
+
+.alertSuccess {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-2;
+  width: 100%;
+  padding: $spacing-3;
+  background-color: #edf7ed;
+  border-radius: $radius-sm;
+  border-left: 4px solid $color-success;
+}
+
+.alertIcon {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.alertText {
+  font-size: $font-size-body2;
+  line-height: $line-height-body2;
+  letter-spacing: $letter-spacing-body2;
+  color: $color-text-primary;
+}
+
+// ---------------------------------------------------------------------------
+// RuleEditor
+// ---------------------------------------------------------------------------
+
+.ruleEditorRoot {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-6;
+}
+
+.sectionCard {
+  padding: $spacing-6;
+}
+
+.sectionTitle {
+  font-size: $font-size-h6;
+  line-height: $line-height-h6;
+  letter-spacing: $letter-spacing-h6;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+  margin: 0 0 $spacing-4 0;
+}
+
+.sectionDescription {
+  font-size: $font-size-body2;
+  line-height: $line-height-body2;
+  letter-spacing: $letter-spacing-body2;
+  color: $color-text-secondary;
+  margin: 0 0 $spacing-4 0;
+}
+
+.ruleDetailsRow {
+  display: flex;
+  gap: $spacing-4;
+  align-items: flex-start;
+}
+
+.ruleNameField {
+  flex: 1;
+}
+
+.enabledToggle {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  margin-top: $spacing-2;
+  white-space: nowrap;
+}
+
+.enabledToggleLabel {
+  font-size: $font-size-body2;
+  line-height: $line-height-body2;
+  letter-spacing: $letter-spacing-body2;
+  color: $color-text-primary;
+  cursor: pointer;
+}
+
+.enabledToggleInput {
+  width: 36px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: $color-primary;
+}
+
+.conditionsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-4;
+}
+
+.conditionsList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+}
+
+.conditionOperatorLabel {
+  display: block;
+  font-size: $font-size-caption;
+  line-height: $line-height-caption;
+  letter-spacing: $letter-spacing-caption;
+  font-weight: $font-weight-medium;
+  color: $color-text-secondary;
+  margin-bottom: $spacing-2;
+}
+
+.conditionRow {
+  display: flex;
+  gap: $spacing-2;
+  align-items: flex-start;
+  padding: $spacing-4;
+  border: 1px solid $color-divider;
+  border-radius: $radius-sm;
+  background-color: $color-background;
+}
+
+.conditionFieldSelect {
+  min-width: 150px;
+}
+
+.conditionMatchSelect {
+  min-width: 130px;
+}
+
+.conditionValueField {
+  flex: 1;
+}
+
+.caseSensitiveToggle {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  margin-left: $spacing-2;
+  white-space: nowrap;
+  margin-top: $spacing-1;
+}
+
+.caseSensitiveLabel {
+  font-size: $font-size-caption;
+  line-height: $line-height-caption;
+  color: $color-text-secondary;
+  cursor: pointer;
+}
+
+.caseSensitiveInput {
+  cursor: pointer;
+  accent-color: $color-primary;
+}
+
+.actionsRow {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+}
+
+.buttonRow {
+  display: flex;
+  justify-content: space-between;
+  gap: $spacing-4;
+}
+
+.buttonGroup {
+  display: flex;
+  gap: $spacing-4;
+}
+
+// ---------------------------------------------------------------------------
+// WebhookStatusWidget
+// ---------------------------------------------------------------------------
+
+.webhookCard {
+  margin-bottom: $spacing-6;
+}
+
+.webhookHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-4;
+}
+
+.webhookHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+}
+
+.webhookIcon {
+  color: $color-primary;
+  display: flex;
+  align-items: center;
+}
+
+.webhookTitle {
+  font-size: $font-size-h6;
+  line-height: $line-height-h6;
+  letter-spacing: $letter-spacing-h6;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+  margin: 0;
+}
+
+.webhookBody {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+}
+
+.healthRow {
+  display: flex;
+  align-items: center;
+  gap: $spacing-4;
+}
+
+.healthIconSuccess {
+  color: $color-success;
+  display: flex;
+  align-items: center;
+}
+
+.healthIconWarning {
+  color: $color-warning;
+  display: flex;
+  align-items: center;
+}
+
+.healthIconCritical {
+  color: $color-error;
+  display: flex;
+  align-items: center;
+}
+
+.healthInfo {
+  flex: 1;
+}
+
+.healthLabel {
+  display: block;
+  font-size: $font-size-body2;
+  line-height: $line-height-body2;
+  letter-spacing: $letter-spacing-body2;
+  color: $color-text-secondary;
+}
+
+.healthMessage {
+  font-size: $font-size-body1;
+  line-height: $line-height-body1;
+  letter-spacing: $letter-spacing-body1;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+}
+
+.lastEventLabel {
+  display: block;
+  font-size: $font-size-body2;
+  line-height: $line-height-body2;
+  letter-spacing: $letter-spacing-body2;
+  color: $color-text-secondary;
+}
+
+.lastEventValue {
+  font-size: $font-size-body1;
+  line-height: $line-height-body1;
+  letter-spacing: $letter-spacing-body1;
+  color: $color-text-primary;
+}
+
+.expandedSection {
+  margin-top: $spacing-6;
+}
+
+.expandedSectionTitle {
+  font-size: $font-size-body2;
+  line-height: $line-height-body2;
+  letter-spacing: $letter-spacing-body2;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+  margin: 0 0 $spacing-2 0;
+}
+
+.expandedSectionTitleSpaced {
+  composes: expandedSectionTitle;
+  margin-top: $spacing-6;
+}
+
+.errorText {
+  cursor: help;
+  color: $color-text-secondary;
+  font-size: $font-size-body2;
+  line-height: $line-height-body2;
+}
+
+.infoAlert {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: $spacing-3;
+  background-color: #e3f2fd;
+  border-radius: $radius-sm;
+  border-left: 4px solid $color-info;
+}
+
+.infoAlertText {
+  font-size: $font-size-body2;
+  line-height: $line-height-body2;
+  color: $color-text-primary;
+}
+
+.errorAlertWidget {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-2;
+  padding: $spacing-3;
+  background-color: #fdecea;
+  border-radius: $radius-sm;
+  border-left: 4px solid $color-error;
+}
+
+.loadingCenter {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: $spacing-4 0;
+}

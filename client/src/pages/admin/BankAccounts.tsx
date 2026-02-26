@@ -1,31 +1,26 @@
 import React, { useEffect, useState } from 'react';
-import {
-  Container,
-  Typography,
-  Box,
-  Button,
-  CircularProgress,
-  Alert,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  FormHelperText,
-} from '@mui/material';
-import {
-  Add as AddIcon,
-  AccountBalance as BankIcon,
-} from '@mui/icons-material';
+import { Plus, Landmark } from 'lucide-react';
+import { Container } from '../../components/primitives/Container';
+import { Button } from '../../components/primitives/Button';
+import { Spinner } from '../../components/primitives/Spinner';
+import { Dialog } from '../../components/primitives/Dialog';
+import { Select } from '../../components/primitives/Select';
 import { bankService, BankAccount } from '../../services/api/bank.service';
 import { ApiError } from '../../types/api.types';
 import { useToast } from '../../contexts/ToastContext';
-import BankAccountsList from '../../components/bank/BankAccountsList';
-import { ImportProgressDialog } from '../../components/bank/ImportProgressDialog';
-import { WebhookStatusWidget } from '../../components/bank/WebhookStatusWidget';
+import { BankAccountsList } from '../../components/composed/bank';
+import { ImportProgressDialog } from '../../components/composed/bank';
+import { WebhookStatusWidget } from '../../components/composed/bank';
+import styles from './BankAccounts.module.scss';
+
+const SYNC_OPTIONS = [
+  { value: '30', label: '30 days' },
+  { value: '90', label: '90 days (recommended)' },
+  { value: '180', label: '6 months' },
+  { value: '365', label: '1 year' },
+  { value: '730', label: '2 years' },
+  { value: '1825', label: '5 years (maximum)' },
+];
 
 export const BankAccounts: React.FC = () => {
   const toast = useToast();
@@ -36,7 +31,7 @@ export const BankAccounts: React.FC = () => {
 
   // Connect dialog state
   const [connectDialogOpen, setConnectDialogOpen] = useState(false);
-  const [syncFromDays, setSyncFromDays] = useState(90);
+  const [syncFromDays, setSyncFromDays] = useState('90');
   const [connectLoading, setConnectLoading] = useState(false);
 
   // Import progress dialog state
@@ -102,7 +97,7 @@ export const BankAccounts: React.FC = () => {
   };
 
   const handleOpenConnectDialog = () => {
-    setSyncFromDays(90); // Reset to default
+    setSyncFromDays('90'); // Reset to default
     setConnectDialogOpen(true);
   };
 
@@ -113,7 +108,7 @@ export const BankAccounts: React.FC = () => {
   const handleConnectMonzo = async () => {
     try {
       setConnectLoading(true);
-      const response = await bankService.connectMonzo(syncFromDays);
+      const response = await bankService.connectMonzo(Number(syncFromDays));
 
       // Redirect to Monzo OAuth page
       window.location.href = response.authUrl;
@@ -128,9 +123,9 @@ export const BankAccounts: React.FC = () => {
   if (loading) {
     return (
       <Container maxWidth="lg">
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
-          <CircularProgress />
-        </Box>
+        <div className={styles.loadingWrapper}>
+          <Spinner />
+        </div>
       </Container>
     );
   }
@@ -138,106 +133,88 @@ export const BankAccounts: React.FC = () => {
   if (error) {
     return (
       <Container maxWidth="lg">
-        <Box sx={{ mb: 4 }}>
-          <Typography variant="h4" component="h1" gutterBottom>
-            Bank Accounts
-          </Typography>
-          <Alert severity="error">{error}</Alert>
-        </Box>
+        <div className={styles.page}>
+          <h1 className={styles.title}>Bank Accounts</h1>
+          <div className={styles.alert}>{error}</div>
+        </div>
       </Container>
     );
   }
 
   return (
     <Container maxWidth="lg">
-      <Box sx={{ mb: 4 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Typography variant="h4" component="h1">
-            Bank Accounts
-          </Typography>
+      <div className={styles.page}>
+        <div className={styles.header}>
+          <h1 className={styles.title}>Bank Accounts</h1>
           <Button
-            variant="contained"
-            color="primary"
-            startIcon={<AddIcon />}
+            variant="primary"
+            startIcon={<Plus size={18} />}
             onClick={handleOpenConnectDialog}
           >
             Connect New Account
           </Button>
-        </Box>
+        </div>
 
         {/* Webhook Status Widget - Only show if there are accounts */}
         {accounts.length > 0 && <WebhookStatusWidget />}
 
         {accounts.length === 0 ? (
-          <Box sx={{ textAlign: 'center', py: 8 }}>
-            <BankIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
-            <Typography variant="h6" color="text.secondary" gutterBottom>
+          <div className={styles.empty}>
+            <Landmark size={64} className={styles.emptyIcon} />
+            <h2 className={styles.emptyTitle}>
               No bank accounts connected
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            </h2>
+            <p className={styles.emptyText}>
               Connect your Monzo account to automatically import and categorize transactions.
-            </Typography>
+            </p>
             <Button
-              variant="contained"
-              startIcon={<AddIcon />}
+              variant="primary"
+              startIcon={<Plus size={18} />}
               onClick={handleOpenConnectDialog}
             >
               Connect Your First Account
             </Button>
-          </Box>
+          </div>
         ) : (
           <BankAccountsList accounts={accounts} />
         )}
-      </Box>
+      </div>
 
       {/* Connect Bank Account Dialog */}
       <Dialog
         open={connectDialogOpen}
         onClose={handleCloseConnectDialog}
-        maxWidth="sm"
-        fullWidth
+        size="medium"
       >
-        <DialogTitle>Connect Monzo Account</DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-            <Typography variant="body2" color="text.secondary">
+        <Dialog.Title>Connect Monzo Account</Dialog.Title>
+        <Dialog.Content>
+          <div className={styles.dialogBody}>
+            <p className={styles.dialogHint}>
               Select how far back to import your transaction history. You can import transactions from the last 30 days up to 5 years.
-            </Typography>
-            <FormControl fullWidth>
-              <InputLabel id="sync-from-days-label">Import History</InputLabel>
-              <Select
-                labelId="sync-from-days-label"
-                id="sync-from-days"
-                value={syncFromDays}
-                label="Import History"
-                onChange={(e) => setSyncFromDays(Number(e.target.value))}
-              >
-                <MenuItem value={30}>30 days</MenuItem>
-                <MenuItem value={90}>90 days (recommended)</MenuItem>
-                <MenuItem value={180}>6 months</MenuItem>
-                <MenuItem value={365}>1 year</MenuItem>
-                <MenuItem value={730}>2 years</MenuItem>
-                <MenuItem value={1825}>5 years (maximum)</MenuItem>
-              </Select>
-              <FormHelperText>
-                Default: 90 days. Importing more history may take longer to process.
-              </FormHelperText>
-            </FormControl>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseConnectDialog} color="inherit" disabled={connectLoading}>
+            </p>
+            <Select
+              label="Import History"
+              value={syncFromDays}
+              onChange={(value) => setSyncFromDays(value)}
+              options={SYNC_OPTIONS}
+              helperText="Default: 90 days. Importing more history may take longer to process."
+            />
+          </div>
+        </Dialog.Content>
+        <Dialog.Actions>
+          <Button variant="text" onClick={handleCloseConnectDialog} disabled={connectLoading}>
             Cancel
           </Button>
           <Button
+            variant="primary"
             onClick={handleConnectMonzo}
-            variant="contained"
             disabled={connectLoading}
-            startIcon={<BankIcon />}
+            loading={connectLoading}
+            startIcon={<Landmark size={18} />}
           >
-            {connectLoading ? <CircularProgress size={24} /> : 'Connect to Monzo'}
+            Connect to Monzo
           </Button>
-        </DialogActions>
+        </Dialog.Actions>
       </Dialog>
 
       {/* Import Progress Dialog */}

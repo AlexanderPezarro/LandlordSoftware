@@ -52,3 +52,6 @@ docs/*-????-??-??.png
 .cache/
 temp/
 tmp/
+
+*storybook.log
+storybook-static

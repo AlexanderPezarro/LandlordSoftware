@@ -52,15 +52,19 @@ CREATE TABLE "new_transactions" (
     "transaction_date" DATETIME NOT NULL,
     "description" TEXT NOT NULL,
     "paid_by_user_id" TEXT,
+    "bank_transaction_id" TEXT,
+    "is_imported" BOOLEAN NOT NULL DEFAULT false,
+    "imported_at" DATETIME,
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" DATETIME NOT NULL,
     CONSTRAINT "transactions_property_id_fkey" FOREIGN KEY ("property_id") REFERENCES "properties" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT "transactions_lease_id_fkey" FOREIGN KEY ("lease_id") REFERENCES "leases" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
     CONSTRAINT "transactions_paid_by_user_id_fkey" FOREIGN KEY ("paid_by_user_id") REFERENCES "users" ("id") ON DELETE SET NULL ON UPDATE CASCADE
 );
-INSERT INTO "new_transactions" ("amount", "category", "created_at", "description", "id", "lease_id", "property_id", "transaction_date", "type", "updated_at") SELECT "amount", "category", "created_at", "description", "id", "lease_id", "property_id", "transaction_date", "type", "updated_at" FROM "transactions";
+INSERT INTO "new_transactions" ("amount", "bank_transaction_id", "category", "created_at", "description", "id", "imported_at", "is_imported", "lease_id", "property_id", "transaction_date", "type", "updated_at") SELECT "amount", "bank_transaction_id", "category", "created_at", "description", "id", "imported_at", "is_imported", "lease_id", "property_id", "transaction_date", "type", "updated_at" FROM "transactions";
 DROP TABLE "transactions";
 ALTER TABLE "new_transactions" RENAME TO "transactions";
+CREATE UNIQUE INDEX "transactions_bank_transaction_id_key" ON "transactions"("bank_transaction_id");
 PRAGMA foreign_keys=ON;
 PRAGMA defer_foreign_keys=OFF;
 

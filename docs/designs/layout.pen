@@ -1,0 +1,655 @@
+{
+  "version": "2.8",
+  "children": [
+    {
+      "type": "frame",
+      "id": "app-shell",
+      "x": -1281,
+      "y": -10,
+      "name": "App Shell (Desktop 1440×900)",
+      "reusable": true,
+      "width": 1440,
+      "height": 900,
+      "fill": "$color.background",
+      "children": [
+        {
+          "type": "frame",
+          "id": "sidebar",
+          "name": "Sidebar",
+          "width": 240,
+          "height": 900,
+          "fill": "$color.paper",
+          "stroke": {
+            "thickness": 1
+          },
+          "layout": "none",
+          "children": [
+            {
+              "type": "frame",
+              "id": "sidebar-header",
+              "x": 0,
+              "y": 0,
+              "width": 240,
+              "height": 64,
+              "fill": "#ffffff00",
+              "padding": [
+                0,
+                16
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "sidebar-header-title",
+                  "fill": "$color.text.primary",
+                  "content": "Landlord System",
+                  "fontFamily": "Inter",
+                  "fontSize": 16,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "sidebar-divider",
+              "x": 0,
+              "y": 64,
+              "width": 240,
+              "height": 1,
+              "fill": "$color.divider"
+            },
+            {
+              "type": "frame",
+              "id": "nav-dashboard",
+              "x": 0,
+              "y": 65,
+              "name": "Nav Item / Active",
+              "width": 240,
+              "height": 48,
+              "fill": "$color.primary",
+              "gap": 12,
+              "padding": [
+                0,
+                16
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "nav-dashboard-icon",
+                  "name": "dashboard",
+                  "width": 0,
+                  "height": 0,
+                  "iconFontFamily": "Material Symbols Rounded",
+                  "fill": "$color.primary.contrast"
+                },
+                {
+                  "type": "text",
+                  "id": "nav-dashboard-label",
+                  "fill": "$color.primary.contrast",
+                  "content": "Dashboard",
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "nav-properties",
+              "x": 0,
+              "y": 113,
+              "name": "Nav Item",
+              "width": 240,
+              "height": 48,
+              "fill": "#ffffff00",
+              "gap": 12,
+              "padding": [
+                0,
+                16
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "nav-properties-icon",
+                  "name": "home",
+                  "width": 0,
+                  "height": 0,
+                  "iconFontFamily": "Material Symbols Rounded",
+                  "fill": "$color.text.secondary"
+                },
+                {
+                  "type": "text",
+                  "id": "nav-properties-label",
+                  "fill": "$color.text.primary",
+                  "content": "Properties",
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "nav-tenants",
+              "x": 0,
+              "y": 161,
+              "width": 240,
+              "height": 48,
+              "fill": "#ffffff00",
+              "gap": 12,
+              "padding": [
+                0,
+                16
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "nav-tenants-icon",
+                  "name": "people",
+                  "width": 0,
+                  "height": 0,
+                  "iconFontFamily": "Material Symbols Rounded",
+                  "fill": "$color.text.secondary"
+                },
+                {
+                  "type": "text",
+                  "id": "nav-tenants-label",
+                  "fill": "$color.text.primary",
+                  "content": "Tenants",
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "nav-leases",
+              "x": 0,
+              "y": 209,
+              "width": 240,
+              "height": 48,
+              "fill": "#ffffff00",
+              "gap": 12,
+              "padding": [
+                0,
+                16
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "nav-leases-icon",
+                  "name": "description",
+                  "width": 0,
+                  "height": 0,
+                  "iconFontFamily": "Material Symbols Rounded",
+                  "fill": "$color.text.secondary"
+                },
+                {
+                  "type": "text",
+                  "id": "nav-leases-label",
+                  "fill": "$color.text.primary",
+                  "content": "Leases",
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "nav-transactions",
+              "x": 0,
+              "y": 257,
+              "width": 240,
+              "height": 48,
+              "fill": "#ffffff00",
+              "gap": 12,
+              "padding": [
+                0,
+                16
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "nav-transactions-icon",
+                  "name": "receipt_long",
+                  "width": 0,
+                  "height": 0,
+                  "iconFontFamily": "Material Symbols Rounded",
+                  "fill": "$color.text.secondary"
+                },
+                {
+                  "type": "text",
+                  "id": "nav-transactions-label",
+                  "fill": "$color.text.primary",
+                  "content": "Transactions",
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "nav-reports",
+              "x": 0,
+              "y": 305,
+              "width": 240,
+              "height": 48,
+              "fill": "#ffffff00",
+              "gap": 12,
+              "padding": [
+                0,
+                16
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "nav-reports-icon",
+                  "name": "assessment",
+                  "width": 0,
+                  "height": 0,
+                  "iconFontFamily": "Material Symbols Rounded",
+                  "fill": "$color.text.secondary"
+                },
+                {
+                  "type": "text",
+                  "id": "nav-reports-label",
+                  "fill": "$color.text.primary",
+                  "content": "Reports",
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "nav-events",
+              "x": 0,
+              "y": 353,
+              "width": 240,
+              "height": 48,
+              "fill": "#ffffff00",
+              "gap": 12,
+              "padding": [
+                0,
+                16
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "nav-events-icon",
+                  "name": "event",
+                  "width": 0,
+                  "height": 0,
+                  "iconFontFamily": "Material Symbols Rounded",
+                  "fill": "$color.text.secondary"
+                },
+                {
+                  "type": "text",
+                  "id": "nav-events-label",
+                  "fill": "$color.text.primary",
+                  "content": "Events",
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "nav-documents",
+              "x": 0,
+              "y": 401,
+              "width": 240,
+              "height": 48,
+              "fill": "#ffffff00",
+              "gap": 12,
+              "padding": [
+                0,
+                16
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "nav-documents-icon",
+                  "name": "folder",
+                  "width": 0,
+                  "height": 0,
+                  "iconFontFamily": "Material Symbols Rounded",
+                  "fill": "$color.text.secondary"
+                },
+                {
+                  "type": "text",
+                  "id": "nav-documents-label",
+                  "fill": "$color.text.primary",
+                  "content": "Documents",
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "nav-pending",
+              "x": 0,
+              "y": 449,
+              "width": 240,
+              "height": 48,
+              "fill": "#ffffff00",
+              "gap": 12,
+              "padding": [
+                0,
+                16
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "nav-pending-icon-wrap",
+                  "width": 32,
+                  "height": 32,
+                  "fill": "#ffffff00",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "nav-pending-icon",
+                      "name": "pending_actions",
+                      "width": 0,
+                      "height": 0,
+                      "iconFontFamily": "Material Symbols Rounded",
+                      "fill": "$color.text.secondary"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "nav-pending-badge",
+                      "width": 16,
+                      "height": 16,
+                      "fill": "$color.error",
+                      "cornerRadius": 8,
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "nav-pending-badge-count",
+                          "fill": "#ffffff",
+                          "content": "5",
+                          "fontFamily": "Inter",
+                          "fontSize": 10,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "nav-pending-label",
+                  "fill": "$color.text.primary",
+                  "content": "Pending Review",
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "nav-users",
+              "x": 0,
+              "y": 497,
+              "width": 240,
+              "height": 48,
+              "fill": "#ffffff00",
+              "gap": 12,
+              "padding": [
+                0,
+                16
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "nav-users-icon",
+                  "name": "manage_accounts",
+                  "width": 0,
+                  "height": 0,
+                  "iconFontFamily": "Material Symbols Rounded",
+                  "fill": "$color.text.secondary"
+                },
+                {
+                  "type": "text",
+                  "id": "nav-users-label",
+                  "fill": "$color.text.primary",
+                  "content": "Users",
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "nav-settings",
+              "x": 0,
+              "y": 545,
+              "width": 240,
+              "height": 48,
+              "fill": "#ffffff00",
+              "gap": 12,
+              "padding": [
+                0,
+                16
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "nav-settings-icon",
+                  "name": "settings",
+                  "width": 0,
+                  "height": 0,
+                  "iconFontFamily": "Material Symbols Rounded",
+                  "fill": "$color.text.secondary"
+                },
+                {
+                  "type": "text",
+                  "id": "nav-settings-label",
+                  "fill": "$color.text.primary",
+                  "content": "Settings",
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "appbar",
+          "name": "AppBar",
+          "width": 1200,
+          "height": 64,
+          "fill": "$color.primary",
+          "layout": "none",
+          "children": [
+            {
+              "type": "text",
+              "id": "appbar-title",
+              "x": 16,
+              "y": 20,
+              "fill": "$color.primary.contrast",
+              "content": "Landlord Management System",
+              "fontFamily": "Inter",
+              "fontSize": 20,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "appbar-user-email",
+              "x": 931,
+              "y": 23,
+              "fill": "#ffffffb3",
+              "content": "admin@example.com",
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "frame",
+              "id": "appbar-logout",
+              "x": 1085,
+              "y": 16,
+              "width": 92,
+              "height": 32,
+              "fill": "#ffffff1a",
+              "cornerRadius": 4,
+              "gap": 4,
+              "padding": [
+                4,
+                8
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "appbar-logout-icon",
+                  "name": "logout",
+                  "width": 0,
+                  "height": 0,
+                  "iconFontFamily": "Material Symbols Rounded",
+                  "fill": "$color.primary.contrast"
+                },
+                {
+                  "type": "text",
+                  "id": "appbar-logout-label",
+                  "fill": "$color.primary.contrast",
+                  "content": "Logout",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "app-shell-mobile",
+      "x": 302,
+      "y": -10,
+      "name": "App Shell (Mobile 390×844)",
+      "reusable": true,
+      "width": 390,
+      "height": 844,
+      "fill": "$color.background",
+      "children": [
+        {
+          "type": "frame",
+          "id": "mobile-appbar",
+          "width": 390,
+          "height": 64,
+          "fill": "$color.primary",
+          "padding": [
+            0,
+            8
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "mobile-hamburger",
+              "width": 40,
+              "height": 40,
+              "fill": "#ffffff00",
+              "cornerRadius": 20,
+              "stroke": {
+                "align": "inside",
+                "thickness": 1
+              },
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "mobile-hamburger-icon",
+                  "name": "menu",
+                  "width": 0,
+                  "height": 0,
+                  "iconFontFamily": "Material Symbols Rounded",
+                  "fill": "$color.primary.contrast"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "mobile-appbar-title",
+              "fill": "$color.primary.contrast",
+              "content": "Landlord Management System",
+              "fontFamily": "Inter",
+              "fontSize": 16,
+              "fontWeight": "normal"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variables": {
+    "color.primary": {
+      "type": "color",
+      "value": "#1976d2"
+    },
+    "color.primary.contrast": {
+      "type": "color",
+      "value": "#ffffff"
+    },
+    "color.background": {
+      "type": "color",
+      "value": "#f5f5f5"
+    },
+    "color.paper": {
+      "type": "color",
+      "value": "#ffffff"
+    },
+    "color.text.primary": {
+      "type": "color",
+      "value": "#000000de"
+    },
+    "color.text.secondary": {
+      "type": "color",
+      "value": "#00000099"
+    },
+    "color.divider": {
+      "type": "color",
+      "value": "#0000001f"
+    },
+    "color.error": {
+      "type": "color",
+      "value": "#d32f2f"
+    },
+    "drawer.width": {
+      "type": "number",
+      "value": 240
+    },
+    "appbar.height": {
+      "type": "number",
+      "value": 64
+    }
+  }
+}

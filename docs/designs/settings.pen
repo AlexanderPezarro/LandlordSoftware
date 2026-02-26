@@ -1,0 +1,552 @@
+{
+  "version": "2.8",
+  "variables": {},
+  "children": [
+    {
+      "id": "set-root-frame",
+      "type": "frame",
+      "name": "Settings",
+      "x": 0,
+      "y": 0,
+      "width": 1200,
+      "height": 1000,
+      "fill": "#f5f5f5",
+      "layout": "vertical",
+      "padding": 24,
+      "gap": 24,
+      "children": [
+        {
+          "id": "set-heading",
+          "type": "text",
+          "content": "Settings",
+          "fontSize": 34,
+          "fontWeight": 400,
+          "fill": "#000000de"
+        },
+        {
+          "id": "set-password-section",
+          "type": "frame",
+          "cornerRadius": 4,
+          "fill": "#ffffff",
+          "layout": "vertical",
+          "padding": 24,
+          "gap": 16,
+          "width": 1152,
+          "children": [
+            {
+              "id": "set-pw-title",
+              "type": "text",
+              "content": "Change Password",
+              "fontSize": 20,
+              "fontWeight": 500,
+              "fill": "#000000de"
+            },
+            {
+              "id": "set-pw-divider",
+              "type": "frame",
+              "height": 1,
+              "width": 1104,
+              "fill": "#0000001f"
+            },
+            {
+              "id": "set-pw-current-field",
+              "type": "frame",
+              "width": 400,
+              "height": 56,
+              "cornerRadius": 4,
+              "fill": "#ffffff",
+              "stroke": "#0000003b",
+              "thickness": 1,
+              "layout": "vertical",
+              "justifyContent": "center",
+              "padding": [8, 14],
+              "gap": 2,
+              "children": [
+                {
+                  "id": "set-pw-current-label",
+                  "type": "text",
+                  "content": "Current Password",
+                  "fontSize": 12,
+                  "fill": "#00000099"
+                },
+                {
+                  "id": "set-pw-current-value",
+                  "type": "text",
+                  "content": "••••••••",
+                  "fontSize": 16,
+                  "fill": "#00000061"
+                }
+              ]
+            },
+            {
+              "id": "set-pw-new-field",
+              "type": "frame",
+              "width": 400,
+              "height": 56,
+              "cornerRadius": 4,
+              "fill": "#ffffff",
+              "stroke": "#0000003b",
+              "thickness": 1,
+              "layout": "vertical",
+              "justifyContent": "center",
+              "padding": [8, 14],
+              "gap": 2,
+              "children": [
+                {
+                  "id": "set-pw-new-label",
+                  "type": "text",
+                  "content": "New Password",
+                  "fontSize": 12,
+                  "fill": "#00000099"
+                },
+                {
+                  "id": "set-pw-new-value",
+                  "type": "text",
+                  "content": "••••••••",
+                  "fontSize": 16,
+                  "fill": "#00000061"
+                }
+              ]
+            },
+            {
+              "id": "set-pw-confirm-field",
+              "type": "frame",
+              "width": 400,
+              "height": 56,
+              "cornerRadius": 4,
+              "fill": "#ffffff",
+              "stroke": "#0000003b",
+              "thickness": 1,
+              "layout": "vertical",
+              "justifyContent": "center",
+              "padding": [8, 14],
+              "gap": 2,
+              "children": [
+                {
+                  "id": "set-pw-confirm-label",
+                  "type": "text",
+                  "content": "Confirm Password",
+                  "fontSize": 12,
+                  "fill": "#00000099"
+                },
+                {
+                  "id": "set-pw-confirm-value",
+                  "type": "text",
+                  "content": "••••••••",
+                  "fontSize": 16,
+                  "fill": "#00000061"
+                }
+              ]
+            },
+            {
+              "id": "set-pw-submit-btn",
+              "type": "frame",
+              "width": 180,
+              "height": 36,
+              "cornerRadius": 4,
+              "fill": "#1976d2",
+              "layout": "horizontal",
+              "alignItems": "center",
+              "justifyContent": "center",
+              "children": [
+                {
+                  "id": "set-pw-submit-label",
+                  "type": "text",
+                  "content": "Change Password",
+                  "fontSize": 14,
+                  "fontWeight": 500,
+                  "fill": "#ffffff"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "set-users-section",
+          "type": "frame",
+          "cornerRadius": 4,
+          "fill": "#ffffff",
+          "layout": "vertical",
+          "padding": 24,
+          "gap": 16,
+          "width": 1152,
+          "children": [
+            {
+              "id": "set-users-header-row",
+              "type": "frame",
+              "layout": "horizontal",
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "id": "set-users-title",
+                  "type": "text",
+                  "content": "User Management",
+                  "fontSize": 20,
+                  "fontWeight": 500,
+                  "fill": "#000000de"
+                },
+                {
+                  "id": "set-users-add-btn",
+                  "type": "frame",
+                  "width": 100,
+                  "height": 36,
+                  "cornerRadius": 4,
+                  "fill": "#1976d2",
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "justifyContent": "center",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "id": "set-users-add-icon",
+                      "type": "icon_font",
+                      "family": "material_symbols",
+                      "name": "person_add",
+                      "fontSize": 18,
+                      "fill": "#ffffff"
+                    },
+                    {
+                      "id": "set-users-add-label",
+                      "type": "text",
+                      "content": "Add User",
+                      "fontSize": 14,
+                      "fontWeight": 500,
+                      "fill": "#ffffff"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "set-users-divider",
+              "type": "frame",
+              "height": 1,
+              "width": 1104,
+              "fill": "#0000001f"
+            },
+            {
+              "id": "set-users-table",
+              "type": "frame",
+              "layout": "vertical",
+              "width": 1104,
+              "children": [
+                {
+                  "id": "set-users-table-header",
+                  "type": "frame",
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "height": 40,
+                  "fill": "#f5f5f5",
+                  "padding": [0, 0],
+                  "children": [
+                    {
+                      "id": "set-users-col-email",
+                      "type": "text",
+                      "content": "Email",
+                      "fontSize": 12,
+                      "fontWeight": 700,
+                      "fill": "#00000099",
+                      "flex": 1
+                    },
+                    {
+                      "id": "set-users-col-created",
+                      "type": "text",
+                      "content": "Created",
+                      "fontSize": 12,
+                      "fontWeight": 700,
+                      "fill": "#00000099",
+                      "width": 160
+                    },
+                    {
+                      "id": "set-users-col-role",
+                      "type": "text",
+                      "content": "Role",
+                      "fontSize": 12,
+                      "fontWeight": 700,
+                      "fill": "#00000099",
+                      "width": 140
+                    },
+                    {
+                      "id": "set-users-col-actions",
+                      "type": "text",
+                      "content": "Actions",
+                      "fontSize": 12,
+                      "fontWeight": 700,
+                      "fill": "#00000099",
+                      "width": 80
+                    }
+                  ]
+                },
+                {
+                  "id": "set-users-row-1",
+                  "type": "frame",
+                  "height": 52,
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "stroke": "#0000001f",
+                  "thickness": 1,
+                  "fill": "#ffffff",
+                  "children": [
+                    {
+                      "id": "set-users-row-1-email",
+                      "type": "text",
+                      "content": "admin@example.com (you)",
+                      "fontSize": 14,
+                      "fill": "#000000de",
+                      "flex": 1
+                    },
+                    {
+                      "id": "set-users-row-1-created",
+                      "type": "text",
+                      "content": "01 Jan 2025",
+                      "fontSize": 14,
+                      "fill": "#00000099",
+                      "width": 160
+                    },
+                    {
+                      "id": "set-users-row-1-role-cell",
+                      "type": "frame",
+                      "width": 140,
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "id": "set-users-row-1-role-badge",
+                          "type": "frame",
+                          "fill": "#1976d220",
+                          "cornerRadius": 12,
+                          "height": 22,
+                          "width": 60,
+                          "layout": "horizontal",
+                          "alignItems": "center",
+                          "justifyContent": "center",
+                          "children": [
+                            {
+                              "id": "set-users-row-1-role-text",
+                              "type": "text",
+                              "content": "Admin",
+                              "fontSize": 11,
+                              "fill": "#1976d2"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": "set-users-row-1-actions-cell",
+                      "type": "frame",
+                      "width": 80,
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "id": "set-users-row-1-delete-btn",
+                          "type": "frame",
+                          "width": 40,
+                          "height": 40,
+                          "cornerRadius": 20,
+                          "fill": "transparent",
+                          "layout": "horizontal",
+                          "alignItems": "center",
+                          "justifyContent": "center",
+                          "children": [
+                            {
+                              "id": "set-users-row-1-delete-icon",
+                              "type": "icon_font",
+                              "family": "material_symbols",
+                              "name": "delete",
+                              "fontSize": 20,
+                              "fill": "#00000061"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "set-users-row-2",
+                  "type": "frame",
+                  "height": 52,
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "stroke": "#0000001f",
+                  "thickness": 1,
+                  "fill": "#ffffff",
+                  "children": [
+                    {
+                      "id": "set-users-row-2-email",
+                      "type": "text",
+                      "content": "landlord@example.com",
+                      "fontSize": 14,
+                      "fill": "#000000de",
+                      "flex": 1
+                    },
+                    {
+                      "id": "set-users-row-2-created",
+                      "type": "text",
+                      "content": "15 Jan 2025",
+                      "fontSize": 14,
+                      "fill": "#00000099",
+                      "width": 160
+                    },
+                    {
+                      "id": "set-users-row-2-role-cell",
+                      "type": "frame",
+                      "width": 140,
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "id": "set-users-row-2-role-badge",
+                          "type": "frame",
+                          "fill": "#2e7d3220",
+                          "cornerRadius": 12,
+                          "height": 22,
+                          "width": 80,
+                          "layout": "horizontal",
+                          "alignItems": "center",
+                          "justifyContent": "center",
+                          "children": [
+                            {
+                              "id": "set-users-row-2-role-text",
+                              "type": "text",
+                              "content": "Landlord",
+                              "fontSize": 11,
+                              "fill": "#2e7d32"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": "set-users-row-2-actions-cell",
+                      "type": "frame",
+                      "width": 80,
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "id": "set-users-row-2-delete-btn",
+                          "type": "frame",
+                          "width": 40,
+                          "height": 40,
+                          "cornerRadius": 20,
+                          "fill": "transparent",
+                          "layout": "horizontal",
+                          "alignItems": "center",
+                          "justifyContent": "center",
+                          "children": [
+                            {
+                              "id": "set-users-row-2-delete-icon",
+                              "type": "icon_font",
+                              "family": "material_symbols",
+                              "name": "delete",
+                              "fontSize": 20,
+                              "fill": "#d32f2f"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "set-users-row-3",
+                  "type": "frame",
+                  "height": 52,
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "stroke": "#0000001f",
+                  "thickness": 1,
+                  "fill": "#ffffff",
+                  "children": [
+                    {
+                      "id": "set-users-row-3-email",
+                      "type": "text",
+                      "content": "viewer@example.com",
+                      "fontSize": 14,
+                      "fill": "#000000de",
+                      "flex": 1
+                    },
+                    {
+                      "id": "set-users-row-3-created",
+                      "type": "text",
+                      "content": "20 Jan 2025",
+                      "fontSize": 14,
+                      "fill": "#00000099",
+                      "width": 160
+                    },
+                    {
+                      "id": "set-users-row-3-role-cell",
+                      "type": "frame",
+                      "width": 140,
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "id": "set-users-row-3-role-badge",
+                          "type": "frame",
+                          "fill": "#61616120",
+                          "cornerRadius": 12,
+                          "height": 22,
+                          "width": 60,
+                          "layout": "horizontal",
+                          "alignItems": "center",
+                          "justifyContent": "center",
+                          "children": [
+                            {
+                              "id": "set-users-row-3-role-text",
+                              "type": "text",
+                              "content": "Viewer",
+                              "fontSize": 11,
+                              "fill": "#616161"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": "set-users-row-3-actions-cell",
+                      "type": "frame",
+                      "width": 80,
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "id": "set-users-row-3-delete-btn",
+                          "type": "frame",
+                          "width": 40,
+                          "height": 40,
+                          "cornerRadius": 20,
+                          "fill": "transparent",
+                          "layout": "horizontal",
+                          "alignItems": "center",
+                          "justifyContent": "center",
+                          "children": [
+                            {
+                              "id": "set-users-row-3-delete-icon",
+                              "type": "icon_font",
+                              "family": "material_symbols",
+                              "name": "delete",
+                              "fontSize": 20,
+                              "fill": "#d32f2f"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

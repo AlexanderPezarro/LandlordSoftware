@@ -1,0 +1,28 @@
+@use '../../../styles/variables' as *;
+@use '../../../styles/mixins' as *;
+
+.container {
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 $spacing-6;
+
+  @include respond-down(sm) {
+    padding: 0 $spacing-4;
+  }
+}
+
+.sm {
+  max-width: $breakpoint-sm;
+}
+
+.md {
+  max-width: $breakpoint-md;
+}
+
+.lg {
+  max-width: $breakpoint-lg;
+}
+
+.xl {
+  max-width: $breakpoint-xl;
+}

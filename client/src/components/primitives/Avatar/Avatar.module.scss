@@ -1,0 +1,44 @@
+@use '../../../styles/variables' as *;
+
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: $radius-full;
+  overflow: hidden;
+  flex-shrink: 0;
+  color: #fff;
+  font-family: $font-family;
+  font-weight: $font-weight-medium;
+  user-select: none;
+}
+
+// Size variants
+.small {
+  width: 32px;
+  height: 32px;
+  font-size: $font-size-caption; // 12px
+}
+
+.medium {
+  width: 40px;
+  height: 40px;
+  font-size: $font-size-body2; // 14px
+}
+
+.large {
+  width: 56px;
+  height: 56px;
+  font-size: $font-size-body1; // 16px
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.initials {
+  line-height: 1;
+  letter-spacing: 0.02em;
+}

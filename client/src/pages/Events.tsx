@@ -1,41 +1,34 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
-  Container,
-  Typography,
-  Box,
-  Paper,
-  Button,
-  Stack,
-  TextField,
-  MenuItem,
-  CircularProgress,
-  Alert,
-  useTheme,
-  useMediaQuery,
-  IconButton,
-  Tooltip,
-} from '@mui/material';
-import {
-  Add as AddIcon,
-  CalendarMonth as CalendarIcon,
-  ViewWeek as WeekIcon,
-  ViewDay as DayIcon,
-  ViewAgenda as AgendaIcon,
-  Refresh as RefreshIcon,
-} from '@mui/icons-material';
-import { Calendar, dateFnsLocalizer, View } from 'react-big-calendar';
+  Plus,
+  Calendar,
+  Columns3,
+  LayoutList,
+  List,
+  RefreshCw,
+  X,
+  AlertCircle,
+} from 'lucide-react';
+import { Calendar as BigCalendar, dateFnsLocalizer, View } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
 import { enGB } from 'date-fns/locale';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import '../styles/calendar.css';
+import { Container } from '../components/primitives/Container';
+import { Button } from '../components/primitives/Button';
+import { Select } from '../components/primitives/Select';
+import { Card } from '../components/primitives/Card';
+import { Spinner } from '../components/primitives/Spinner';
+import { Tooltip } from '../components/primitives/Tooltip';
+import { EventDialog } from '../components/composed/EventDialog';
+import { PropertySelector } from '../components/composed/PropertySelector';
+import { DateRangePicker } from '../components/composed/DateRangePicker';
+import { ConfirmDialog } from '../components/composed/ConfirmDialog';
+import { EventBadge } from '../components/composed/EventBadge';
 import { eventsService } from '../services/api/events.service';
 import { Event, CreateEventRequest, UpdateEventRequest, EventFilters } from '../types/api.types';
-import EventDialog from '../components/events/EventDialog';
-import PropertySelector from '../components/shared/PropertySelector';
-import DateRangePicker from '../components/shared/DateRangePicker';
-import ConfirmDialog from '../components/shared/ConfirmDialog';
-import EventBadge from '../components/shared/EventBadge';
 import { useAuth } from '../contexts/AuthContext';
+import styles from './Events.module.scss';
 
 const locales = {
   'en-GB': enGB,
@@ -65,17 +58,22 @@ interface EventComponentProps {
 
 const EventComponent: React.FC<EventComponentProps> = ({ event }) => {
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, overflow: 'hidden' }}>
+    <div className={styles.eventInner}>
       <EventBadge event={event.resource} />
-      {event.resource.completed && <Typography variant="caption" sx={{ ml: 0.5 }}>✓</Typography>}
-    </Box>
+      {event.resource.completed && <span className={styles.eventCompleted}>✓</span>}
+    </div>
   );
 };
 
 export const Events: React.FC = () => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 900);
   const { canWrite } = useAuth();
+
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 900);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
 
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
@@ -88,7 +86,6 @@ export const Events: React.FC = () => {
 
   // Confirm dialog states
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [deleteLoading, setDeleteLoading] = useState(false);
 
   // Calendar view state
   const [calendarView, setCalendarView] = useState<View>('month');
@@ -191,7 +188,6 @@ export const Events: React.FC = () => {
     if (!selectedEvent) return;
 
     try {
-      setDeleteLoading(true);
       await eventsService.deleteEvent(selectedEvent.id);
       setConfirmOpen(false);
       setDialogOpen(false);
@@ -199,8 +195,6 @@ export const Events: React.FC = () => {
     } catch (err) {
       console.error('Error deleting event:', err);
       setError('Failed to delete event. Please try again.');
-    } finally {
-      setDeleteLoading(false);
     }
   };
 
@@ -230,29 +224,29 @@ export const Events: React.FC = () => {
     const eventType = event.resource.eventType;
     const completed = event.resource.completed;
 
-    let backgroundColor = theme.palette.grey[400];
+    let backgroundColor = '#bdbdbd';
 
     switch (eventType) {
       case 'Maintenance':
-        backgroundColor = theme.palette.warning.main;
+        backgroundColor = '#ed6c02';
         break;
       case 'Inspection':
-        backgroundColor = theme.palette.warning.light;
+        backgroundColor = '#ff9800';
         break;
       case 'Repair':
-        backgroundColor = theme.palette.error.main;
+        backgroundColor = '#d32f2f';
         break;
       case 'Viewing':
-        backgroundColor = theme.palette.info.main;
+        backgroundColor = '#0288d1';
         break;
       case 'Meeting':
-        backgroundColor = theme.palette.secondary.main;
+        backgroundColor = '#616161';
         break;
       case 'Rent Due Date':
-        backgroundColor = theme.palette.success.main;
+        backgroundColor = '#2e7d32';
         break;
       case 'Lease Renewal':
-        backgroundColor = theme.palette.primary.main;
+        backgroundColor = '#1976d2';
         break;
     }
 
@@ -285,170 +279,180 @@ export const Events: React.FC = () => {
 
   return (
     <Container maxWidth="xl">
-      <Box sx={{ mb: 4 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Typography variant="h4" component="h1">
-            Events Calendar
-          </Typography>
+      <div className={styles.page}>
+        <div className={styles.pageHeader}>
+          <h1 className={styles.pageTitle}>Events Calendar</h1>
           {canWrite() && (
             <Button
-              variant="contained"
-              startIcon={<AddIcon />}
+              variant="primary"
+              startIcon={<Plus size={18} />}
               onClick={handleCreateEvent}
               size={isMobile ? 'small' : 'medium'}
             >
               New Event
             </Button>
           )}
-        </Box>
+        </div>
 
         {error && (
-          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
-            {error}
-          </Alert>
+          <div className={styles.errorAlert} role="alert">
+            <AlertCircle size={18} />
+            <span className={styles.errorAlertText}>{error}</span>
+            <button
+              className={styles.errorAlertClose}
+              onClick={() => setError(null)}
+              aria-label="Dismiss error"
+            >
+              <X size={16} />
+            </button>
+          </div>
         )}
 
-        <Paper sx={{ p: 2, mb: 3 }}>
-          <Typography variant="subtitle2" gutterBottom>
-            Filters
-          </Typography>
+        <Card className={styles.filtersCard}>
+          <Card.Content>
+            <p className={styles.filtersTitle}>Filters</p>
 
-          <Stack spacing={2}>
-            <Stack direction={isMobile ? 'column' : 'row'} spacing={2}>
-              <PropertySelector
-                value={propertyFilter}
-                onChange={setPropertyFilter}
-                includeAllOption={true}
+            <div className={styles.filtersContent}>
+              <div className={styles.filterRow}>
+                <div className={styles.filterField}>
+                  <PropertySelector
+                    value={propertyFilter}
+                    onChange={setPropertyFilter}
+                    includeAllOption={true}
+                  />
+                </div>
+
+                <div className={styles.filterField}>
+                  <Select
+                    label="Event Type"
+                    value={eventTypeFilter}
+                    onChange={(value) => setEventTypeFilter(value)}
+                    options={[
+                      { value: 'all', label: 'All Types' },
+                      ...EVENT_TYPES.map((type) => ({ value: type, label: type })),
+                    ]}
+                    size="small"
+                    fullWidth
+                  />
+                </div>
+
+                <div className={styles.filterField}>
+                  <Select
+                    label="Status"
+                    value={completedFilter}
+                    onChange={(value) => setCompletedFilter(value as typeof completedFilter)}
+                    options={[
+                      { value: 'all', label: 'All Status' },
+                      { value: 'pending', label: 'Pending' },
+                      { value: 'completed', label: 'Completed' },
+                    ]}
+                    size="small"
+                    fullWidth
+                  />
+                </div>
+              </div>
+
+              <DateRangePicker
+                startDate={dateRangeStart}
+                endDate={dateRangeEnd}
+                onStartChange={setDateRangeStart}
+                onEndChange={setDateRangeEnd}
+                label="Filter by Date Range"
               />
 
-              <TextField
-                select
-                fullWidth
-                size="small"
-                label="Event Type"
-                value={eventTypeFilter}
-                onChange={(e) => setEventTypeFilter(e.target.value)}
-              >
-                <MenuItem value="all">All Types</MenuItem>
-                {EVENT_TYPES.map((type) => (
-                  <MenuItem key={type} value={type}>
-                    {type}
-                  </MenuItem>
-                ))}
-              </TextField>
+              {hasActiveFilters && (
+                <div className={styles.clearFiltersRow}>
+                  <Button variant="text" size="small" onClick={handleClearFilters}>
+                    Clear Filters
+                  </Button>
+                </div>
+              )}
+            </div>
+          </Card.Content>
+        </Card>
 
-              <TextField
-                select
-                fullWidth
-                size="small"
-                label="Status"
-                value={completedFilter}
-                onChange={(e) => setCompletedFilter(e.target.value as typeof completedFilter)}
-              >
-                <MenuItem value="all">All Status</MenuItem>
-                <MenuItem value="pending">Pending</MenuItem>
-                <MenuItem value="completed">Completed</MenuItem>
-              </TextField>
-            </Stack>
+        <Card className={styles.controlsCard}>
+          <Card.Content>
+            <div className={styles.controlsRow}>
+              <p className={styles.eventsCount}>
+                Showing {events.length} event{events.length !== 1 ? 's' : ''}
+              </p>
 
-            <DateRangePicker
-              startDate={dateRangeStart}
-              endDate={dateRangeEnd}
-              onStartDateChange={setDateRangeStart}
-              onEndDateChange={setDateRangeEnd}
-              label="Filter by Date Range"
-            />
+              <div className={styles.viewControls}>
+                <Tooltip content="Refresh">
+                  <button
+                    className={styles.refreshButton}
+                    onClick={fetchEvents}
+                    disabled={loading}
+                    aria-label="Refresh events"
+                  >
+                    <RefreshCw size={16} />
+                  </button>
+                </Tooltip>
 
-            {hasActiveFilters && (
-              <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <Button size="small" onClick={handleClearFilters}>
-                  Clear Filters
+                <Button
+                  size="small"
+                  variant={calendarView === 'month' ? 'primary' : 'secondary'}
+                  onClick={() => setCalendarView('month')}
+                  startIcon={<Calendar size={14} />}
+                >
+                  Month
                 </Button>
-              </Box>
+                <Button
+                  size="small"
+                  variant={calendarView === 'week' ? 'primary' : 'secondary'}
+                  onClick={() => setCalendarView('week')}
+                  startIcon={<Columns3 size={14} />}
+                >
+                  Week
+                </Button>
+                <Button
+                  size="small"
+                  variant={calendarView === 'day' ? 'primary' : 'secondary'}
+                  onClick={() => setCalendarView('day')}
+                  startIcon={<LayoutList size={14} />}
+                >
+                  Day
+                </Button>
+                <Button
+                  size="small"
+                  variant={calendarView === 'agenda' ? 'primary' : 'secondary'}
+                  onClick={() => setCalendarView('agenda')}
+                  startIcon={<List size={14} />}
+                >
+                  Agenda
+                </Button>
+              </div>
+            </div>
+          </Card.Content>
+        </Card>
+
+        <Card className={styles.calendarCard}>
+          <div className={styles.calendarWrapper}>
+            {loading ? (
+              <div className={styles.loadingContainer}>
+                <Spinner />
+              </div>
+            ) : (
+              <BigCalendar
+                localizer={localizer}
+                events={calendarEvents}
+                startAccessor="start"
+                endAccessor="end"
+                style={{ height: '100%' }}
+                view={calendarView}
+                onView={setCalendarView}
+                onSelectEvent={handleSelectEvent}
+                eventPropGetter={eventStyleGetter}
+                components={{
+                  event: EventComponent,
+                }}
+                popup
+                tooltipAccessor={(event) => event.resource.description || event.title}
+              />
             )}
-          </Stack>
-        </Paper>
-
-        <Paper sx={{ p: 2, mb: 2 }}>
-          <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between" flexWrap="wrap">
-            <Typography variant="subtitle2">
-              Showing {events.length} event{events.length !== 1 ? 's' : ''}
-            </Typography>
-
-            <Stack direction="row" spacing={1} alignItems="center">
-              <Tooltip title="Refresh">
-                <IconButton onClick={fetchEvents} size="small" disabled={loading}>
-                  <RefreshIcon />
-                </IconButton>
-              </Tooltip>
-
-              <Button
-                size="small"
-                variant={calendarView === 'month' ? 'contained' : 'outlined'}
-                onClick={() => setCalendarView('month')}
-                startIcon={<CalendarIcon />}
-              >
-                Month
-              </Button>
-              <Button
-                size="small"
-                variant={calendarView === 'week' ? 'contained' : 'outlined'}
-                onClick={() => setCalendarView('week')}
-                startIcon={<WeekIcon />}
-              >
-                Week
-              </Button>
-              <Button
-                size="small"
-                variant={calendarView === 'day' ? 'contained' : 'outlined'}
-                onClick={() => setCalendarView('day')}
-                startIcon={<DayIcon />}
-              >
-                Day
-              </Button>
-              <Button
-                size="small"
-                variant={calendarView === 'agenda' ? 'contained' : 'outlined'}
-                onClick={() => setCalendarView('agenda')}
-                startIcon={<AgendaIcon />}
-              >
-                Agenda
-              </Button>
-            </Stack>
-          </Stack>
-        </Paper>
-
-        <Paper sx={{ p: 2, height: isMobile ? 500 : 700 }}>
-          {loading ? (
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                height: '100%',
-              }}
-            >
-              <CircularProgress />
-            </Box>
-          ) : (
-            <Calendar
-              localizer={localizer}
-              events={calendarEvents}
-              startAccessor="start"
-              endAccessor="end"
-              style={{ height: '100%' }}
-              view={calendarView}
-              onView={setCalendarView}
-              onSelectEvent={handleSelectEvent}
-              eventPropGetter={eventStyleGetter}
-              components={{
-                event: EventComponent,
-              }}
-              popup
-              tooltipAccessor={(event) => event.resource.description || event.title}
-            />
-          )}
-        </Paper>
+          </div>
+        </Card>
 
         <EventDialog
           open={dialogOpen}
@@ -470,9 +474,8 @@ export const Events: React.FC = () => {
           message="Are you sure you want to delete this event? This action cannot be undone."
           onConfirm={handleDeleteConfirm}
           onCancel={() => setConfirmOpen(false)}
-          loading={deleteLoading}
         />
-      </Box>
+      </div>
     </Container>
   );
 };

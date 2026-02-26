@@ -36,7 +36,7 @@ function validateTypeCategoryMatch(type: string, category: string): boolean {
 }
 
 // GET /api/transactions - List transactions with filtering
-router.get('/', async (req, res) => {
+router.get('/', requireAuth, async (req, res) => {
   try {
     // Validate query parameters
     const validationResult = TransactionQueryParamsSchema.safeParse(req.query);
@@ -114,7 +114,7 @@ router.get('/', async (req, res) => {
 });
 
 // GET /api/transactions/summary - Financial summary with filtering
-router.get('/summary', async (req, res) => {
+router.get('/summary', requireAuth, async (req, res) => {
   try {
     // Validate query parameters (same as list endpoint)
     const validationResult = TransactionQueryParamsSchema.safeParse(req.query);

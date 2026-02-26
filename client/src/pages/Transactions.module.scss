@@ -1,0 +1,234 @@
+@use '../styles/variables' as *;
+@use '../styles/mixins' as *;
+
+// ---------------------------------------------------------------------------
+// Page Layout
+// ---------------------------------------------------------------------------
+
+.page {
+  margin-bottom: $spacing-8;
+}
+
+// ---------------------------------------------------------------------------
+// Page Header
+// ---------------------------------------------------------------------------
+
+.pageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: $spacing-3;
+  margin-bottom: $spacing-6;
+}
+
+.pageTitle {
+  font-size: $font-size-h4;
+  font-weight: $font-weight-regular;
+  line-height: $line-height-h4;
+  letter-spacing: $letter-spacing-h4;
+  color: $color-text-primary;
+  margin: 0;
+}
+
+// ---------------------------------------------------------------------------
+// Error Alert
+// ---------------------------------------------------------------------------
+
+.errorAlert {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: $spacing-3 $spacing-4;
+  border-radius: $radius-sm;
+  font-size: $font-size-body2;
+  line-height: $line-height-body2;
+  margin-bottom: $spacing-4;
+  background-color: rgba($color-error, 0.1);
+  color: darken($color-error, 5%);
+}
+
+.errorAlertText {
+  flex: 1;
+}
+
+.errorAlertClose {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  padding: $spacing-1;
+  display: flex;
+  align-items: center;
+  border-radius: $radius-sm;
+
+  &:hover {
+    background-color: rgba($color-error, 0.15);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Summary Cards Grid
+// ---------------------------------------------------------------------------
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: $spacing-6;
+  margin-bottom: $spacing-6;
+
+  @include respond-to(sm) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @include respond-to(md) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.summaryCard {
+  padding: $spacing-4 $spacing-5;
+}
+
+.summaryCardContent {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+}
+
+.summaryCardIcon {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+}
+
+.summaryCardTitle {
+  font-size: $font-size-body2;
+  font-weight: $font-weight-medium;
+  color: $color-text-secondary;
+  margin: 0;
+}
+
+.summaryCardValue {
+  font-size: $font-size-h5;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+  margin: 0;
+}
+
+.iconSuccess {
+  color: $color-success;
+}
+
+.iconError {
+  color: $color-error;
+}
+
+// ---------------------------------------------------------------------------
+// Filters Section
+// ---------------------------------------------------------------------------
+
+.filtersCard {
+  margin-bottom: $spacing-6;
+}
+
+.filtersTitle {
+  font-size: $font-size-body2;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+  margin: 0 0 $spacing-4;
+}
+
+.filtersContent {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+}
+
+.filterRow {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+
+  @include respond-to(md) {
+    flex-direction: row;
+  }
+}
+
+.filterField {
+  flex: 1;
+  min-width: 0;
+}
+
+.clearFiltersRow {
+  display: flex;
+  justify-content: flex-end;
+}
+
+// ---------------------------------------------------------------------------
+// Transactions List
+// ---------------------------------------------------------------------------
+
+.transactionsCard {
+  // Container for the table area
+}
+
+.transactionsCount {
+  font-size: $font-size-body2;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+  margin: 0 0 $spacing-4;
+}
+
+// ---------------------------------------------------------------------------
+// Loading / Empty States
+// ---------------------------------------------------------------------------
+
+.loadingContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+}
+
+.emptyContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  flex-direction: column;
+  gap: $spacing-4;
+}
+
+.emptyText {
+  font-size: $font-size-body1;
+  color: $color-text-secondary;
+  margin: 0;
+}
+
+// ---------------------------------------------------------------------------
+// Dialog Form
+// ---------------------------------------------------------------------------
+
+.formStack {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+  margin-top: $spacing-2;
+}
+
+.formError {
+  font-size: $font-size-caption;
+  color: $color-error;
+  margin: 0;
+}
+
+.attachmentLabel {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  font-size: $font-size-body2;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+  margin: 0 0 $spacing-2;
+}

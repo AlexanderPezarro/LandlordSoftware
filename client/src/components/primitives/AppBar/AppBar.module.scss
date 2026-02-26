@@ -1,0 +1,16 @@
+@use '../../../styles/variables' as *;
+
+.appbar {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  height: $appbar-height;
+  background: $color-primary;
+  color: $color-primary-contrast;
+  z-index: $z-index-appbar;
+  display: flex;
+  align-items: center;
+  padding: 0 $spacing-6;
+  box-shadow: $shadow-4;
+  box-sizing: border-box;
+}

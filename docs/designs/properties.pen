@@ -1,0 +1,663 @@
+{
+  "version": "2.8",
+  "variables": {
+    "color.primary": { "type": "color", "value": "#1976d2" },
+    "color.primary.contrast": { "type": "color", "value": "#ffffff" },
+    "color.background": { "type": "color", "value": "#f5f5f5" },
+    "color.paper": { "type": "color", "value": "#ffffff" },
+    "color.text.primary": { "type": "color", "value": "#000000de" },
+    "color.text.secondary": { "type": "color", "value": "#00000099" },
+    "color.divider": { "type": "color", "value": "#0000001f" },
+    "color.success": { "type": "color", "value": "#2e7d32" },
+    "color.error": { "type": "color", "value": "#d32f2f" },
+    "color.warning": { "type": "color", "value": "#ed6c02" },
+    "color.info": { "type": "color", "value": "#0288d1" },
+    "borderRadius.sm": { "type": "dimension", "value": "4px" },
+    "spacing.base": { "type": "dimension", "value": "4px" }
+  },
+  "children": [
+    {
+      "id": "properties-page",
+      "type": "frame",
+      "name": "Properties",
+      "x": 0, "y": 0,
+      "width": 1200, "height": 1000,
+      "fill": "#f5f5f5",
+      "layout": "vertical",
+      "padding": 24,
+      "gap": 24,
+      "children": [
+
+        {
+          "id": "props-header-row",
+          "type": "frame",
+          "name": "Page Header",
+          "layout": "horizontal",
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "height": 40,
+          "width": 1152,
+          "fill": "#ffffff00",
+          "children": [
+            {
+              "id": "props-header-title",
+              "type": "text",
+              "content": "Properties",
+              "fontSize": 34,
+              "fontWeight": 400,
+              "fill": "#000000de"
+            },
+            {
+              "id": "props-add-btn",
+              "type": "frame",
+              "name": "Add Property Button",
+              "width": 140, "height": 36,
+              "cornerRadius": 4,
+              "fill": "#1976d2",
+              "layout": "horizontal",
+              "alignItems": "center",
+              "justifyContent": "center",
+              "gap": 8,
+              "children": [
+                {
+                  "id": "props-add-btn-icon",
+                  "type": "icon_font",
+                  "family": "material_symbols",
+                  "name": "add",
+                  "fontSize": 18,
+                  "fill": "#ffffff"
+                },
+                {
+                  "id": "props-add-btn-label",
+                  "type": "text",
+                  "content": "Add Property",
+                  "fontSize": 14,
+                  "fontWeight": 500,
+                  "fill": "#ffffff"
+                }
+              ]
+            }
+          ]
+        },
+
+        {
+          "id": "props-search-filters",
+          "type": "frame",
+          "name": "Search and Filters",
+          "layout": "vertical",
+          "gap": 12,
+          "width": 1152,
+          "fill": "#ffffff",
+          "cornerRadius": 4,
+          "padding": 16,
+          "children": [
+            {
+              "id": "props-search-field",
+              "type": "frame",
+              "name": "Search Field",
+              "width": 1120, "height": 40,
+              "cornerRadius": 4,
+              "fill": "#ffffff",
+              "stroke": { "color": "#0000003b", "thickness": 1 },
+              "layout": "horizontal",
+              "alignItems": "center",
+              "padding": [0, 14],
+              "gap": 8,
+              "children": [
+                {
+                  "id": "props-search-icon",
+                  "type": "icon_font",
+                  "family": "material_symbols",
+                  "name": "search",
+                  "fontSize": 20,
+                  "fill": "#00000099"
+                },
+                {
+                  "id": "props-search-placeholder",
+                  "type": "text",
+                  "content": "Search properties...",
+                  "fontSize": 14,
+                  "fill": "#00000099"
+                }
+              ]
+            },
+            {
+              "id": "props-filters-row",
+              "type": "frame",
+              "name": "Filters Row",
+              "layout": "horizontal",
+              "gap": 12,
+              "fill": "#ffffff00",
+              "children": [
+                {
+                  "id": "props-filter-status",
+                  "type": "frame",
+                  "name": "Status Filter",
+                  "width": 180, "height": 40,
+                  "cornerRadius": 4,
+                  "fill": "#ffffff",
+                  "stroke": { "color": "#0000003b", "thickness": 1 },
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "padding": [0, 14],
+                  "children": [
+                    {
+                      "id": "props-filter-status-label",
+                      "type": "text",
+                      "content": "All Statuses",
+                      "fontSize": 14,
+                      "fill": "#00000099"
+                    },
+                    {
+                      "id": "props-filter-status-icon",
+                      "type": "icon_font",
+                      "family": "material_symbols",
+                      "name": "expand_more",
+                      "fontSize": 20,
+                      "fill": "#00000099"
+                    }
+                  ]
+                },
+                {
+                  "id": "props-filter-type",
+                  "type": "frame",
+                  "name": "Type Filter",
+                  "width": 180, "height": 40,
+                  "cornerRadius": 4,
+                  "fill": "#ffffff",
+                  "stroke": { "color": "#0000003b", "thickness": 1 },
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "padding": [0, 14],
+                  "children": [
+                    {
+                      "id": "props-filter-type-label",
+                      "type": "text",
+                      "content": "All Types",
+                      "fontSize": 14,
+                      "fill": "#00000099"
+                    },
+                    {
+                      "id": "props-filter-type-icon",
+                      "type": "icon_font",
+                      "family": "material_symbols",
+                      "name": "expand_more",
+                      "fontSize": 20,
+                      "fill": "#00000099"
+                    }
+                  ]
+                },
+                {
+                  "id": "props-filter-sort",
+                  "type": "frame",
+                  "name": "Sort Filter",
+                  "width": 180, "height": 40,
+                  "cornerRadius": 4,
+                  "fill": "#ffffff",
+                  "stroke": { "color": "#0000003b", "thickness": 1 },
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "padding": [0, 14],
+                  "children": [
+                    {
+                      "id": "props-filter-sort-label",
+                      "type": "text",
+                      "content": "Sort by Name",
+                      "fontSize": 14,
+                      "fill": "#00000099"
+                    },
+                    {
+                      "id": "props-filter-sort-icon",
+                      "type": "icon_font",
+                      "family": "material_symbols",
+                      "name": "expand_more",
+                      "fontSize": 20,
+                      "fill": "#00000099"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+
+        {
+          "id": "props-grid",
+          "type": "frame",
+          "name": "Properties Grid",
+          "layout": "horizontal",
+          "gap": 24,
+          "width": 1152, "height": 420,
+          "fill": "#ffffff00",
+          "children": [
+
+            {
+              "id": "prop-card-1",
+              "type": "frame",
+              "name": "PropertyCard 123 Main Street",
+              "width": 352, "height": 180,
+              "cornerRadius": 4,
+              "fill": "#ffffff",
+              "layout": "vertical",
+              "children": [
+                {
+                  "id": "prop-card-1-content",
+                  "type": "frame",
+                  "name": "Card 1 Content",
+                  "layout": "vertical",
+                  "padding": 16,
+                  "gap": 8,
+                  "fill": "#ffffff00",
+                  "height": 144,
+                  "children": [
+                    {
+                      "id": "prop-card-1-header",
+                      "type": "frame",
+                      "name": "Card 1 Header",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "gap": 8,
+                      "fill": "#ffffff00",
+                      "children": [
+                        {
+                          "id": "prop-card-1-name",
+                          "type": "text",
+                          "content": "123 Main Street",
+                          "fontSize": 16,
+                          "fontWeight": 700,
+                          "fill": "#000000de"
+                        },
+                        {
+                          "id": "prop-card-1-chip",
+                          "type": "frame",
+                          "name": "Status Chip Occupied",
+                          "cornerRadius": 12,
+                          "fill": "#2e7d3220",
+                          "padding": [0, 10],
+                          "height": 24,
+                          "width": 80,
+                          "layout": "horizontal",
+                          "alignItems": "center",
+                          "justifyContent": "center",
+                          "children": [
+                            {
+                              "id": "prop-card-1-chip-text",
+                              "type": "text",
+                              "content": "Occupied",
+                              "fontSize": 12,
+                              "fill": "#2e7d32"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": "prop-card-1-address",
+                      "type": "text",
+                      "content": "London SW1A 1AA",
+                      "fontSize": 14,
+                      "fill": "#00000099"
+                    },
+                    {
+                      "id": "prop-card-1-type",
+                      "type": "text",
+                      "content": "Apartment",
+                      "fontSize": 14,
+                      "fill": "#00000099"
+                    },
+                    {
+                      "id": "prop-card-1-rent",
+                      "type": "text",
+                      "content": "£1,200/month",
+                      "fontSize": 14,
+                      "fill": "#1976d2"
+                    }
+                  ]
+                },
+                {
+                  "id": "prop-card-1-actions",
+                  "type": "frame",
+                  "name": "Card 1 Actions",
+                  "layout": "horizontal",
+                  "padding": [4, 8],
+                  "gap": 4,
+                  "fill": "#ffffff00",
+                  "stroke": { "color": "#0000001f", "thickness": 1 },
+                  "height": 36,
+                  "children": [
+                    {
+                      "id": "prop-card-1-btn-edit",
+                      "type": "frame",
+                      "name": "Edit Button",
+                      "width": 40, "height": 40,
+                      "cornerRadius": 20,
+                      "fill": "#ffffff00",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "id": "prop-card-1-icon-edit",
+                          "type": "icon_font",
+                          "family": "material_symbols",
+                          "name": "edit",
+                          "fontSize": 20,
+                          "fill": "#00000099"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "prop-card-1-btn-delete",
+                      "type": "frame",
+                      "name": "Delete Button",
+                      "width": 40, "height": 40,
+                      "cornerRadius": 20,
+                      "fill": "#ffffff00",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "id": "prop-card-1-icon-delete",
+                          "type": "icon_font",
+                          "family": "material_symbols",
+                          "name": "delete",
+                          "fontSize": 20,
+                          "fill": "#00000099"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+
+            {
+              "id": "prop-card-2",
+              "type": "frame",
+              "name": "PropertyCard 45 Park Avenue",
+              "width": 352, "height": 180,
+              "cornerRadius": 4,
+              "fill": "#ffffff",
+              "layout": "vertical",
+              "children": [
+                {
+                  "id": "prop-card-2-content",
+                  "type": "frame",
+                  "name": "Card 2 Content",
+                  "layout": "vertical",
+                  "padding": 16,
+                  "gap": 8,
+                  "fill": "#ffffff00",
+                  "height": 144,
+                  "children": [
+                    {
+                      "id": "prop-card-2-header",
+                      "type": "frame",
+                      "name": "Card 2 Header",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "gap": 8,
+                      "fill": "#ffffff00",
+                      "children": [
+                        {
+                          "id": "prop-card-2-name",
+                          "type": "text",
+                          "content": "45 Park Avenue",
+                          "fontSize": 16,
+                          "fontWeight": 700,
+                          "fill": "#000000de"
+                        },
+                        {
+                          "id": "prop-card-2-chip",
+                          "type": "frame",
+                          "name": "Status Chip Available",
+                          "cornerRadius": 12,
+                          "fill": "#ed6c0220",
+                          "padding": [0, 10],
+                          "height": 24,
+                          "width": 80,
+                          "layout": "horizontal",
+                          "alignItems": "center",
+                          "justifyContent": "center",
+                          "children": [
+                            {
+                              "id": "prop-card-2-chip-text",
+                              "type": "text",
+                              "content": "Available",
+                              "fontSize": 12,
+                              "fill": "#ed6c02"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": "prop-card-2-address",
+                      "type": "text",
+                      "content": "Manchester M1 1AA",
+                      "fontSize": 14,
+                      "fill": "#00000099"
+                    },
+                    {
+                      "id": "prop-card-2-type",
+                      "type": "text",
+                      "content": "House",
+                      "fontSize": 14,
+                      "fill": "#00000099"
+                    },
+                    {
+                      "id": "prop-card-2-rent",
+                      "type": "text",
+                      "content": "£1,200/month",
+                      "fontSize": 14,
+                      "fill": "#1976d2"
+                    }
+                  ]
+                },
+                {
+                  "id": "prop-card-2-actions",
+                  "type": "frame",
+                  "name": "Card 2 Actions",
+                  "layout": "horizontal",
+                  "padding": [4, 8],
+                  "gap": 4,
+                  "fill": "#ffffff00",
+                  "stroke": { "color": "#0000001f", "thickness": 1 },
+                  "height": 36,
+                  "children": [
+                    {
+                      "id": "prop-card-2-btn-edit",
+                      "type": "frame",
+                      "name": "Edit Button",
+                      "width": 40, "height": 40,
+                      "cornerRadius": 20,
+                      "fill": "#ffffff00",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "id": "prop-card-2-icon-edit",
+                          "type": "icon_font",
+                          "family": "material_symbols",
+                          "name": "edit",
+                          "fontSize": 20,
+                          "fill": "#00000099"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "prop-card-2-btn-delete",
+                      "type": "frame",
+                      "name": "Delete Button",
+                      "width": 40, "height": 40,
+                      "cornerRadius": 20,
+                      "fill": "#ffffff00",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "id": "prop-card-2-icon-delete",
+                          "type": "icon_font",
+                          "family": "material_symbols",
+                          "name": "delete",
+                          "fontSize": 20,
+                          "fill": "#00000099"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+
+            {
+              "id": "prop-card-3",
+              "type": "frame",
+              "name": "PropertyCard 7 Garden Close",
+              "width": 352, "height": 180,
+              "cornerRadius": 4,
+              "fill": "#ffffff",
+              "layout": "vertical",
+              "children": [
+                {
+                  "id": "prop-card-3-content",
+                  "type": "frame",
+                  "name": "Card 3 Content",
+                  "layout": "vertical",
+                  "padding": 16,
+                  "gap": 8,
+                  "fill": "#ffffff00",
+                  "height": 144,
+                  "children": [
+                    {
+                      "id": "prop-card-3-header",
+                      "type": "frame",
+                      "name": "Card 3 Header",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "gap": 8,
+                      "fill": "#ffffff00",
+                      "children": [
+                        {
+                          "id": "prop-card-3-name",
+                          "type": "text",
+                          "content": "7 Garden Close",
+                          "fontSize": 16,
+                          "fontWeight": 700,
+                          "fill": "#000000de"
+                        },
+                        {
+                          "id": "prop-card-3-chip",
+                          "type": "frame",
+                          "name": "Status Chip Occupied",
+                          "cornerRadius": 12,
+                          "fill": "#2e7d3220",
+                          "padding": [0, 10],
+                          "height": 24,
+                          "width": 80,
+                          "layout": "horizontal",
+                          "alignItems": "center",
+                          "justifyContent": "center",
+                          "children": [
+                            {
+                              "id": "prop-card-3-chip-text",
+                              "type": "text",
+                              "content": "Occupied",
+                              "fontSize": 12,
+                              "fill": "#2e7d32"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": "prop-card-3-address",
+                      "type": "text",
+                      "content": "Birmingham B1 1AA",
+                      "fontSize": 14,
+                      "fill": "#00000099"
+                    },
+                    {
+                      "id": "prop-card-3-type",
+                      "type": "text",
+                      "content": "Semi-detached",
+                      "fontSize": 14,
+                      "fill": "#00000099"
+                    },
+                    {
+                      "id": "prop-card-3-rent",
+                      "type": "text",
+                      "content": "£1,200/month",
+                      "fontSize": 14,
+                      "fill": "#1976d2"
+                    }
+                  ]
+                },
+                {
+                  "id": "prop-card-3-actions",
+                  "type": "frame",
+                  "name": "Card 3 Actions",
+                  "layout": "horizontal",
+                  "padding": [4, 8],
+                  "gap": 4,
+                  "fill": "#ffffff00",
+                  "stroke": { "color": "#0000001f", "thickness": 1 },
+                  "height": 36,
+                  "children": [
+                    {
+                      "id": "prop-card-3-btn-edit",
+                      "type": "frame",
+                      "name": "Edit Button",
+                      "width": 40, "height": 40,
+                      "cornerRadius": 20,
+                      "fill": "#ffffff00",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "id": "prop-card-3-icon-edit",
+                          "type": "icon_font",
+                          "family": "material_symbols",
+                          "name": "edit",
+                          "fontSize": 20,
+                          "fill": "#00000099"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "prop-card-3-btn-delete",
+                      "type": "frame",
+                      "name": "Delete Button",
+                      "width": 40, "height": 40,
+                      "cornerRadius": 20,
+                      "fill": "#ffffff00",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "id": "prop-card-3-icon-delete",
+                          "type": "icon_font",
+                          "family": "material_symbols",
+                          "name": "delete",
+                          "fontSize": 20,
+                          "fill": "#00000099"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+
+          ]
+        }
+
+      ]
+    }
+  ]
+}

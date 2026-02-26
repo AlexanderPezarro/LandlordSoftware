@@ -1,40 +1,28 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import {
-  Container,
-  Typography,
-  Box,
-  Paper,
-  Button,
-  Stack,
-  TextField,
-  MenuItem,
-  CircularProgress,
-  Alert,
-  useTheme,
-  useMediaQuery,
-  Table,
-  TableHead,
-  TableBody,
-  TableRow,
-  TableCell,
-  TableContainer,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  FormControl,
-  InputLabel,
-  Select,
-  SelectChangeEvent,
-} from '@mui/material';
-import {
-  Add as AddIcon,
-  TrendingUp as TrendingUpIcon,
-  TrendingDown as TrendingDownIcon,
-  AccountBalance as AccountBalanceIcon,
-  AttachFile as AttachFileIcon,
-} from '@mui/icons-material';
 import { format } from 'date-fns';
+import {
+  Plus,
+  TrendingUp,
+  TrendingDown,
+  Landmark,
+  Paperclip,
+  X,
+  AlertCircle,
+} from 'lucide-react';
+import { Container } from '../components/primitives/Container';
+import { Button } from '../components/primitives/Button';
+import { TextField } from '../components/primitives/TextField';
+import { Select } from '../components/primitives/Select';
+import { Card } from '../components/primitives/Card';
+import { Table } from '../components/primitives/Table';
+import { Dialog } from '../components/primitives/Dialog';
+import { Spinner } from '../components/primitives/Spinner';
+import { FileUpload } from '../components/primitives/FileUpload';
+import TransactionRow from '../components/composed/TransactionRow/TransactionRow';
+import DateRangePicker from '../components/composed/DateRangePicker/DateRangePicker';
+import { PropertySelector } from '../components/composed/PropertySelector/PropertySelector';
+import { ConfirmDialog } from '../components/composed/ConfirmDialog/ConfirmDialog';
+import { SplitSection } from '../components/composed/Transaction/SplitSection';
 import { transactionsService } from '../services/api/transactions.service';
 import { documentsService } from '../services/api/documents.service';
 import {
@@ -45,16 +33,10 @@ import {
   TransactionSummary,
   TransactionSplit,
 } from '../types/api.types';
-import TransactionRow from '../components/shared/TransactionRow';
-import StatsCard from '../components/shared/StatsCard';
-import DateRangePicker from '../components/shared/DateRangePicker';
-import PropertySelector from '../components/shared/PropertySelector';
-import FileUpload from '../components/shared/FileUpload';
-import ConfirmDialog from '../components/shared/ConfirmDialog';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
-import { SplitSection } from '../components/Transaction/SplitSection';
 import { propertyOwnershipService, PropertyOwnership } from '../services/api/propertyOwnership.service';
+import styles from './Transactions.module.scss';
 
 const TRANSACTION_TYPES = ['Income', 'Expense'] as const;
 
@@ -92,9 +74,37 @@ const initialFormData: TransactionFormData = {
   paidByUserId: '',
 };
 
+// Build Select options for type filter
+const typeFilterOptions = [
+  { value: 'all', label: 'All Types' },
+  ...TRANSACTION_TYPES.map((type) => ({ value: type, label: type })),
+];
+
+// Build Select options for category filter
+const categoryFilterOptions = [
+  { value: 'all', label: 'All Categories' },
+  ...INCOME_CATEGORIES.map((c) => ({ value: c, label: `Income - ${c}` })),
+  ...EXPENSE_CATEGORIES.map((c) => ({ value: c, label: `Expense - ${c}` })),
+];
+
+// Build Select options for transaction type in form
+const transactionTypeOptions = TRANSACTION_TYPES.map((type) => ({
+  value: type,
+  label: type,
+}));
+
+// Build Select options for paid-by
+function buildPaidByOptions(propertyOwnership: PropertyOwnership[]) {
+  return [
+    { value: '', label: 'None' },
+    ...propertyOwnership.map((ownership) => ({
+      value: ownership.userId,
+      label: ownership.user.email,
+    })),
+  ];
+}
+
 export const Transactions: React.FC = () => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const toast = useToast();
   const { user, canWrite } = useAuth();
 
@@ -116,14 +126,14 @@ export const Transactions: React.FC = () => {
 
   // Confirm dialog states
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [, setDeleteLoading] = useState(false);
 
   // Property ownership and splits
   const [propertyOwnership, setPropertyOwnership] = useState<PropertyOwnership[]>([]);
   const [splits, setSplits] = useState<TransactionSplit[]>([]);
 
   // Filter states
-  const [propertyFilter, setPropertyFilter] = useState('all');
+  const [propertyFilter, setPropertyFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [dateRangeStart, setDateRangeStart] = useState<Date | null>(null);
@@ -136,7 +146,7 @@ export const Transactions: React.FC = () => {
 
       const filters: TransactionFilters = {};
 
-      if (propertyFilter !== 'all') {
+      if (propertyFilter !== '') {
         filters.propertyId = propertyFilter;
       }
 
@@ -234,6 +244,13 @@ export const Transactions: React.FC = () => {
       return EXPENSE_CATEGORIES;
     }
   }, [formData.type]);
+
+  const categoryOptions = useMemo(() => {
+    return availableCategories.map((category) => ({
+      value: category,
+      label: category,
+    }));
+  }, [availableCategories]);
 
   const handleCreateTransaction = () => {
     setSelectedTransaction(null);
@@ -427,7 +444,7 @@ export const Transactions: React.FC = () => {
   };
 
   const handleClearFilters = () => {
-    setPropertyFilter('all');
+    setPropertyFilter('');
     setTypeFilter('all');
     setCategoryFilter('all');
     setDateRangeStart(null);
@@ -435,299 +452,270 @@ export const Transactions: React.FC = () => {
   };
 
   const hasActiveFilters =
-    propertyFilter !== 'all' ||
+    propertyFilter !== '' ||
     typeFilter !== 'all' ||
     categoryFilter !== 'all' ||
     dateRangeStart !== null ||
     dateRangeEnd !== null;
 
   const formatCurrency = (amount: number) => {
-    return `£${amount.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    return `\u00A3${amount.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
+
+  const handleFilesChange = useCallback((files: File[]) => {
+    setSelectedFile(files.length > 0 ? files[0] : null);
+  }, []);
 
   return (
     <Container maxWidth="xl">
-      <Box sx={{ mb: 4 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Typography variant="h4" component="h1">
-            Finances & Transactions
-          </Typography>
+      <div className={styles.page}>
+        {/* Page Header */}
+        <div className={styles.pageHeader}>
+          <h1 className={styles.pageTitle}>Finances &amp; Transactions</h1>
           {canWrite() && (
             <Button
-              variant="contained"
-              startIcon={<AddIcon />}
+              variant="primary"
+              startIcon={<Plus size={18} />}
               onClick={handleCreateTransaction}
-              size={isMobile ? 'small' : 'medium'}
             >
               New Transaction
             </Button>
           )}
-        </Box>
+        </div>
 
+        {/* Error Alert */}
         {error && (
-          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
-            {error}
-          </Alert>
+          <div className={styles.errorAlert} role="alert">
+            <AlertCircle size={18} />
+            <span className={styles.errorAlertText}>{error}</span>
+            <button
+              className={styles.errorAlertClose}
+              onClick={() => setError(null)}
+              aria-label="Dismiss error"
+            >
+              <X size={16} />
+            </button>
+          </div>
         )}
 
         {/* Financial Summary Cards */}
-        {/* Note: Using CSS Grid instead of MUI Grid for MUI v7 compatibility (Grid component deprecated in v7) */}
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: {
-              xs: '1fr',
-              sm: 'repeat(2, 1fr)',
-              md: 'repeat(3, 1fr)',
-            },
-            gap: 3,
-            mb: 3,
-          }}
-        >
-          <StatsCard
-            title="Total Income"
-            value={summary ? formatCurrency(summary.total_income) : '£0.00'}
-            icon={<TrendingUpIcon />}
-            color={theme.palette.success.main}
-          />
-          <StatsCard
-            title="Total Expenses"
-            value={summary ? formatCurrency(summary.total_expense) : '£0.00'}
-            icon={<TrendingDownIcon />}
-            color={theme.palette.error.main}
-          />
-          <StatsCard
-            title="Net Income"
-            value={summary ? formatCurrency(summary.net) : '£0.00'}
-            icon={<AccountBalanceIcon />}
-            color={
-              summary && summary.net >= 0 ? theme.palette.success.main : theme.palette.error.main
-            }
-          />
-        </Box>
+        <div className={styles.summaryGrid}>
+          <Card className={styles.summaryCard}>
+            <Card.Content className={styles.summaryCardContent}>
+              <span className={styles.summaryCardIcon}>
+                <TrendingUp size={20} className={styles.iconSuccess} />
+                <span className={styles.summaryCardTitle}>Total Income</span>
+              </span>
+              <span className={styles.summaryCardValue}>
+                {summary ? formatCurrency(summary.total_income) : '\u00A30.00'}
+              </span>
+            </Card.Content>
+          </Card>
+
+          <Card className={styles.summaryCard}>
+            <Card.Content className={styles.summaryCardContent}>
+              <span className={styles.summaryCardIcon}>
+                <TrendingDown size={20} className={styles.iconError} />
+                <span className={styles.summaryCardTitle}>Total Expenses</span>
+              </span>
+              <span className={styles.summaryCardValue}>
+                {summary ? formatCurrency(summary.total_expense) : '\u00A30.00'}
+              </span>
+            </Card.Content>
+          </Card>
+
+          <Card className={styles.summaryCard}>
+            <Card.Content className={styles.summaryCardContent}>
+              <span className={styles.summaryCardIcon}>
+                <Landmark
+                  size={20}
+                  className={
+                    summary && summary.net >= 0 ? styles.iconSuccess : styles.iconError
+                  }
+                />
+                <span className={styles.summaryCardTitle}>Net Income</span>
+              </span>
+              <span className={styles.summaryCardValue}>
+                {summary ? formatCurrency(summary.net) : '\u00A30.00'}
+              </span>
+            </Card.Content>
+          </Card>
+        </div>
 
         {/* Filters */}
-        <Paper sx={{ p: 2, mb: 3 }}>
-          <Typography variant="subtitle2" gutterBottom>
-            Filters
-          </Typography>
+        <Card className={styles.filtersCard}>
+          <Card.Content>
+            <p className={styles.filtersTitle}>Filters</p>
 
-          <Stack spacing={2}>
-            <Stack direction={isMobile ? 'column' : 'row'} spacing={2}>
-              <PropertySelector
-                value={propertyFilter}
-                onChange={setPropertyFilter}
-                includeAllOption={true}
+            <div className={styles.filtersContent}>
+              <div className={styles.filterRow}>
+                <div className={styles.filterField}>
+                  <PropertySelector
+                    value={propertyFilter}
+                    onChange={setPropertyFilter}
+                    includeAllOption={true}
+                  />
+                </div>
+
+                <div className={styles.filterField}>
+                  <Select
+                    label="Transaction Type"
+                    value={typeFilter}
+                    onChange={(value) => setTypeFilter(value)}
+                    options={typeFilterOptions}
+                    fullWidth
+                    size="small"
+                  />
+                </div>
+
+                <div className={styles.filterField}>
+                  <Select
+                    label="Category"
+                    value={categoryFilter}
+                    onChange={(value) => setCategoryFilter(value)}
+                    options={categoryFilterOptions}
+                    fullWidth
+                    size="small"
+                  />
+                </div>
+              </div>
+
+              <DateRangePicker
+                startDate={dateRangeStart}
+                endDate={dateRangeEnd}
+                onStartChange={setDateRangeStart}
+                onEndChange={setDateRangeEnd}
+                label="Filter by Date Range"
               />
 
-              <TextField
-                select
-                fullWidth
-                size="small"
-                label="Transaction Type"
-                value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value)}
-              >
-                <MenuItem value="all">All Types</MenuItem>
-                {TRANSACTION_TYPES.map((type) => (
-                  <MenuItem key={type} value={type}>
-                    {type}
-                  </MenuItem>
-                ))}
-              </TextField>
-
-              <TextField
-                select
-                fullWidth
-                size="small"
-                label="Category"
-                value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
-              >
-                <MenuItem value="all">All Categories</MenuItem>
-                <MenuItem disabled>--- Income ---</MenuItem>
-                {INCOME_CATEGORIES.map((category) => (
-                  <MenuItem key={category} value={category}>
-                    {category}
-                  </MenuItem>
-                ))}
-                <MenuItem disabled>--- Expense ---</MenuItem>
-                {EXPENSE_CATEGORIES.map((category) => (
-                  <MenuItem key={category} value={category}>
-                    {category}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Stack>
-
-            <DateRangePicker
-              startDate={dateRangeStart}
-              endDate={dateRangeEnd}
-              onStartDateChange={setDateRangeStart}
-              onEndDateChange={setDateRangeEnd}
-              label="Filter by Date Range"
-            />
-
-            {hasActiveFilters && (
-              <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <Button size="small" onClick={handleClearFilters}>
-                  Clear Filters
-                </Button>
-              </Box>
-            )}
-          </Stack>
-        </Paper>
+              {hasActiveFilters && (
+                <div className={styles.clearFiltersRow}>
+                  <Button variant="text" size="small" onClick={handleClearFilters}>
+                    Clear Filters
+                  </Button>
+                </div>
+              )}
+            </div>
+          </Card.Content>
+        </Card>
 
         {/* Transactions List */}
-        <Paper sx={{ p: 2 }}>
-          <Typography variant="subtitle2" sx={{ mb: 2 }}>
-            Showing {transactions.length} transaction{transactions.length !== 1 ? 's' : ''}
-          </Typography>
+        <Card className={styles.transactionsCard}>
+          <Card.Content>
+            <p className={styles.transactionsCount}>
+              Showing {transactions.length} transaction{transactions.length !== 1 ? 's' : ''}
+            </p>
 
-          {loading ? (
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                minHeight: 200,
-              }}
-            >
-              <CircularProgress />
-            </Box>
-          ) : transactions.length === 0 ? (
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                minHeight: 200,
-                flexDirection: 'column',
-              }}
-            >
-              <Typography variant="body1" color="text.secondary">
-                No transactions found
-              </Typography>
-              {canWrite() && (
-                <Button
-                  variant="outlined"
-                  startIcon={<AddIcon />}
-                  onClick={handleCreateTransaction}
-                  sx={{ mt: 2 }}
-                >
-                  Create First Transaction
-                </Button>
-              )}
-            </Box>
-          ) : (
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Date</TableCell>
-                    <TableCell>Property</TableCell>
-                    <TableCell>Type</TableCell>
-                    <TableCell>Category</TableCell>
-                    <TableCell>Amount</TableCell>
-                    <TableCell>Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {transactions.map((transaction) => (
-                    <TransactionRow
-                      key={transaction.id}
-                      transaction={transaction}
-                      onEdit={canWrite() ? handleEditTransaction : undefined}
-                      onDelete={canWrite() ? handleDeleteTransaction : undefined}
-                    />
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
-        </Paper>
+            {loading ? (
+              <div className={styles.loadingContainer}>
+                <Spinner size="medium" />
+              </div>
+            ) : transactions.length === 0 ? (
+              <div className={styles.emptyContainer}>
+                <p className={styles.emptyText}>No transactions found</p>
+                {canWrite() && (
+                  <Button
+                    variant="secondary"
+                    startIcon={<Plus size={18} />}
+                    onClick={handleCreateTransaction}
+                  >
+                    Create First Transaction
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <Table.Container>
+                <Table>
+                  <Table.Head>
+                    <Table.Row>
+                      <Table.Cell sortable={false}>Date</Table.Cell>
+                      <Table.Cell sortable={false}>Property</Table.Cell>
+                      <Table.Cell sortable={false}>Type</Table.Cell>
+                      <Table.Cell sortable={false}>Category</Table.Cell>
+                      <Table.Cell sortable={false}>Amount</Table.Cell>
+                      <Table.Cell sortable={false}>Actions</Table.Cell>
+                    </Table.Row>
+                  </Table.Head>
+                  <Table.Body>
+                    {transactions.map((transaction) => (
+                      <TransactionRow
+                        key={transaction.id}
+                        transaction={transaction}
+                        onEdit={canWrite() ? handleEditTransaction : undefined}
+                        onDelete={canWrite() ? handleDeleteTransaction : undefined}
+                      />
+                    ))}
+                  </Table.Body>
+                </Table>
+              </Table.Container>
+            )}
+          </Card.Content>
+        </Card>
 
         {/* Transaction Dialog */}
-        <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="md" fullWidth>
-          <DialogTitle>
+        <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} size="large">
+          <Dialog.Title>
             {dialogMode === 'create' ? 'Create Transaction' : 'Edit Transaction'}
-          </DialogTitle>
+          </Dialog.Title>
 
-          <DialogContent>
-            <Stack spacing={2} sx={{ mt: 1 }}>
+          <Dialog.Content>
+            <div className={styles.formStack}>
               <PropertySelector
                 value={formData.propertyId}
                 onChange={(value) => handleFormChange('propertyId', value)}
                 includeAllOption={false}
               />
               {formErrors.propertyId && (
-                <Typography variant="caption" color="error">
-                  {formErrors.propertyId}
-                </Typography>
+                <p className={styles.formError}>{formErrors.propertyId}</p>
               )}
 
-              <FormControl fullWidth size="small" error={!!formErrors.type}>
-                <InputLabel>Transaction Type</InputLabel>
-                <Select
-                  value={formData.type}
-                  label="Transaction Type"
-                  onChange={(e: SelectChangeEvent) => handleFormChange('type', e.target.value)}
-                >
-                  {TRANSACTION_TYPES.map((type) => (
-                    <MenuItem key={type} value={type}>
-                      {type}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-
-              <FormControl fullWidth size="small" error={!!formErrors.category}>
-                <InputLabel>Category</InputLabel>
-                <Select
-                  value={formData.category}
-                  label="Category"
-                  onChange={(e: SelectChangeEvent) => handleFormChange('category', e.target.value)}
-                >
-                  {availableCategories.map((category) => (
-                    <MenuItem key={category} value={category}>
-                      {category}
-                    </MenuItem>
-                  ))}
-                </Select>
-                {formErrors.category && (
-                  <Typography variant="caption" color="error">
-                    {formErrors.category}
-                  </Typography>
-                )}
-              </FormControl>
-
-              <TextField
+              <Select
+                label="Transaction Type"
+                value={formData.type}
+                onChange={(value) => handleFormChange('type', value)}
+                options={transactionTypeOptions}
                 fullWidth
                 size="small"
+                error={!!formErrors.type}
+              />
+
+              <Select
+                label="Category"
+                value={formData.category}
+                onChange={(value) => handleFormChange('category', value)}
+                options={categoryOptions}
+                fullWidth
+                size="small"
+                placeholder="Select a category"
+                error={!!formErrors.category}
+                helperText={formErrors.category}
+              />
+
+              <TextField
                 label="Amount"
                 type="number"
                 value={formData.amount}
                 onChange={(e) => handleFormChange('amount', e.target.value)}
                 error={!!formErrors.amount}
                 helperText={formErrors.amount}
-                inputProps={{ step: '0.01', min: '0' }}
+                fullWidth
+                size="small"
+                step="0.01"
+                min="0"
               />
 
               <TextField
-                fullWidth
-                size="small"
                 label="Transaction Date"
                 type="date"
                 value={formData.transactionDate}
                 onChange={(e) => handleFormChange('transactionDate', e.target.value)}
                 error={!!formErrors.transactionDate}
                 helperText={formErrors.transactionDate}
-                InputLabelProps={{ shrink: true }}
+                fullWidth
+                size="small"
               />
 
               <TextField
-                fullWidth
-                size="small"
                 label="Description"
                 multiline
                 rows={3}
@@ -735,27 +723,20 @@ export const Transactions: React.FC = () => {
                 onChange={(e) => handleFormChange('description', e.target.value)}
                 error={!!formErrors.description}
                 helperText={formErrors.description}
+                fullWidth
+                size="small"
               />
 
               {/* Paid By - only for expenses with property ownership */}
               {formData.type === 'Expense' && propertyOwnership.length > 0 && (
-                <FormControl fullWidth size="small">
-                  <InputLabel>Paid By (Optional)</InputLabel>
-                  <Select
-                    value={formData.paidByUserId}
-                    label="Paid By (Optional)"
-                    onChange={(e: SelectChangeEvent) => handleFormChange('paidByUserId', e.target.value)}
-                  >
-                    <MenuItem value="">
-                      <em>None</em>
-                    </MenuItem>
-                    {propertyOwnership.map((ownership) => (
-                      <MenuItem key={ownership.userId} value={ownership.userId}>
-                        {ownership.user.email}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+                <Select
+                  label="Paid By (Optional)"
+                  value={formData.paidByUserId}
+                  onChange={(value) => handleFormChange('paidByUserId', value)}
+                  options={buildPaidByOptions(propertyOwnership)}
+                  fullWidth
+                  size="small"
+                />
               )}
 
               {/* Transaction Splits */}
@@ -767,33 +748,33 @@ export const Transactions: React.FC = () => {
                 disabled={!formData.propertyId || !formData.amount}
               />
 
-              <Box>
-                <Typography variant="subtitle2" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <AttachFileIcon fontSize="small" />
+              <div>
+                <p className={styles.attachmentLabel}>
+                  <Paperclip size={16} />
                   Attach Receipt/Document (Optional)
-                </Typography>
+                </p>
                 <FileUpload
-                  onFileSelect={setSelectedFile}
+                  onFilesChange={handleFilesChange}
                   accept="image/jpeg,image/png,application/pdf"
                   maxSize={10 * 1024 * 1024}
                 />
-              </Box>
-            </Stack>
-          </DialogContent>
+              </div>
+            </div>
+          </Dialog.Content>
 
-          <DialogActions>
-            <Button onClick={() => setDialogOpen(false)} disabled={saveLoading}>
+          <Dialog.Actions>
+            <Button variant="text" onClick={() => setDialogOpen(false)} disabled={saveLoading}>
               Cancel
             </Button>
             <Button
+              variant="primary"
               onClick={handleSaveTransaction}
-              variant="contained"
               disabled={saveLoading}
-              startIcon={saveLoading ? <CircularProgress size={16} /> : undefined}
+              loading={saveLoading}
             >
               {saveLoading ? 'Saving...' : dialogMode === 'create' ? 'Create' : 'Update'}
             </Button>
-          </DialogActions>
+          </Dialog.Actions>
         </Dialog>
 
         {/* Delete Confirmation Dialog */}
@@ -803,9 +784,8 @@ export const Transactions: React.FC = () => {
           message="Are you sure you want to delete this transaction? This action cannot be undone."
           onConfirm={handleDeleteConfirm}
           onCancel={() => setConfirmOpen(false)}
-          loading={deleteLoading}
         />
-      </Box>
+      </div>
     </Container>
   );
 };

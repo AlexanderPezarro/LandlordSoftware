@@ -1,0 +1,115 @@
+@use '../../../styles/variables' as *;
+
+// ---------------------------------------------------------------------------
+// Group container
+// ---------------------------------------------------------------------------
+
+.group {
+  display: inline-flex;
+
+  // Connected borders: collapse adjacent borders
+  .button + .button {
+    margin-left: -1px;
+  }
+
+  // First button gets left border-radius
+  .button:first-child {
+    border-radius: $radius-sm 0 0 $radius-sm;
+  }
+
+  // Last button gets right border-radius
+  .button:last-child {
+    border-radius: 0 $radius-sm $radius-sm 0;
+  }
+
+  // Single button gets full border-radius
+  .button:only-child {
+    border-radius: $radius-sm;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Button base
+// ---------------------------------------------------------------------------
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-1;
+  border: 1px solid $color-divider;
+  font-family: $font-family;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color $transition-duration $transition-easing,
+    color $transition-duration $transition-easing,
+    border-color $transition-duration $transition-easing;
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: -2px;
+    z-index: 1;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.38;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Selected state
+// ---------------------------------------------------------------------------
+
+.selected {
+  background-color: $color-primary;
+  color: $color-primary-contrast;
+  border-color: $color-primary;
+  z-index: 1;
+
+  &:hover:not(:disabled) {
+    background-color: $color-primary-dark;
+    border-color: $color-primary-dark;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Unselected state
+// ---------------------------------------------------------------------------
+
+.unselected {
+  background-color: $color-paper;
+  color: $color-text-primary;
+
+  &:hover:not(:disabled) {
+    background-color: rgba($color-primary, 0.08);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Sizes
+// ---------------------------------------------------------------------------
+
+.small .button {
+  height: 32px;
+  padding: 0 $spacing-2;
+  font-size: $font-size-caption;
+}
+
+.medium .button {
+  height: 40px;
+  padding: 0 $spacing-3;
+  font-size: $font-size-body2;
+}
+
+// ---------------------------------------------------------------------------
+// Icon
+// ---------------------------------------------------------------------------
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
