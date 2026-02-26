@@ -1,0 +1,1063 @@
+{
+  "version": "2.8",
+  "variables": {},
+  "children": [
+    {
+      "id": "doc-root-frame",
+      "type": "frame",
+      "name": "Documents",
+      "x": 0,
+      "y": 0,
+      "width": 1200,
+      "height": 900,
+      "fill": "#f5f5f5",
+      "layout": "vertical",
+      "padding": 24,
+      "gap": 24,
+      "children": [
+        {
+          "id": "doc-header-row",
+          "type": "frame",
+          "layout": "horizontal",
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "width": 1152,
+          "height": 40,
+          "fill": "transparent",
+          "children": [
+            {
+              "id": "doc-heading-text",
+              "type": "text",
+              "content": "Documents",
+              "fontSize": 34,
+              "fontWeight": 400,
+              "fill": "#000000de"
+            },
+            {
+              "id": "doc-upload-btn",
+              "type": "frame",
+              "layout": "horizontal",
+              "alignItems": "center",
+              "justifyContent": "center",
+              "gap": 8,
+              "height": 36,
+              "width": 168,
+              "cornerRadius": 4,
+              "fill": "#1976d2",
+              "children": [
+                {
+                  "id": "doc-upload-icon",
+                  "type": "icon_font",
+                  "family": "material_symbols",
+                  "name": "upload",
+                  "fontSize": 18,
+                  "fill": "#ffffff"
+                },
+                {
+                  "id": "doc-upload-label",
+                  "type": "text",
+                  "content": "Upload Document",
+                  "fontSize": 14,
+                  "fontWeight": 500,
+                  "fill": "#ffffff"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "doc-filters-row",
+          "type": "frame",
+          "layout": "horizontal",
+          "gap": 12,
+          "alignItems": "center",
+          "width": 1152,
+          "height": 40,
+          "fill": "transparent",
+          "children": [
+            {
+              "id": "doc-entity-type-select",
+              "type": "frame",
+              "width": 200,
+              "height": 40,
+              "cornerRadius": 4,
+              "fill": "#ffffff",
+              "stroke": "#0000003b",
+              "thickness": 1,
+              "layout": "horizontal",
+              "alignItems": "center",
+              "justifyContent": "space_between",
+              "padding": [0, 14],
+              "children": [
+                {
+                  "id": "doc-entity-type-label",
+                  "type": "text",
+                  "content": "All Types",
+                  "fontSize": 14,
+                  "fill": "#00000099"
+                },
+                {
+                  "id": "doc-entity-type-expand",
+                  "type": "icon_font",
+                  "family": "material_symbols",
+                  "name": "expand_more",
+                  "fontSize": 20,
+                  "fill": "#00000099"
+                }
+              ]
+            },
+            {
+              "id": "doc-entity-select",
+              "type": "frame",
+              "width": 280,
+              "height": 40,
+              "cornerRadius": 4,
+              "fill": "#ffffff",
+              "stroke": "#0000003b",
+              "thickness": 1,
+              "layout": "horizontal",
+              "alignItems": "center",
+              "justifyContent": "space_between",
+              "padding": [0, 14],
+              "children": [
+                {
+                  "id": "doc-entity-label",
+                  "type": "text",
+                  "content": "All Entities",
+                  "fontSize": 14,
+                  "fill": "#00000099"
+                },
+                {
+                  "id": "doc-entity-expand",
+                  "type": "icon_font",
+                  "family": "material_symbols",
+                  "name": "expand_more",
+                  "fontSize": 20,
+                  "fill": "#00000099"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "doc-grid",
+          "type": "frame",
+          "layout": "horizontal",
+          "gap": 24,
+          "flexWrap": "wrap",
+          "width": 1152,
+          "height": 560,
+          "fill": "transparent",
+          "children": [
+            {
+              "id": "doc-card-1",
+              "type": "frame",
+              "width": 352,
+              "height": 168,
+              "cornerRadius": 4,
+              "fill": "#ffffff",
+              "layout": "vertical",
+              "padding": 16,
+              "gap": 8,
+              "children": [
+                {
+                  "id": "doc-card-1-top-row",
+                  "type": "frame",
+                  "layout": "horizontal",
+                  "justifyContent": "space_between",
+                  "alignItems": "start",
+                  "children": [
+                    {
+                      "id": "doc-card-1-icon-circle",
+                      "type": "frame",
+                      "width": 48,
+                      "height": 48,
+                      "cornerRadius": 24,
+                      "fill": "#d32f2f20",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "id": "doc-card-1-pdf-icon",
+                          "type": "icon_font",
+                          "family": "material_symbols",
+                          "name": "picture_as_pdf",
+                          "fontSize": 28,
+                          "fill": "#d32f2f"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "doc-card-1-actions",
+                      "type": "frame",
+                      "layout": "horizontal",
+                      "gap": 4,
+                      "children": [
+                        {
+                          "id": "doc-card-1-download-btn",
+                          "type": "frame",
+                          "width": 40,
+                          "height": 40,
+                          "cornerRadius": 20,
+                          "fill": "transparent",
+                          "layout": "horizontal",
+                          "alignItems": "center",
+                          "justifyContent": "center",
+                          "children": [
+                            {
+                              "id": "doc-card-1-download-icon",
+                              "type": "icon_font",
+                              "family": "material_symbols",
+                              "name": "download",
+                              "fontSize": 20,
+                              "fill": "#00000099"
+                            }
+                          ]
+                        },
+                        {
+                          "id": "doc-card-1-delete-btn",
+                          "type": "frame",
+                          "width": 40,
+                          "height": 40,
+                          "cornerRadius": 20,
+                          "fill": "transparent",
+                          "layout": "horizontal",
+                          "alignItems": "center",
+                          "justifyContent": "center",
+                          "children": [
+                            {
+                              "id": "doc-card-1-delete-icon",
+                              "type": "icon_font",
+                              "family": "material_symbols",
+                              "name": "delete",
+                              "fontSize": 20,
+                              "fill": "#00000099"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "doc-card-1-filename",
+                  "type": "text",
+                  "content": "lease_agreement_2025.pdf",
+                  "fontSize": 14,
+                  "fontWeight": 500,
+                  "fill": "#000000de"
+                },
+                {
+                  "id": "doc-card-1-size",
+                  "type": "text",
+                  "content": "245 KB",
+                  "fontSize": 12,
+                  "fill": "#00000099"
+                },
+                {
+                  "id": "doc-card-1-chip-row",
+                  "type": "frame",
+                  "layout": "horizontal",
+                  "gap": 8,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "doc-card-1-chip",
+                      "type": "frame",
+                      "cornerRadius": 12,
+                      "height": 22,
+                      "padding": [0, 8],
+                      "fill": "#1976d220",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "id": "doc-card-1-chip-text",
+                          "type": "text",
+                          "content": "Lease",
+                          "fontSize": 11,
+                          "fill": "#1976d2"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "doc-card-1-entity-name",
+                      "type": "text",
+                      "content": "123 Main Street",
+                      "fontSize": 12,
+                      "fill": "#00000099"
+                    }
+                  ]
+                },
+                {
+                  "id": "doc-card-1-date",
+                  "type": "text",
+                  "content": "25 Feb 2026",
+                  "fontSize": 12,
+                  "fill": "#00000061"
+                }
+              ]
+            },
+            {
+              "id": "doc-card-2",
+              "type": "frame",
+              "width": 352,
+              "height": 168,
+              "cornerRadius": 4,
+              "fill": "#ffffff",
+              "layout": "vertical",
+              "padding": 16,
+              "gap": 8,
+              "children": [
+                {
+                  "id": "doc-card-2-top-row",
+                  "type": "frame",
+                  "layout": "horizontal",
+                  "justifyContent": "space_between",
+                  "alignItems": "start",
+                  "children": [
+                    {
+                      "id": "doc-card-2-icon-circle",
+                      "type": "frame",
+                      "width": 48,
+                      "height": 48,
+                      "cornerRadius": 24,
+                      "fill": "#d32f2f20",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "id": "doc-card-2-pdf-icon",
+                          "type": "icon_font",
+                          "family": "material_symbols",
+                          "name": "picture_as_pdf",
+                          "fontSize": 28,
+                          "fill": "#d32f2f"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "doc-card-2-actions",
+                      "type": "frame",
+                      "layout": "horizontal",
+                      "gap": 4,
+                      "children": [
+                        {
+                          "id": "doc-card-2-download-btn",
+                          "type": "frame",
+                          "width": 40,
+                          "height": 40,
+                          "cornerRadius": 20,
+                          "fill": "transparent",
+                          "layout": "horizontal",
+                          "alignItems": "center",
+                          "justifyContent": "center",
+                          "children": [
+                            {
+                              "id": "doc-card-2-download-icon",
+                              "type": "icon_font",
+                              "family": "material_symbols",
+                              "name": "download",
+                              "fontSize": 20,
+                              "fill": "#00000099"
+                            }
+                          ]
+                        },
+                        {
+                          "id": "doc-card-2-delete-btn",
+                          "type": "frame",
+                          "width": 40,
+                          "height": 40,
+                          "cornerRadius": 20,
+                          "fill": "transparent",
+                          "layout": "horizontal",
+                          "alignItems": "center",
+                          "justifyContent": "center",
+                          "children": [
+                            {
+                              "id": "doc-card-2-delete-icon",
+                              "type": "icon_font",
+                              "family": "material_symbols",
+                              "name": "delete",
+                              "fontSize": 20,
+                              "fill": "#00000099"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "doc-card-2-filename",
+                  "type": "text",
+                  "content": "inspection_report.pdf",
+                  "fontSize": 14,
+                  "fontWeight": 500,
+                  "fill": "#000000de"
+                },
+                {
+                  "id": "doc-card-2-size",
+                  "type": "text",
+                  "content": "1.2 MB",
+                  "fontSize": 12,
+                  "fill": "#00000099"
+                },
+                {
+                  "id": "doc-card-2-chip-row",
+                  "type": "frame",
+                  "layout": "horizontal",
+                  "gap": 8,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "doc-card-2-chip",
+                      "type": "frame",
+                      "cornerRadius": 12,
+                      "height": 22,
+                      "padding": [0, 8],
+                      "fill": "#1976d220",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "id": "doc-card-2-chip-text",
+                          "type": "text",
+                          "content": "Property",
+                          "fontSize": 11,
+                          "fill": "#1976d2"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "doc-card-2-entity-name",
+                      "type": "text",
+                      "content": "45 Park Avenue",
+                      "fontSize": 12,
+                      "fill": "#00000099"
+                    }
+                  ]
+                },
+                {
+                  "id": "doc-card-2-date",
+                  "type": "text",
+                  "content": "25 Feb 2026",
+                  "fontSize": 12,
+                  "fill": "#00000061"
+                }
+              ]
+            },
+            {
+              "id": "doc-card-3",
+              "type": "frame",
+              "width": 352,
+              "height": 168,
+              "cornerRadius": 4,
+              "fill": "#ffffff",
+              "layout": "vertical",
+              "padding": 16,
+              "gap": 8,
+              "children": [
+                {
+                  "id": "doc-card-3-top-row",
+                  "type": "frame",
+                  "layout": "horizontal",
+                  "justifyContent": "space_between",
+                  "alignItems": "start",
+                  "children": [
+                    {
+                      "id": "doc-card-3-icon-circle",
+                      "type": "frame",
+                      "width": 48,
+                      "height": 48,
+                      "cornerRadius": 24,
+                      "fill": "#1976d220",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "id": "doc-card-3-img-icon",
+                          "type": "icon_font",
+                          "family": "material_symbols",
+                          "name": "image",
+                          "fontSize": 28,
+                          "fill": "#1976d2"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "doc-card-3-actions",
+                      "type": "frame",
+                      "layout": "horizontal",
+                      "gap": 4,
+                      "children": [
+                        {
+                          "id": "doc-card-3-download-btn",
+                          "type": "frame",
+                          "width": 40,
+                          "height": 40,
+                          "cornerRadius": 20,
+                          "fill": "transparent",
+                          "layout": "horizontal",
+                          "alignItems": "center",
+                          "justifyContent": "center",
+                          "children": [
+                            {
+                              "id": "doc-card-3-download-icon",
+                              "type": "icon_font",
+                              "family": "material_symbols",
+                              "name": "download",
+                              "fontSize": 20,
+                              "fill": "#00000099"
+                            }
+                          ]
+                        },
+                        {
+                          "id": "doc-card-3-delete-btn",
+                          "type": "frame",
+                          "width": 40,
+                          "height": 40,
+                          "cornerRadius": 20,
+                          "fill": "transparent",
+                          "layout": "horizontal",
+                          "alignItems": "center",
+                          "justifyContent": "center",
+                          "children": [
+                            {
+                              "id": "doc-card-3-delete-icon",
+                              "type": "icon_font",
+                              "family": "material_symbols",
+                              "name": "delete",
+                              "fontSize": 20,
+                              "fill": "#00000099"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "doc-card-3-filename",
+                  "type": "text",
+                  "content": "property_photo.jpg",
+                  "fontSize": 14,
+                  "fontWeight": 500,
+                  "fill": "#000000de"
+                },
+                {
+                  "id": "doc-card-3-size",
+                  "type": "text",
+                  "content": "3.4 MB",
+                  "fontSize": 12,
+                  "fill": "#00000099"
+                },
+                {
+                  "id": "doc-card-3-chip-row",
+                  "type": "frame",
+                  "layout": "horizontal",
+                  "gap": 8,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "doc-card-3-chip",
+                      "type": "frame",
+                      "cornerRadius": 12,
+                      "height": 22,
+                      "padding": [0, 8],
+                      "fill": "#1976d220",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "id": "doc-card-3-chip-text",
+                          "type": "text",
+                          "content": "Property",
+                          "fontSize": 11,
+                          "fill": "#1976d2"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "doc-card-3-entity-name",
+                      "type": "text",
+                      "content": "7 Garden Close",
+                      "fontSize": 12,
+                      "fill": "#00000099"
+                    }
+                  ]
+                },
+                {
+                  "id": "doc-card-3-date",
+                  "type": "text",
+                  "content": "25 Feb 2026",
+                  "fontSize": 12,
+                  "fill": "#00000061"
+                }
+              ]
+            },
+            {
+              "id": "doc-card-4",
+              "type": "frame",
+              "width": 352,
+              "height": 168,
+              "cornerRadius": 4,
+              "fill": "#ffffff",
+              "layout": "vertical",
+              "padding": 16,
+              "gap": 8,
+              "children": [
+                {
+                  "id": "doc-card-4-top-row",
+                  "type": "frame",
+                  "layout": "horizontal",
+                  "justifyContent": "space_between",
+                  "alignItems": "start",
+                  "children": [
+                    {
+                      "id": "doc-card-4-icon-circle",
+                      "type": "frame",
+                      "width": 48,
+                      "height": 48,
+                      "cornerRadius": 24,
+                      "fill": "#d32f2f20",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "id": "doc-card-4-pdf-icon",
+                          "type": "icon_font",
+                          "family": "material_symbols",
+                          "name": "picture_as_pdf",
+                          "fontSize": 28,
+                          "fill": "#d32f2f"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "doc-card-4-actions",
+                      "type": "frame",
+                      "layout": "horizontal",
+                      "gap": 4,
+                      "children": [
+                        {
+                          "id": "doc-card-4-download-btn",
+                          "type": "frame",
+                          "width": 40,
+                          "height": 40,
+                          "cornerRadius": 20,
+                          "fill": "transparent",
+                          "layout": "horizontal",
+                          "alignItems": "center",
+                          "justifyContent": "center",
+                          "children": [
+                            {
+                              "id": "doc-card-4-download-icon",
+                              "type": "icon_font",
+                              "family": "material_symbols",
+                              "name": "download",
+                              "fontSize": 20,
+                              "fill": "#00000099"
+                            }
+                          ]
+                        },
+                        {
+                          "id": "doc-card-4-delete-btn",
+                          "type": "frame",
+                          "width": 40,
+                          "height": 40,
+                          "cornerRadius": 20,
+                          "fill": "transparent",
+                          "layout": "horizontal",
+                          "alignItems": "center",
+                          "justifyContent": "center",
+                          "children": [
+                            {
+                              "id": "doc-card-4-delete-icon",
+                              "type": "icon_font",
+                              "family": "material_symbols",
+                              "name": "delete",
+                              "fontSize": 20,
+                              "fill": "#00000099"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "doc-card-4-filename",
+                  "type": "text",
+                  "content": "tenancy_agreement.pdf",
+                  "fontSize": 14,
+                  "fontWeight": 500,
+                  "fill": "#000000de"
+                },
+                {
+                  "id": "doc-card-4-size",
+                  "type": "text",
+                  "content": "180 KB",
+                  "fontSize": 12,
+                  "fill": "#00000099"
+                },
+                {
+                  "id": "doc-card-4-chip-row",
+                  "type": "frame",
+                  "layout": "horizontal",
+                  "gap": 8,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "doc-card-4-chip",
+                      "type": "frame",
+                      "cornerRadius": 12,
+                      "height": 22,
+                      "padding": [0, 8],
+                      "fill": "#61616120",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "id": "doc-card-4-chip-text",
+                          "type": "text",
+                          "content": "Tenant",
+                          "fontSize": 11,
+                          "fill": "#616161"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "doc-card-4-entity-name",
+                      "type": "text",
+                      "content": "Alice Johnson",
+                      "fontSize": 12,
+                      "fill": "#00000099"
+                    }
+                  ]
+                },
+                {
+                  "id": "doc-card-4-date",
+                  "type": "text",
+                  "content": "25 Feb 2026",
+                  "fontSize": 12,
+                  "fill": "#00000061"
+                }
+              ]
+            },
+            {
+              "id": "doc-card-5",
+              "type": "frame",
+              "width": 352,
+              "height": 168,
+              "cornerRadius": 4,
+              "fill": "#ffffff",
+              "layout": "vertical",
+              "padding": 16,
+              "gap": 8,
+              "children": [
+                {
+                  "id": "doc-card-5-top-row",
+                  "type": "frame",
+                  "layout": "horizontal",
+                  "justifyContent": "space_between",
+                  "alignItems": "start",
+                  "children": [
+                    {
+                      "id": "doc-card-5-icon-circle",
+                      "type": "frame",
+                      "width": 48,
+                      "height": 48,
+                      "cornerRadius": 24,
+                      "fill": "#d32f2f20",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "id": "doc-card-5-pdf-icon",
+                          "type": "icon_font",
+                          "family": "material_symbols",
+                          "name": "picture_as_pdf",
+                          "fontSize": 28,
+                          "fill": "#d32f2f"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "doc-card-5-actions",
+                      "type": "frame",
+                      "layout": "horizontal",
+                      "gap": 4,
+                      "children": [
+                        {
+                          "id": "doc-card-5-download-btn",
+                          "type": "frame",
+                          "width": 40,
+                          "height": 40,
+                          "cornerRadius": 20,
+                          "fill": "transparent",
+                          "layout": "horizontal",
+                          "alignItems": "center",
+                          "justifyContent": "center",
+                          "children": [
+                            {
+                              "id": "doc-card-5-download-icon",
+                              "type": "icon_font",
+                              "family": "material_symbols",
+                              "name": "download",
+                              "fontSize": 20,
+                              "fill": "#00000099"
+                            }
+                          ]
+                        },
+                        {
+                          "id": "doc-card-5-delete-btn",
+                          "type": "frame",
+                          "width": 40,
+                          "height": 40,
+                          "cornerRadius": 20,
+                          "fill": "transparent",
+                          "layout": "horizontal",
+                          "alignItems": "center",
+                          "justifyContent": "center",
+                          "children": [
+                            {
+                              "id": "doc-card-5-delete-icon",
+                              "type": "icon_font",
+                              "family": "material_symbols",
+                              "name": "delete",
+                              "fontSize": 20,
+                              "fill": "#00000099"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "doc-card-5-filename",
+                  "type": "text",
+                  "content": "utility_bill_jan.pdf",
+                  "fontSize": 14,
+                  "fontWeight": 500,
+                  "fill": "#000000de"
+                },
+                {
+                  "id": "doc-card-5-size",
+                  "type": "text",
+                  "content": "95 KB",
+                  "fontSize": 12,
+                  "fill": "#00000099"
+                },
+                {
+                  "id": "doc-card-5-chip-row",
+                  "type": "frame",
+                  "layout": "horizontal",
+                  "gap": 8,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "doc-card-5-chip",
+                      "type": "frame",
+                      "cornerRadius": 12,
+                      "height": 22,
+                      "padding": [0, 8],
+                      "fill": "#ed6c0220",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "id": "doc-card-5-chip-text",
+                          "type": "text",
+                          "content": "Transaction",
+                          "fontSize": 11,
+                          "fill": "#ed6c02"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "doc-card-5-entity-name",
+                      "type": "text",
+                      "content": "123 Main Street",
+                      "fontSize": 12,
+                      "fill": "#00000099"
+                    }
+                  ]
+                },
+                {
+                  "id": "doc-card-5-date",
+                  "type": "text",
+                  "content": "25 Feb 2026",
+                  "fontSize": 12,
+                  "fill": "#00000061"
+                }
+              ]
+            },
+            {
+              "id": "doc-card-6",
+              "type": "frame",
+              "width": 352,
+              "height": 168,
+              "cornerRadius": 4,
+              "fill": "#ffffff",
+              "layout": "vertical",
+              "padding": 16,
+              "gap": 8,
+              "children": [
+                {
+                  "id": "doc-card-6-top-row",
+                  "type": "frame",
+                  "layout": "horizontal",
+                  "justifyContent": "space_between",
+                  "alignItems": "start",
+                  "children": [
+                    {
+                      "id": "doc-card-6-icon-circle",
+                      "type": "frame",
+                      "width": 48,
+                      "height": 48,
+                      "cornerRadius": 24,
+                      "fill": "#1976d220",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "id": "doc-card-6-img-icon",
+                          "type": "icon_font",
+                          "family": "material_symbols",
+                          "name": "image",
+                          "fontSize": 28,
+                          "fill": "#1976d2"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "doc-card-6-actions",
+                      "type": "frame",
+                      "layout": "horizontal",
+                      "gap": 4,
+                      "children": [
+                        {
+                          "id": "doc-card-6-download-btn",
+                          "type": "frame",
+                          "width": 40,
+                          "height": 40,
+                          "cornerRadius": 20,
+                          "fill": "transparent",
+                          "layout": "horizontal",
+                          "alignItems": "center",
+                          "justifyContent": "center",
+                          "children": [
+                            {
+                              "id": "doc-card-6-download-icon",
+                              "type": "icon_font",
+                              "family": "material_symbols",
+                              "name": "download",
+                              "fontSize": 20,
+                              "fill": "#00000099"
+                            }
+                          ]
+                        },
+                        {
+                          "id": "doc-card-6-delete-btn",
+                          "type": "frame",
+                          "width": 40,
+                          "height": 40,
+                          "cornerRadius": 20,
+                          "fill": "transparent",
+                          "layout": "horizontal",
+                          "alignItems": "center",
+                          "justifyContent": "center",
+                          "children": [
+                            {
+                              "id": "doc-card-6-delete-icon",
+                              "type": "icon_font",
+                              "family": "material_symbols",
+                              "name": "delete",
+                              "fontSize": 20,
+                              "fill": "#00000099"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "doc-card-6-filename",
+                  "type": "text",
+                  "content": "maintenance_photo.jpg",
+                  "fontSize": 14,
+                  "fontWeight": 500,
+                  "fill": "#000000de"
+                },
+                {
+                  "id": "doc-card-6-size",
+                  "type": "text",
+                  "content": "2.1 MB",
+                  "fontSize": 12,
+                  "fill": "#00000099"
+                },
+                {
+                  "id": "doc-card-6-chip-row",
+                  "type": "frame",
+                  "layout": "horizontal",
+                  "gap": 8,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "doc-card-6-chip",
+                      "type": "frame",
+                      "cornerRadius": 12,
+                      "height": 22,
+                      "padding": [0, 8],
+                      "fill": "#1976d220",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "id": "doc-card-6-chip-text",
+                          "type": "text",
+                          "content": "Property",
+                          "fontSize": 11,
+                          "fill": "#1976d2"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "doc-card-6-entity-name",
+                      "type": "text",
+                      "content": "123 Main Street",
+                      "fontSize": 12,
+                      "fill": "#00000099"
+                    }
+                  ]
+                },
+                {
+                  "id": "doc-card-6-date",
+                  "type": "text",
+                  "content": "25 Feb 2026",
+                  "fontSize": 12,
+                  "fill": "#00000061"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

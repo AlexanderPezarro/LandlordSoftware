@@ -1,0 +1,706 @@
+{
+  "version": "2.8",
+  "variables": {
+    "color.primary": { "type": "color", "value": "#1976d2" },
+    "color.primary.contrast": { "type": "color", "value": "#ffffff" },
+    "color.background": { "type": "color", "value": "#f5f5f5" },
+    "color.paper": { "type": "color", "value": "#ffffff" },
+    "color.text.primary": { "type": "color", "value": "#000000de" },
+    "color.text.secondary": { "type": "color", "value": "#00000099" },
+    "color.divider": { "type": "color", "value": "#0000001f" },
+    "color.success": { "type": "color", "value": "#2e7d32" },
+    "color.error": { "type": "color", "value": "#d32f2f" },
+    "color.warning": { "type": "color", "value": "#ed6c02" },
+    "color.info": { "type": "color", "value": "#0288d1" },
+    "borderRadius.sm": { "type": "dimension", "value": "4px" },
+    "spacing.base": { "type": "dimension", "value": "4px" }
+  },
+  "children": [
+    {
+      "id": "tenants-page",
+      "type": "frame",
+      "name": "Tenants",
+      "x": 0, "y": 0,
+      "width": 1200, "height": 900,
+      "fill": "#f5f5f5",
+      "layout": "vertical",
+      "padding": 24,
+      "gap": 24,
+      "children": [
+
+        {
+          "id": "tenants-header-row",
+          "type": "frame",
+          "name": "Page Header",
+          "layout": "horizontal",
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "height": 40,
+          "width": 1152,
+          "fill": "#ffffff00",
+          "children": [
+            {
+              "id": "tenants-header-title",
+              "type": "text",
+              "content": "Tenants",
+              "fontSize": 34,
+              "fontWeight": 400,
+              "fill": "#000000de"
+            },
+            {
+              "id": "tenants-add-btn",
+              "type": "frame",
+              "name": "Add Tenant Button",
+              "width": 140, "height": 36,
+              "cornerRadius": 4,
+              "fill": "#1976d2",
+              "layout": "horizontal",
+              "alignItems": "center",
+              "justifyContent": "center",
+              "gap": 8,
+              "children": [
+                {
+                  "id": "tenants-add-btn-icon",
+                  "type": "icon_font",
+                  "family": "material_symbols",
+                  "name": "add",
+                  "fontSize": 18,
+                  "fill": "#ffffff"
+                },
+                {
+                  "id": "tenants-add-btn-label",
+                  "type": "text",
+                  "content": "Add Tenant",
+                  "fontSize": 14,
+                  "fontWeight": 500,
+                  "fill": "#ffffff"
+                }
+              ]
+            }
+          ]
+        },
+
+        {
+          "id": "tenants-tabs-bar",
+          "type": "frame",
+          "name": "Tabs Bar",
+          "layout": "horizontal",
+          "gap": 0,
+          "width": 1152, "height": 48,
+          "fill": "#ffffff",
+          "cornerRadius": 4,
+          "stroke": { "color": "#0000001f", "thickness": 1 },
+          "children": [
+            {
+              "id": "tenants-tab-all",
+              "type": "frame",
+              "name": "Tab All",
+              "width": 200, "height": 48,
+              "layout": "horizontal",
+              "alignItems": "center",
+              "justifyContent": "center",
+              "fill": "#1976d220",
+              "children": [
+                {
+                  "id": "tenants-tab-all-label",
+                  "type": "text",
+                  "content": "All (8)",
+                  "fontSize": 14,
+                  "fontWeight": 500,
+                  "fill": "#1976d2"
+                }
+              ]
+            },
+            {
+              "id": "tenants-tab-all-indicator",
+              "type": "frame",
+              "name": "Active Tab Indicator",
+              "width": 200, "height": 2,
+              "fill": "#1976d2",
+              "y": 46
+            },
+            {
+              "id": "tenants-tab-active",
+              "type": "frame",
+              "name": "Tab Active",
+              "width": 200, "height": 48,
+              "layout": "horizontal",
+              "alignItems": "center",
+              "justifyContent": "center",
+              "fill": "#ffffff00",
+              "children": [
+                {
+                  "id": "tenants-tab-active-label",
+                  "type": "text",
+                  "content": "Active (5)",
+                  "fontSize": 14,
+                  "fill": "#00000099"
+                }
+              ]
+            },
+            {
+              "id": "tenants-tab-prospective",
+              "type": "frame",
+              "name": "Tab Prospective",
+              "width": 200, "height": 48,
+              "layout": "horizontal",
+              "alignItems": "center",
+              "justifyContent": "center",
+              "fill": "#ffffff00",
+              "children": [
+                {
+                  "id": "tenants-tab-prospective-label",
+                  "type": "text",
+                  "content": "Prospective (2)",
+                  "fontSize": 14,
+                  "fill": "#00000099"
+                }
+              ]
+            },
+            {
+              "id": "tenants-tab-former",
+              "type": "frame",
+              "name": "Tab Former",
+              "width": 200, "height": 48,
+              "layout": "horizontal",
+              "alignItems": "center",
+              "justifyContent": "center",
+              "fill": "#ffffff00",
+              "children": [
+                {
+                  "id": "tenants-tab-former-label",
+                  "type": "text",
+                  "content": "Former (1)",
+                  "fontSize": 14,
+                  "fill": "#00000099"
+                }
+              ]
+            }
+          ]
+        },
+
+        {
+          "id": "tenants-cards-grid",
+          "type": "frame",
+          "name": "Tenant Cards Grid",
+          "layout": "horizontal",
+          "gap": 24,
+          "width": 1152, "height": 180,
+          "fill": "#ffffff00",
+          "children": [
+
+            {
+              "id": "tenant-card-1",
+              "type": "frame",
+              "name": "TenantCard Alice Johnson",
+              "width": 258, "height": 180,
+              "cornerRadius": 4,
+              "fill": "#ffffff",
+              "layout": "vertical",
+              "children": [
+                {
+                  "id": "tenant-card-1-content",
+                  "type": "frame",
+                  "name": "Card 1 Content",
+                  "layout": "vertical",
+                  "padding": 16,
+                  "gap": 8,
+                  "fill": "#ffffff00",
+                  "height": 144,
+                  "children": [
+                    {
+                      "id": "tenant-card-1-header",
+                      "type": "frame",
+                      "name": "Card 1 Header",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "gap": 8,
+                      "fill": "#ffffff00",
+                      "children": [
+                        {
+                          "id": "tenant-card-1-name",
+                          "type": "text",
+                          "content": "Alice Johnson",
+                          "fontSize": 16,
+                          "fontWeight": 700,
+                          "fill": "#000000de"
+                        },
+                        {
+                          "id": "tenant-card-1-chip",
+                          "type": "frame",
+                          "name": "Status Chip Active",
+                          "cornerRadius": 12,
+                          "fill": "#2e7d3220",
+                          "padding": [0, 10],
+                          "height": 24,
+                          "width": 80,
+                          "layout": "horizontal",
+                          "alignItems": "center",
+                          "justifyContent": "center",
+                          "children": [
+                            {
+                              "id": "tenant-card-1-chip-text",
+                              "type": "text",
+                              "content": "Active",
+                              "fontSize": 12,
+                              "fill": "#2e7d32"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": "tenant-card-1-email",
+                      "type": "text",
+                      "content": "alice@email.com",
+                      "fontSize": 14,
+                      "fill": "#00000099"
+                    },
+                    {
+                      "id": "tenant-card-1-phone",
+                      "type": "text",
+                      "content": "+44 7700 100000",
+                      "fontSize": 14,
+                      "fill": "#00000099"
+                    },
+                    {
+                      "id": "tenant-card-1-divider",
+                      "type": "frame",
+                      "height": 1,
+                      "fill": "#0000001f",
+                      "width": 226
+                    },
+                    {
+                      "id": "tenant-card-1-property",
+                      "type": "text",
+                      "content": "123 Main Street",
+                      "fontSize": 14,
+                      "fill": "#00000099"
+                    }
+                  ]
+                },
+                {
+                  "id": "tenant-card-1-actions",
+                  "type": "frame",
+                  "name": "Card 1 Actions",
+                  "layout": "horizontal",
+                  "padding": [4, 8],
+                  "gap": 4,
+                  "fill": "#ffffff00",
+                  "stroke": { "color": "#0000001f", "thickness": 1 },
+                  "height": 36,
+                  "children": [
+                    {
+                      "id": "tenant-card-1-btn-edit",
+                      "type": "frame",
+                      "name": "Edit Button",
+                      "width": 40, "height": 40,
+                      "cornerRadius": 20,
+                      "fill": "#ffffff00",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "id": "tenant-card-1-icon-edit",
+                          "type": "icon_font",
+                          "family": "material_symbols",
+                          "name": "edit",
+                          "fontSize": 20,
+                          "fill": "#00000099"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+
+            {
+              "id": "tenant-card-2",
+              "type": "frame",
+              "name": "TenantCard Bob Smith",
+              "width": 258, "height": 180,
+              "cornerRadius": 4,
+              "fill": "#ffffff",
+              "layout": "vertical",
+              "children": [
+                {
+                  "id": "tenant-card-2-content",
+                  "type": "frame",
+                  "name": "Card 2 Content",
+                  "layout": "vertical",
+                  "padding": 16,
+                  "gap": 8,
+                  "fill": "#ffffff00",
+                  "height": 144,
+                  "children": [
+                    {
+                      "id": "tenant-card-2-header",
+                      "type": "frame",
+                      "name": "Card 2 Header",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "gap": 8,
+                      "fill": "#ffffff00",
+                      "children": [
+                        {
+                          "id": "tenant-card-2-name",
+                          "type": "text",
+                          "content": "Bob Smith",
+                          "fontSize": 16,
+                          "fontWeight": 700,
+                          "fill": "#000000de"
+                        },
+                        {
+                          "id": "tenant-card-2-chip",
+                          "type": "frame",
+                          "name": "Status Chip Active",
+                          "cornerRadius": 12,
+                          "fill": "#2e7d3220",
+                          "padding": [0, 10],
+                          "height": 24,
+                          "width": 80,
+                          "layout": "horizontal",
+                          "alignItems": "center",
+                          "justifyContent": "center",
+                          "children": [
+                            {
+                              "id": "tenant-card-2-chip-text",
+                              "type": "text",
+                              "content": "Active",
+                              "fontSize": 12,
+                              "fill": "#2e7d32"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": "tenant-card-2-email",
+                      "type": "text",
+                      "content": "bob@email.com",
+                      "fontSize": 14,
+                      "fill": "#00000099"
+                    },
+                    {
+                      "id": "tenant-card-2-phone",
+                      "type": "text",
+                      "content": "+44 7700 200000",
+                      "fontSize": 14,
+                      "fill": "#00000099"
+                    },
+                    {
+                      "id": "tenant-card-2-divider",
+                      "type": "frame",
+                      "height": 1,
+                      "fill": "#0000001f",
+                      "width": 226
+                    },
+                    {
+                      "id": "tenant-card-2-property",
+                      "type": "text",
+                      "content": "45 Park Avenue",
+                      "fontSize": 14,
+                      "fill": "#00000099"
+                    }
+                  ]
+                },
+                {
+                  "id": "tenant-card-2-actions",
+                  "type": "frame",
+                  "name": "Card 2 Actions",
+                  "layout": "horizontal",
+                  "padding": [4, 8],
+                  "gap": 4,
+                  "fill": "#ffffff00",
+                  "stroke": { "color": "#0000001f", "thickness": 1 },
+                  "height": 36,
+                  "children": [
+                    {
+                      "id": "tenant-card-2-btn-edit",
+                      "type": "frame",
+                      "name": "Edit Button",
+                      "width": 40, "height": 40,
+                      "cornerRadius": 20,
+                      "fill": "#ffffff00",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "id": "tenant-card-2-icon-edit",
+                          "type": "icon_font",
+                          "family": "material_symbols",
+                          "name": "edit",
+                          "fontSize": 20,
+                          "fill": "#00000099"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+
+            {
+              "id": "tenant-card-3",
+              "type": "frame",
+              "name": "TenantCard Carol White",
+              "width": 258, "height": 180,
+              "cornerRadius": 4,
+              "fill": "#ffffff",
+              "layout": "vertical",
+              "children": [
+                {
+                  "id": "tenant-card-3-content",
+                  "type": "frame",
+                  "name": "Card 3 Content",
+                  "layout": "vertical",
+                  "padding": 16,
+                  "gap": 8,
+                  "fill": "#ffffff00",
+                  "height": 144,
+                  "children": [
+                    {
+                      "id": "tenant-card-3-header",
+                      "type": "frame",
+                      "name": "Card 3 Header",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "gap": 8,
+                      "fill": "#ffffff00",
+                      "children": [
+                        {
+                          "id": "tenant-card-3-name",
+                          "type": "text",
+                          "content": "Carol White",
+                          "fontSize": 16,
+                          "fontWeight": 700,
+                          "fill": "#000000de"
+                        },
+                        {
+                          "id": "tenant-card-3-chip",
+                          "type": "frame",
+                          "name": "Status Chip Prospective",
+                          "cornerRadius": 12,
+                          "fill": "#0288d120",
+                          "padding": [0, 10],
+                          "height": 24,
+                          "width": 80,
+                          "layout": "horizontal",
+                          "alignItems": "center",
+                          "justifyContent": "center",
+                          "children": [
+                            {
+                              "id": "tenant-card-3-chip-text",
+                              "type": "text",
+                              "content": "Prospective",
+                              "fontSize": 12,
+                              "fill": "#0288d1"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": "tenant-card-3-email",
+                      "type": "text",
+                      "content": "carol@email.com",
+                      "fontSize": 14,
+                      "fill": "#00000099"
+                    },
+                    {
+                      "id": "tenant-card-3-phone",
+                      "type": "text",
+                      "content": "+44 7700 300000",
+                      "fontSize": 14,
+                      "fill": "#00000099"
+                    },
+                    {
+                      "id": "tenant-card-3-divider",
+                      "type": "frame",
+                      "height": 1,
+                      "fill": "#0000001f",
+                      "width": 226
+                    },
+                    {
+                      "id": "tenant-card-3-property",
+                      "type": "text",
+                      "content": "—",
+                      "fontSize": 14,
+                      "fill": "#00000099"
+                    }
+                  ]
+                },
+                {
+                  "id": "tenant-card-3-actions",
+                  "type": "frame",
+                  "name": "Card 3 Actions",
+                  "layout": "horizontal",
+                  "padding": [4, 8],
+                  "gap": 4,
+                  "fill": "#ffffff00",
+                  "stroke": { "color": "#0000001f", "thickness": 1 },
+                  "height": 36,
+                  "children": [
+                    {
+                      "id": "tenant-card-3-btn-edit",
+                      "type": "frame",
+                      "name": "Edit Button",
+                      "width": 40, "height": 40,
+                      "cornerRadius": 20,
+                      "fill": "#ffffff00",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "id": "tenant-card-3-icon-edit",
+                          "type": "icon_font",
+                          "family": "material_symbols",
+                          "name": "edit",
+                          "fontSize": 20,
+                          "fill": "#00000099"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+
+            {
+              "id": "tenant-card-4",
+              "type": "frame",
+              "name": "TenantCard Dave Brown",
+              "width": 258, "height": 180,
+              "cornerRadius": 4,
+              "fill": "#ffffff",
+              "layout": "vertical",
+              "children": [
+                {
+                  "id": "tenant-card-4-content",
+                  "type": "frame",
+                  "name": "Card 4 Content",
+                  "layout": "vertical",
+                  "padding": 16,
+                  "gap": 8,
+                  "fill": "#ffffff00",
+                  "height": 144,
+                  "children": [
+                    {
+                      "id": "tenant-card-4-header",
+                      "type": "frame",
+                      "name": "Card 4 Header",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "gap": 8,
+                      "fill": "#ffffff00",
+                      "children": [
+                        {
+                          "id": "tenant-card-4-name",
+                          "type": "text",
+                          "content": "Dave Brown",
+                          "fontSize": 16,
+                          "fontWeight": 700,
+                          "fill": "#000000de"
+                        },
+                        {
+                          "id": "tenant-card-4-chip",
+                          "type": "frame",
+                          "name": "Status Chip Former",
+                          "cornerRadius": 12,
+                          "fill": "#d32f2f20",
+                          "padding": [0, 10],
+                          "height": 24,
+                          "width": 80,
+                          "layout": "horizontal",
+                          "alignItems": "center",
+                          "justifyContent": "center",
+                          "children": [
+                            {
+                              "id": "tenant-card-4-chip-text",
+                              "type": "text",
+                              "content": "Former",
+                              "fontSize": 12,
+                              "fill": "#d32f2f"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": "tenant-card-4-email",
+                      "type": "text",
+                      "content": "dave@email.com",
+                      "fontSize": 14,
+                      "fill": "#00000099"
+                    },
+                    {
+                      "id": "tenant-card-4-phone",
+                      "type": "text",
+                      "content": "+44 7700 400000",
+                      "fontSize": 14,
+                      "fill": "#00000099"
+                    },
+                    {
+                      "id": "tenant-card-4-divider",
+                      "type": "frame",
+                      "height": 1,
+                      "fill": "#0000001f",
+                      "width": 226
+                    },
+                    {
+                      "id": "tenant-card-4-property",
+                      "type": "text",
+                      "content": "—",
+                      "fontSize": 14,
+                      "fill": "#00000099"
+                    }
+                  ]
+                },
+                {
+                  "id": "tenant-card-4-actions",
+                  "type": "frame",
+                  "name": "Card 4 Actions",
+                  "layout": "horizontal",
+                  "padding": [4, 8],
+                  "gap": 4,
+                  "fill": "#ffffff00",
+                  "stroke": { "color": "#0000001f", "thickness": 1 },
+                  "height": 36,
+                  "children": [
+                    {
+                      "id": "tenant-card-4-btn-edit",
+                      "type": "frame",
+                      "name": "Edit Button",
+                      "width": 40, "height": 40,
+                      "cornerRadius": 20,
+                      "fill": "#ffffff00",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "id": "tenant-card-4-icon-edit",
+                          "type": "icon_font",
+                          "family": "material_symbols",
+                          "name": "edit",
+                          "fontSize": 20,
+                          "fill": "#00000099"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+
+          ]
+        }
+
+      ]
+    }
+  ]
+}

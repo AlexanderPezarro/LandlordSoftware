@@ -1,0 +1,1390 @@
+{
+  "version": "2.8",
+  "variables": {},
+  "children": [
+    {
+      "id": "txn-root-frame",
+      "type": "frame",
+      "name": "Transactions",
+      "x": 0,
+      "y": 0,
+      "width": 1200,
+      "height": 1100,
+      "fill": "#f5f5f5",
+      "layout": "vertical",
+      "padding": 24,
+      "gap": 24,
+      "children": [
+        {
+          "id": "txn-header-row",
+          "type": "frame",
+          "name": "Header Row",
+          "width": 1152,
+          "height": 40,
+          "fill": "transparent",
+          "layout": "horizontal",
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "id": "txn-title-text",
+              "type": "text",
+              "name": "Transactions Title",
+              "content": "Transactions",
+              "fontSize": 34,
+              "fontWeight": 400,
+              "fill": "#000000de"
+            },
+            {
+              "id": "txn-new-button",
+              "type": "frame",
+              "name": "New Transaction Button",
+              "width": 160,
+              "height": 36,
+              "cornerRadius": 4,
+              "fill": "#1976d2",
+              "layout": "horizontal",
+              "alignItems": "center",
+              "justifyContent": "center",
+              "gap": 8,
+              "children": [
+                {
+                  "id": "txn-new-button-icon",
+                  "type": "icon",
+                  "name": "New Transaction Icon",
+                  "iconSet": "material_symbols",
+                  "iconName": "add",
+                  "fontSize": 18,
+                  "fill": "#ffffff"
+                },
+                {
+                  "id": "txn-new-button-text",
+                  "type": "text",
+                  "name": "New Transaction Text",
+                  "content": "New Transaction",
+                  "fontSize": 14,
+                  "fontWeight": 500,
+                  "fill": "#ffffff"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "txn-summary-cards-row",
+          "type": "frame",
+          "name": "Summary Cards Row",
+          "width": 1152,
+          "height": 120,
+          "fill": "transparent",
+          "layout": "horizontal",
+          "gap": 24,
+          "children": [
+            {
+              "id": "txn-income-card",
+              "type": "frame",
+              "name": "Total Income Card",
+              "width": 352,
+              "height": 120,
+              "cornerRadius": 4,
+              "fill": "#ffffff",
+              "layout": "horizontal",
+              "alignItems": "center",
+              "padding": 16,
+              "gap": 16,
+              "children": [
+                {
+                  "id": "txn-income-card-left",
+                  "type": "frame",
+                  "name": "Income Card Left",
+                  "width": 250,
+                  "fill": "transparent",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "id": "txn-income-label",
+                      "type": "text",
+                      "name": "Total Income Label",
+                      "content": "Total Income",
+                      "fontSize": 14,
+                      "fill": "#00000099"
+                    },
+                    {
+                      "id": "txn-income-value",
+                      "type": "text",
+                      "name": "Total Income Value",
+                      "content": "£8,400",
+                      "fontSize": 34,
+                      "fontWeight": 700,
+                      "fill": "#2e7d32"
+                    }
+                  ]
+                },
+                {
+                  "id": "txn-income-icon-circle",
+                  "type": "frame",
+                  "name": "Income Icon Circle",
+                  "width": 56,
+                  "height": 56,
+                  "cornerRadius": 28,
+                  "fill": "#2e7d3220",
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "justifyContent": "center",
+                  "children": [
+                    {
+                      "id": "txn-income-icon",
+                      "type": "icon",
+                      "name": "Trending Up Icon",
+                      "iconSet": "material_symbols",
+                      "iconName": "trending_up",
+                      "fontSize": 28,
+                      "fill": "#2e7d32"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "txn-expenses-card",
+              "type": "frame",
+              "name": "Total Expenses Card",
+              "width": 352,
+              "height": 120,
+              "cornerRadius": 4,
+              "fill": "#ffffff",
+              "layout": "horizontal",
+              "alignItems": "center",
+              "padding": 16,
+              "gap": 16,
+              "children": [
+                {
+                  "id": "txn-expenses-card-left",
+                  "type": "frame",
+                  "name": "Expenses Card Left",
+                  "width": 250,
+                  "fill": "transparent",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "id": "txn-expenses-label",
+                      "type": "text",
+                      "name": "Total Expenses Label",
+                      "content": "Total Expenses",
+                      "fontSize": 14,
+                      "fill": "#00000099"
+                    },
+                    {
+                      "id": "txn-expenses-value",
+                      "type": "text",
+                      "name": "Total Expenses Value",
+                      "content": "£2,100",
+                      "fontSize": 34,
+                      "fontWeight": 700,
+                      "fill": "#d32f2f"
+                    }
+                  ]
+                },
+                {
+                  "id": "txn-expenses-icon-circle",
+                  "type": "frame",
+                  "name": "Expenses Icon Circle",
+                  "width": 56,
+                  "height": 56,
+                  "cornerRadius": 28,
+                  "fill": "#d32f2f20",
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "justifyContent": "center",
+                  "children": [
+                    {
+                      "id": "txn-expenses-icon",
+                      "type": "icon",
+                      "name": "Trending Down Icon",
+                      "iconSet": "material_symbols",
+                      "iconName": "trending_down",
+                      "fontSize": 28,
+                      "fill": "#d32f2f"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "txn-net-card",
+              "type": "frame",
+              "name": "Net Income Card",
+              "width": 352,
+              "height": 120,
+              "cornerRadius": 4,
+              "fill": "#ffffff",
+              "layout": "horizontal",
+              "alignItems": "center",
+              "padding": 16,
+              "gap": 16,
+              "children": [
+                {
+                  "id": "txn-net-card-left",
+                  "type": "frame",
+                  "name": "Net Card Left",
+                  "width": 250,
+                  "fill": "transparent",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "id": "txn-net-label",
+                      "type": "text",
+                      "name": "Net Income Label",
+                      "content": "Net Income",
+                      "fontSize": 14,
+                      "fill": "#00000099"
+                    },
+                    {
+                      "id": "txn-net-value",
+                      "type": "text",
+                      "name": "Net Income Value",
+                      "content": "£6,300",
+                      "fontSize": 34,
+                      "fontWeight": 700,
+                      "fill": "#2e7d32"
+                    }
+                  ]
+                },
+                {
+                  "id": "txn-net-icon-circle",
+                  "type": "frame",
+                  "name": "Net Icon Circle",
+                  "width": 56,
+                  "height": 56,
+                  "cornerRadius": 28,
+                  "fill": "#2e7d3220",
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "justifyContent": "center",
+                  "children": [
+                    {
+                      "id": "txn-net-icon",
+                      "type": "icon",
+                      "name": "Account Balance Icon",
+                      "iconSet": "material_symbols",
+                      "iconName": "account_balance",
+                      "fontSize": 28,
+                      "fill": "#2e7d32"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "txn-filters-paper",
+          "type": "frame",
+          "name": "Filters Paper",
+          "width": 1152,
+          "fill": "#ffffff",
+          "cornerRadius": 4,
+          "layout": "vertical",
+          "padding": 16,
+          "gap": 12,
+          "children": [
+            {
+              "id": "txn-filters-row1",
+              "type": "frame",
+              "name": "Filters Row 1",
+              "layout": "horizontal",
+              "gap": 12,
+              "fill": "transparent",
+              "children": [
+                {
+                  "id": "txn-property-select",
+                  "type": "frame",
+                  "name": "Property Select",
+                  "width": 280,
+                  "height": 40,
+                  "cornerRadius": 4,
+                  "fill": "#ffffff",
+                  "stroke": "#0000003b",
+                  "strokeWidth": 1,
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "padding": [0, 14],
+                  "gap": 8,
+                  "children": [
+                    {
+                      "id": "txn-property-select-label",
+                      "type": "text",
+                      "name": "Property Select Label",
+                      "content": "All Properties",
+                      "fontSize": 14,
+                      "fill": "#00000099"
+                    },
+                    {
+                      "id": "txn-property-select-arrow",
+                      "type": "icon",
+                      "name": "Property Select Arrow",
+                      "iconSet": "material_symbols",
+                      "iconName": "arrow_drop_down",
+                      "fontSize": 20,
+                      "fill": "#00000099"
+                    }
+                  ]
+                },
+                {
+                  "id": "txn-type-select",
+                  "type": "frame",
+                  "name": "Type Select",
+                  "width": 160,
+                  "height": 40,
+                  "cornerRadius": 4,
+                  "fill": "#ffffff",
+                  "stroke": "#0000003b",
+                  "strokeWidth": 1,
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "padding": [0, 14],
+                  "gap": 8,
+                  "children": [
+                    {
+                      "id": "txn-type-select-label",
+                      "type": "text",
+                      "name": "Type Select Label",
+                      "content": "All Types",
+                      "fontSize": 14,
+                      "fill": "#00000099"
+                    },
+                    {
+                      "id": "txn-type-select-arrow",
+                      "type": "icon",
+                      "name": "Type Select Arrow",
+                      "iconSet": "material_symbols",
+                      "iconName": "arrow_drop_down",
+                      "fontSize": 20,
+                      "fill": "#00000099"
+                    }
+                  ]
+                },
+                {
+                  "id": "txn-category-select",
+                  "type": "frame",
+                  "name": "Category Select",
+                  "width": 200,
+                  "height": 40,
+                  "cornerRadius": 4,
+                  "fill": "#ffffff",
+                  "stroke": "#0000003b",
+                  "strokeWidth": 1,
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "padding": [0, 14],
+                  "gap": 8,
+                  "children": [
+                    {
+                      "id": "txn-category-select-label",
+                      "type": "text",
+                      "name": "Category Select Label",
+                      "content": "All Categories",
+                      "fontSize": 14,
+                      "fill": "#00000099"
+                    },
+                    {
+                      "id": "txn-category-select-arrow",
+                      "type": "icon",
+                      "name": "Category Select Arrow",
+                      "iconSet": "material_symbols",
+                      "iconName": "arrow_drop_down",
+                      "fontSize": 20,
+                      "fill": "#00000099"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "txn-filters-row2",
+              "type": "frame",
+              "name": "Filters Row 2 - Date Range",
+              "layout": "horizontal",
+              "gap": 12,
+              "fill": "transparent",
+              "children": [
+                {
+                  "id": "txn-date-from-field",
+                  "type": "frame",
+                  "name": "Date From Field",
+                  "width": 200,
+                  "height": 40,
+                  "cornerRadius": 4,
+                  "fill": "#ffffff",
+                  "stroke": "#0000003b",
+                  "strokeWidth": 1,
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "padding": [0, 14],
+                  "gap": 8,
+                  "children": [
+                    {
+                      "id": "txn-date-from-label",
+                      "type": "text",
+                      "name": "Date From Label",
+                      "content": "From",
+                      "fontSize": 14,
+                      "fill": "#00000061"
+                    },
+                    {
+                      "id": "txn-date-from-icon",
+                      "type": "icon",
+                      "name": "Date From Calendar Icon",
+                      "iconSet": "material_symbols",
+                      "iconName": "calendar_today",
+                      "fontSize": 18,
+                      "fill": "#00000099"
+                    }
+                  ]
+                },
+                {
+                  "id": "txn-date-to-field",
+                  "type": "frame",
+                  "name": "Date To Field",
+                  "width": 200,
+                  "height": 40,
+                  "cornerRadius": 4,
+                  "fill": "#ffffff",
+                  "stroke": "#0000003b",
+                  "strokeWidth": 1,
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "padding": [0, 14],
+                  "gap": 8,
+                  "children": [
+                    {
+                      "id": "txn-date-to-label",
+                      "type": "text",
+                      "name": "Date To Label",
+                      "content": "To",
+                      "fontSize": 14,
+                      "fill": "#00000061"
+                    },
+                    {
+                      "id": "txn-date-to-icon",
+                      "type": "icon",
+                      "name": "Date To Calendar Icon",
+                      "iconSet": "material_symbols",
+                      "iconName": "calendar_today",
+                      "fontSize": 18,
+                      "fill": "#00000099"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "txn-table",
+          "type": "frame",
+          "name": "Transactions Table",
+          "width": 1152,
+          "fill": "#ffffff",
+          "cornerRadius": 4,
+          "layout": "vertical",
+          "children": [
+            {
+              "id": "txn-table-header",
+              "type": "frame",
+              "name": "Table Header Row",
+              "layout": "horizontal",
+              "alignItems": "center",
+              "padding": [0, 16],
+              "height": 40,
+              "fill": "#f5f5f5",
+              "children": [
+                {
+                  "id": "txn-col-date",
+                  "type": "frame",
+                  "name": "Date Column Header",
+                  "width": 120,
+                  "height": 40,
+                  "fill": "transparent",
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "txn-col-date-text",
+                      "type": "text",
+                      "name": "Date Header Text",
+                      "content": "Date",
+                      "fontSize": 12,
+                      "fontWeight": 700,
+                      "fill": "#00000099"
+                    }
+                  ]
+                },
+                {
+                  "id": "txn-col-property",
+                  "type": "frame",
+                  "name": "Property Column Header",
+                  "width": 200,
+                  "height": 40,
+                  "fill": "transparent",
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "txn-col-property-text",
+                      "type": "text",
+                      "name": "Property Header Text",
+                      "content": "Property",
+                      "fontSize": 12,
+                      "fontWeight": 700,
+                      "fill": "#00000099"
+                    }
+                  ]
+                },
+                {
+                  "id": "txn-col-type",
+                  "type": "frame",
+                  "name": "Type Column Header",
+                  "width": 80,
+                  "height": 40,
+                  "fill": "transparent",
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "txn-col-type-text",
+                      "type": "text",
+                      "name": "Type Header Text",
+                      "content": "Type",
+                      "fontSize": 12,
+                      "fontWeight": 700,
+                      "fill": "#00000099"
+                    }
+                  ]
+                },
+                {
+                  "id": "txn-col-category",
+                  "type": "frame",
+                  "name": "Category Column Header",
+                  "width": 160,
+                  "height": 40,
+                  "fill": "transparent",
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "txn-col-category-text",
+                      "type": "text",
+                      "name": "Category Header Text",
+                      "content": "Category",
+                      "fontSize": 12,
+                      "fontWeight": 700,
+                      "fill": "#00000099"
+                    }
+                  ]
+                },
+                {
+                  "id": "txn-col-amount",
+                  "type": "frame",
+                  "name": "Amount Column Header",
+                  "width": 120,
+                  "height": 40,
+                  "fill": "transparent",
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "txn-col-amount-text",
+                      "type": "text",
+                      "name": "Amount Header Text",
+                      "content": "Amount",
+                      "fontSize": 12,
+                      "fontWeight": 700,
+                      "fill": "#00000099"
+                    }
+                  ]
+                },
+                {
+                  "id": "txn-col-actions",
+                  "type": "frame",
+                  "name": "Actions Column Header",
+                  "width": 80,
+                  "height": 40,
+                  "fill": "transparent",
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "txn-col-actions-text",
+                      "type": "text",
+                      "name": "Actions Header Text",
+                      "content": "Actions",
+                      "fontSize": 12,
+                      "fontWeight": 700,
+                      "fill": "#00000099"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "txn-row-1",
+              "type": "frame",
+              "name": "Transaction Row 1",
+              "height": 52,
+              "layout": "horizontal",
+              "alignItems": "center",
+              "padding": [0, 16],
+              "fill": "#ffffff",
+              "stroke": "#0000001f",
+              "strokeWidth": 1,
+              "children": [
+                {
+                  "id": "txn-row1-date",
+                  "type": "frame",
+                  "name": "Row 1 Date",
+                  "width": 120,
+                  "height": 52,
+                  "fill": "transparent",
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "txn-row1-date-text",
+                      "type": "text",
+                      "name": "Row 1 Date Text",
+                      "content": "25/02/2026",
+                      "fontSize": 14,
+                      "fill": "#000000de"
+                    }
+                  ]
+                },
+                {
+                  "id": "txn-row1-property",
+                  "type": "frame",
+                  "name": "Row 1 Property",
+                  "width": 200,
+                  "height": 52,
+                  "fill": "transparent",
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "txn-row1-property-text",
+                      "type": "text",
+                      "name": "Row 1 Property Text",
+                      "content": "123 Main Street",
+                      "fontSize": 14,
+                      "fill": "#000000de"
+                    }
+                  ]
+                },
+                {
+                  "id": "txn-row1-type",
+                  "type": "frame",
+                  "name": "Row 1 Type",
+                  "width": 80,
+                  "height": 52,
+                  "fill": "transparent",
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "txn-row1-income-chip",
+                      "type": "frame",
+                      "name": "Row 1 Income Chip",
+                      "height": 22,
+                      "width": 64,
+                      "cornerRadius": 11,
+                      "fill": "#2e7d3220",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "id": "txn-row1-income-chip-text",
+                          "type": "text",
+                          "name": "Row 1 Income Chip Text",
+                          "content": "Income",
+                          "fontSize": 11,
+                          "fill": "#2e7d32"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "txn-row1-category",
+                  "type": "frame",
+                  "name": "Row 1 Category",
+                  "width": 160,
+                  "height": 52,
+                  "fill": "transparent",
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "txn-row1-category-text",
+                      "type": "text",
+                      "name": "Row 1 Category Text",
+                      "content": "Rent",
+                      "fontSize": 14,
+                      "fill": "#000000de"
+                    }
+                  ]
+                },
+                {
+                  "id": "txn-row1-amount",
+                  "type": "frame",
+                  "name": "Row 1 Amount",
+                  "width": 120,
+                  "height": 52,
+                  "fill": "transparent",
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "txn-row1-amount-text",
+                      "type": "text",
+                      "name": "Row 1 Amount Text",
+                      "content": "+£1,200",
+                      "fontSize": 14,
+                      "fontWeight": 500,
+                      "fill": "#2e7d32"
+                    }
+                  ]
+                },
+                {
+                  "id": "txn-row1-actions",
+                  "type": "frame",
+                  "name": "Row 1 Actions",
+                  "width": 80,
+                  "height": 52,
+                  "fill": "transparent",
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "id": "txn-row1-edit-btn",
+                      "type": "frame",
+                      "name": "Row 1 Edit Button",
+                      "width": 32,
+                      "height": 32,
+                      "cornerRadius": 4,
+                      "fill": "transparent",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "id": "txn-row1-edit-icon",
+                          "type": "icon",
+                          "name": "Row 1 Edit Icon",
+                          "iconSet": "material_symbols",
+                          "iconName": "edit",
+                          "fontSize": 18,
+                          "fill": "#00000099"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "txn-row1-delete-btn",
+                      "type": "frame",
+                      "name": "Row 1 Delete Button",
+                      "width": 32,
+                      "height": 32,
+                      "cornerRadius": 4,
+                      "fill": "transparent",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "id": "txn-row1-delete-icon",
+                          "type": "icon",
+                          "name": "Row 1 Delete Icon",
+                          "iconSet": "material_symbols",
+                          "iconName": "delete",
+                          "fontSize": 18,
+                          "fill": "#00000099"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "txn-row-2",
+              "type": "frame",
+              "name": "Transaction Row 2",
+              "height": 52,
+              "layout": "horizontal",
+              "alignItems": "center",
+              "padding": [0, 16],
+              "fill": "#ffffff",
+              "stroke": "#0000001f",
+              "strokeWidth": 1,
+              "children": [
+                {
+                  "id": "txn-row2-date",
+                  "type": "frame",
+                  "name": "Row 2 Date",
+                  "width": 120,
+                  "height": 52,
+                  "fill": "transparent",
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "txn-row2-date-text",
+                      "type": "text",
+                      "name": "Row 2 Date Text",
+                      "content": "20/02/2026",
+                      "fontSize": 14,
+                      "fill": "#000000de"
+                    }
+                  ]
+                },
+                {
+                  "id": "txn-row2-property",
+                  "type": "frame",
+                  "name": "Row 2 Property",
+                  "width": 200,
+                  "height": 52,
+                  "fill": "transparent",
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "txn-row2-property-text",
+                      "type": "text",
+                      "name": "Row 2 Property Text",
+                      "content": "45 Park Avenue",
+                      "fontSize": 14,
+                      "fill": "#000000de"
+                    }
+                  ]
+                },
+                {
+                  "id": "txn-row2-type",
+                  "type": "frame",
+                  "name": "Row 2 Type",
+                  "width": 80,
+                  "height": 52,
+                  "fill": "transparent",
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "txn-row2-expense-chip",
+                      "type": "frame",
+                      "name": "Row 2 Expense Chip",
+                      "height": 22,
+                      "width": 72,
+                      "cornerRadius": 11,
+                      "fill": "#d32f2f20",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "id": "txn-row2-expense-chip-text",
+                          "type": "text",
+                          "name": "Row 2 Expense Chip Text",
+                          "content": "Expense",
+                          "fontSize": 11,
+                          "fill": "#d32f2f"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "txn-row2-category",
+                  "type": "frame",
+                  "name": "Row 2 Category",
+                  "width": 160,
+                  "height": 52,
+                  "fill": "transparent",
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "txn-row2-category-text",
+                      "type": "text",
+                      "name": "Row 2 Category Text",
+                      "content": "Repair",
+                      "fontSize": 14,
+                      "fill": "#000000de"
+                    }
+                  ]
+                },
+                {
+                  "id": "txn-row2-amount",
+                  "type": "frame",
+                  "name": "Row 2 Amount",
+                  "width": 120,
+                  "height": 52,
+                  "fill": "transparent",
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "txn-row2-amount-text",
+                      "type": "text",
+                      "name": "Row 2 Amount Text",
+                      "content": "−£350",
+                      "fontSize": 14,
+                      "fontWeight": 500,
+                      "fill": "#d32f2f"
+                    }
+                  ]
+                },
+                {
+                  "id": "txn-row2-actions",
+                  "type": "frame",
+                  "name": "Row 2 Actions",
+                  "width": 80,
+                  "height": 52,
+                  "fill": "transparent",
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "id": "txn-row2-edit-btn",
+                      "type": "frame",
+                      "name": "Row 2 Edit Button",
+                      "width": 32,
+                      "height": 32,
+                      "cornerRadius": 4,
+                      "fill": "transparent",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "id": "txn-row2-edit-icon",
+                          "type": "icon",
+                          "name": "Row 2 Edit Icon",
+                          "iconSet": "material_symbols",
+                          "iconName": "edit",
+                          "fontSize": 18,
+                          "fill": "#00000099"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "txn-row2-delete-btn",
+                      "type": "frame",
+                      "name": "Row 2 Delete Button",
+                      "width": 32,
+                      "height": 32,
+                      "cornerRadius": 4,
+                      "fill": "transparent",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "id": "txn-row2-delete-icon",
+                          "type": "icon",
+                          "name": "Row 2 Delete Icon",
+                          "iconSet": "material_symbols",
+                          "iconName": "delete",
+                          "fontSize": 18,
+                          "fill": "#00000099"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "txn-row-3",
+              "type": "frame",
+              "name": "Transaction Row 3",
+              "height": 52,
+              "layout": "horizontal",
+              "alignItems": "center",
+              "padding": [0, 16],
+              "fill": "#ffffff",
+              "stroke": "#0000001f",
+              "strokeWidth": 1,
+              "children": [
+                {
+                  "id": "txn-row3-date",
+                  "type": "frame",
+                  "name": "Row 3 Date",
+                  "width": 120,
+                  "height": 52,
+                  "fill": "transparent",
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "txn-row3-date-text",
+                      "type": "text",
+                      "name": "Row 3 Date Text",
+                      "content": "15/02/2026",
+                      "fontSize": 14,
+                      "fill": "#000000de"
+                    }
+                  ]
+                },
+                {
+                  "id": "txn-row3-property",
+                  "type": "frame",
+                  "name": "Row 3 Property",
+                  "width": 200,
+                  "height": 52,
+                  "fill": "transparent",
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "txn-row3-property-text",
+                      "type": "text",
+                      "name": "Row 3 Property Text",
+                      "content": "123 Main Street",
+                      "fontSize": 14,
+                      "fill": "#000000de"
+                    }
+                  ]
+                },
+                {
+                  "id": "txn-row3-type",
+                  "type": "frame",
+                  "name": "Row 3 Type",
+                  "width": 80,
+                  "height": 52,
+                  "fill": "transparent",
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "txn-row3-income-chip",
+                      "type": "frame",
+                      "name": "Row 3 Income Chip",
+                      "height": 22,
+                      "width": 64,
+                      "cornerRadius": 11,
+                      "fill": "#2e7d3220",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "id": "txn-row3-income-chip-text",
+                          "type": "text",
+                          "name": "Row 3 Income Chip Text",
+                          "content": "Income",
+                          "fontSize": 11,
+                          "fill": "#2e7d32"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "txn-row3-category",
+                  "type": "frame",
+                  "name": "Row 3 Category",
+                  "width": 160,
+                  "height": 52,
+                  "fill": "transparent",
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "txn-row3-category-text",
+                      "type": "text",
+                      "name": "Row 3 Category Text",
+                      "content": "Rent",
+                      "fontSize": 14,
+                      "fill": "#000000de"
+                    }
+                  ]
+                },
+                {
+                  "id": "txn-row3-amount",
+                  "type": "frame",
+                  "name": "Row 3 Amount",
+                  "width": 120,
+                  "height": 52,
+                  "fill": "transparent",
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "txn-row3-amount-text",
+                      "type": "text",
+                      "name": "Row 3 Amount Text",
+                      "content": "+£950",
+                      "fontSize": 14,
+                      "fontWeight": 500,
+                      "fill": "#2e7d32"
+                    }
+                  ]
+                },
+                {
+                  "id": "txn-row3-actions",
+                  "type": "frame",
+                  "name": "Row 3 Actions",
+                  "width": 80,
+                  "height": 52,
+                  "fill": "transparent",
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "id": "txn-row3-edit-btn",
+                      "type": "frame",
+                      "name": "Row 3 Edit Button",
+                      "width": 32,
+                      "height": 32,
+                      "cornerRadius": 4,
+                      "fill": "transparent",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "id": "txn-row3-edit-icon",
+                          "type": "icon",
+                          "name": "Row 3 Edit Icon",
+                          "iconSet": "material_symbols",
+                          "iconName": "edit",
+                          "fontSize": 18,
+                          "fill": "#00000099"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "txn-row3-delete-btn",
+                      "type": "frame",
+                      "name": "Row 3 Delete Button",
+                      "width": 32,
+                      "height": 32,
+                      "cornerRadius": 4,
+                      "fill": "transparent",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "id": "txn-row3-delete-icon",
+                          "type": "icon",
+                          "name": "Row 3 Delete Icon",
+                          "iconSet": "material_symbols",
+                          "iconName": "delete",
+                          "fontSize": 18,
+                          "fill": "#00000099"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "txn-row-4",
+              "type": "frame",
+              "name": "Transaction Row 4",
+              "height": 52,
+              "layout": "horizontal",
+              "alignItems": "center",
+              "padding": [0, 16],
+              "fill": "#ffffff",
+              "stroke": "#0000001f",
+              "strokeWidth": 1,
+              "children": [
+                {
+                  "id": "txn-row4-date",
+                  "type": "frame",
+                  "name": "Row 4 Date",
+                  "width": 120,
+                  "height": 52,
+                  "fill": "transparent",
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "txn-row4-date-text",
+                      "type": "text",
+                      "name": "Row 4 Date Text",
+                      "content": "10/02/2026",
+                      "fontSize": 14,
+                      "fill": "#000000de"
+                    }
+                  ]
+                },
+                {
+                  "id": "txn-row4-property",
+                  "type": "frame",
+                  "name": "Row 4 Property",
+                  "width": 200,
+                  "height": 52,
+                  "fill": "transparent",
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "txn-row4-property-text",
+                      "type": "text",
+                      "name": "Row 4 Property Text",
+                      "content": "7 Garden Close",
+                      "fontSize": 14,
+                      "fill": "#000000de"
+                    }
+                  ]
+                },
+                {
+                  "id": "txn-row4-type",
+                  "type": "frame",
+                  "name": "Row 4 Type",
+                  "width": 80,
+                  "height": 52,
+                  "fill": "transparent",
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "txn-row4-expense-chip",
+                      "type": "frame",
+                      "name": "Row 4 Expense Chip",
+                      "height": 22,
+                      "width": 72,
+                      "cornerRadius": 11,
+                      "fill": "#d32f2f20",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "id": "txn-row4-expense-chip-text",
+                          "type": "text",
+                          "name": "Row 4 Expense Chip Text",
+                          "content": "Expense",
+                          "fontSize": 11,
+                          "fill": "#d32f2f"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "txn-row4-category",
+                  "type": "frame",
+                  "name": "Row 4 Category",
+                  "width": 160,
+                  "height": 52,
+                  "fill": "transparent",
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "txn-row4-category-text",
+                      "type": "text",
+                      "name": "Row 4 Category Text",
+                      "content": "Insurance",
+                      "fontSize": 14,
+                      "fill": "#000000de"
+                    }
+                  ]
+                },
+                {
+                  "id": "txn-row4-amount",
+                  "type": "frame",
+                  "name": "Row 4 Amount",
+                  "width": 120,
+                  "height": 52,
+                  "fill": "transparent",
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "txn-row4-amount-text",
+                      "type": "text",
+                      "name": "Row 4 Amount Text",
+                      "content": "−£180",
+                      "fontSize": 14,
+                      "fontWeight": 500,
+                      "fill": "#d32f2f"
+                    }
+                  ]
+                },
+                {
+                  "id": "txn-row4-actions",
+                  "type": "frame",
+                  "name": "Row 4 Actions",
+                  "width": 80,
+                  "height": 52,
+                  "fill": "transparent",
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "id": "txn-row4-edit-btn",
+                      "type": "frame",
+                      "name": "Row 4 Edit Button",
+                      "width": 32,
+                      "height": 32,
+                      "cornerRadius": 4,
+                      "fill": "transparent",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "id": "txn-row4-edit-icon",
+                          "type": "icon",
+                          "name": "Row 4 Edit Icon",
+                          "iconSet": "material_symbols",
+                          "iconName": "edit",
+                          "fontSize": 18,
+                          "fill": "#00000099"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "txn-row4-delete-btn",
+                      "type": "frame",
+                      "name": "Row 4 Delete Button",
+                      "width": 32,
+                      "height": 32,
+                      "cornerRadius": 4,
+                      "fill": "transparent",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "id": "txn-row4-delete-icon",
+                          "type": "icon",
+                          "name": "Row 4 Delete Icon",
+                          "iconSet": "material_symbols",
+                          "iconName": "delete",
+                          "fontSize": 18,
+                          "fill": "#00000099"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1233 @@
+{
+  "version": "2.8",
+  "variables": {},
+  "children": [
+    {
+      "id": "events-root-frame",
+      "type": "frame",
+      "name": "Events",
+      "x": 0,
+      "y": 0,
+      "width": 1200,
+      "height": 1000,
+      "fill": "#f5f5f5",
+      "layout": "vertical",
+      "padding": 24,
+      "gap": 24,
+      "children": [
+        {
+          "id": "events-header-row",
+          "type": "frame",
+          "name": "Header Row",
+          "width": 1152,
+          "height": 40,
+          "fill": "transparent",
+          "layout": "horizontal",
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "id": "events-title-text",
+              "type": "text",
+              "name": "Events Title",
+              "content": "Events",
+              "fontSize": 34,
+              "fontWeight": 400,
+              "fill": "#000000de"
+            },
+            {
+              "id": "events-new-button",
+              "type": "frame",
+              "name": "New Event Button",
+              "width": 120,
+              "height": 36,
+              "cornerRadius": 4,
+              "fill": "#1976d2",
+              "layout": "horizontal",
+              "alignItems": "center",
+              "justifyContent": "center",
+              "gap": 8,
+              "children": [
+                {
+                  "id": "events-new-button-icon",
+                  "type": "icon",
+                  "name": "New Event Icon",
+                  "iconSet": "material_symbols",
+                  "iconName": "add",
+                  "fontSize": 18,
+                  "fill": "#ffffff"
+                },
+                {
+                  "id": "events-new-button-text",
+                  "type": "text",
+                  "name": "New Event Text",
+                  "content": "New Event",
+                  "fontSize": 14,
+                  "fontWeight": 500,
+                  "fill": "#ffffff"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "events-filters-paper",
+          "type": "frame",
+          "name": "Filters Paper",
+          "width": 1152,
+          "fill": "#ffffff",
+          "cornerRadius": 4,
+          "layout": "horizontal",
+          "padding": 16,
+          "gap": 12,
+          "alignItems": "center",
+          "children": [
+            {
+              "id": "events-property-select",
+              "type": "frame",
+              "name": "Events Property Select",
+              "width": 200,
+              "height": 40,
+              "cornerRadius": 4,
+              "fill": "#ffffff",
+              "stroke": "#0000003b",
+              "strokeWidth": 1,
+              "layout": "horizontal",
+              "alignItems": "center",
+              "padding": [0, 14],
+              "gap": 8,
+              "children": [
+                {
+                  "id": "events-property-select-label",
+                  "type": "text",
+                  "name": "Events Property Select Label",
+                  "content": "All Properties",
+                  "fontSize": 14,
+                  "fill": "#00000099"
+                },
+                {
+                  "id": "events-property-select-arrow",
+                  "type": "icon",
+                  "name": "Events Property Select Arrow",
+                  "iconSet": "material_symbols",
+                  "iconName": "arrow_drop_down",
+                  "fontSize": 20,
+                  "fill": "#00000099"
+                }
+              ]
+            },
+            {
+              "id": "events-type-select",
+              "type": "frame",
+              "name": "Event Type Select",
+              "width": 180,
+              "height": 40,
+              "cornerRadius": 4,
+              "fill": "#ffffff",
+              "stroke": "#0000003b",
+              "strokeWidth": 1,
+              "layout": "horizontal",
+              "alignItems": "center",
+              "padding": [0, 14],
+              "gap": 8,
+              "children": [
+                {
+                  "id": "events-type-select-label",
+                  "type": "text",
+                  "name": "Event Type Select Label",
+                  "content": "All Event Types",
+                  "fontSize": 14,
+                  "fill": "#00000099"
+                },
+                {
+                  "id": "events-type-select-arrow",
+                  "type": "icon",
+                  "name": "Event Type Select Arrow",
+                  "iconSet": "material_symbols",
+                  "iconName": "arrow_drop_down",
+                  "fontSize": 20,
+                  "fill": "#00000099"
+                }
+              ]
+            },
+            {
+              "id": "events-status-select",
+              "type": "frame",
+              "name": "Events Status Select",
+              "width": 160,
+              "height": 40,
+              "cornerRadius": 4,
+              "fill": "#ffffff",
+              "stroke": "#0000003b",
+              "strokeWidth": 1,
+              "layout": "horizontal",
+              "alignItems": "center",
+              "padding": [0, 14],
+              "gap": 8,
+              "children": [
+                {
+                  "id": "events-status-select-label",
+                  "type": "text",
+                  "name": "Events Status Select Label",
+                  "content": "All Statuses",
+                  "fontSize": 14,
+                  "fill": "#00000099"
+                },
+                {
+                  "id": "events-status-select-arrow",
+                  "type": "icon",
+                  "name": "Events Status Select Arrow",
+                  "iconSet": "material_symbols",
+                  "iconName": "arrow_drop_down",
+                  "fontSize": 20,
+                  "fill": "#00000099"
+                }
+              ]
+            },
+            {
+              "id": "events-date-from-field",
+              "type": "frame",
+              "name": "Events Date From",
+              "width": 180,
+              "height": 40,
+              "cornerRadius": 4,
+              "fill": "#ffffff",
+              "stroke": "#0000003b",
+              "strokeWidth": 1,
+              "layout": "horizontal",
+              "alignItems": "center",
+              "padding": [0, 14],
+              "gap": 8,
+              "children": [
+                {
+                  "id": "events-date-from-label",
+                  "type": "text",
+                  "name": "Events Date From Label",
+                  "content": "From",
+                  "fontSize": 14,
+                  "fill": "#00000061"
+                },
+                {
+                  "id": "events-date-from-icon",
+                  "type": "icon",
+                  "name": "Events Date From Icon",
+                  "iconSet": "material_symbols",
+                  "iconName": "calendar_today",
+                  "fontSize": 18,
+                  "fill": "#00000099"
+                }
+              ]
+            },
+            {
+              "id": "events-date-to-field",
+              "type": "frame",
+              "name": "Events Date To",
+              "width": 180,
+              "height": 40,
+              "cornerRadius": 4,
+              "fill": "#ffffff",
+              "stroke": "#0000003b",
+              "strokeWidth": 1,
+              "layout": "horizontal",
+              "alignItems": "center",
+              "padding": [0, 14],
+              "gap": 8,
+              "children": [
+                {
+                  "id": "events-date-to-label",
+                  "type": "text",
+                  "name": "Events Date To Label",
+                  "content": "To",
+                  "fontSize": 14,
+                  "fill": "#00000061"
+                },
+                {
+                  "id": "events-date-to-icon",
+                  "type": "icon",
+                  "name": "Events Date To Icon",
+                  "iconSet": "material_symbols",
+                  "iconName": "calendar_today",
+                  "fontSize": 18,
+                  "fill": "#00000099"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "events-calendar-controls",
+          "type": "frame",
+          "name": "Calendar Controls",
+          "width": 1152,
+          "height": 48,
+          "fill": "#ffffff",
+          "cornerRadius": 4,
+          "layout": "horizontal",
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "padding": [0, 16],
+          "children": [
+            {
+              "id": "events-controls-left",
+              "type": "frame",
+              "name": "Controls Left",
+              "fill": "transparent",
+              "layout": "horizontal",
+              "alignItems": "center",
+              "gap": 8,
+              "children": [
+                {
+                  "id": "events-count-text",
+                  "type": "text",
+                  "name": "Events Count Text",
+                  "content": "15 events",
+                  "fontSize": 14,
+                  "fill": "#00000099"
+                },
+                {
+                  "id": "events-refresh-btn",
+                  "type": "frame",
+                  "name": "Refresh Button",
+                  "width": 32,
+                  "height": 32,
+                  "cornerRadius": 4,
+                  "fill": "transparent",
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "justifyContent": "center",
+                  "children": [
+                    {
+                      "id": "events-refresh-icon",
+                      "type": "icon",
+                      "name": "Refresh Icon",
+                      "iconSet": "material_symbols",
+                      "iconName": "refresh",
+                      "fontSize": 20,
+                      "fill": "#00000099"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "events-controls-right",
+              "type": "frame",
+              "name": "View Toggle Buttons",
+              "fill": "transparent",
+              "layout": "horizontal",
+              "alignItems": "center",
+              "gap": 8,
+              "children": [
+                {
+                  "id": "events-view-month",
+                  "type": "frame",
+                  "name": "Month View Button",
+                  "width": 80,
+                  "height": 32,
+                  "cornerRadius": 4,
+                  "fill": "#1976d2",
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "justifyContent": "center",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "id": "events-view-month-text",
+                      "type": "text",
+                      "name": "Month Button Text",
+                      "content": "Month",
+                      "fontSize": 14,
+                      "fontWeight": 500,
+                      "fill": "#ffffff"
+                    }
+                  ]
+                },
+                {
+                  "id": "events-view-week",
+                  "type": "frame",
+                  "name": "Week View Button",
+                  "width": 80,
+                  "height": 32,
+                  "cornerRadius": 4,
+                  "fill": "transparent",
+                  "stroke": "#1976d2",
+                  "strokeWidth": 1,
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "justifyContent": "center",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "id": "events-view-week-text",
+                      "type": "text",
+                      "name": "Week Button Text",
+                      "content": "Week",
+                      "fontSize": 14,
+                      "fontWeight": 500,
+                      "fill": "#1976d2"
+                    }
+                  ]
+                },
+                {
+                  "id": "events-view-day",
+                  "type": "frame",
+                  "name": "Day View Button",
+                  "width": 80,
+                  "height": 32,
+                  "cornerRadius": 4,
+                  "fill": "transparent",
+                  "stroke": "#1976d2",
+                  "strokeWidth": 1,
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "justifyContent": "center",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "id": "events-view-day-text",
+                      "type": "text",
+                      "name": "Day Button Text",
+                      "content": "Day",
+                      "fontSize": 14,
+                      "fontWeight": 500,
+                      "fill": "#1976d2"
+                    }
+                  ]
+                },
+                {
+                  "id": "events-view-agenda",
+                  "type": "frame",
+                  "name": "Agenda View Button",
+                  "width": 80,
+                  "height": 32,
+                  "cornerRadius": 4,
+                  "fill": "transparent",
+                  "stroke": "#1976d2",
+                  "strokeWidth": 1,
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "justifyContent": "center",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "id": "events-view-agenda-text",
+                      "type": "text",
+                      "name": "Agenda Button Text",
+                      "content": "Agenda",
+                      "fontSize": 14,
+                      "fontWeight": 500,
+                      "fill": "#1976d2"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "events-calendar-grid",
+          "type": "frame",
+          "name": "Calendar Grid",
+          "width": 1152,
+          "height": 700,
+          "fill": "#ffffff",
+          "cornerRadius": 4,
+          "layout": "vertical",
+          "padding": 16,
+          "children": [
+            {
+              "id": "events-month-header-row",
+              "type": "frame",
+              "name": "Month Header Row",
+              "layout": "horizontal",
+              "height": 40,
+              "fill": "transparent",
+              "children": [
+                {
+                  "id": "events-day-label-mon",
+                  "type": "frame",
+                  "name": "Day Label Mon",
+                  "width": 152,
+                  "height": 40,
+                  "fill": "transparent",
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "justifyContent": "center",
+                  "children": [
+                    {
+                      "id": "events-day-label-mon-text",
+                      "type": "text",
+                      "name": "Mon Label",
+                      "content": "Mon",
+                      "fontSize": 12,
+                      "fontWeight": 700,
+                      "fill": "#00000099"
+                    }
+                  ]
+                },
+                {
+                  "id": "events-day-label-tue",
+                  "type": "frame",
+                  "name": "Day Label Tue",
+                  "width": 152,
+                  "height": 40,
+                  "fill": "transparent",
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "justifyContent": "center",
+                  "children": [
+                    {
+                      "id": "events-day-label-tue-text",
+                      "type": "text",
+                      "name": "Tue Label",
+                      "content": "Tue",
+                      "fontSize": 12,
+                      "fontWeight": 700,
+                      "fill": "#00000099"
+                    }
+                  ]
+                },
+                {
+                  "id": "events-day-label-wed",
+                  "type": "frame",
+                  "name": "Day Label Wed",
+                  "width": 152,
+                  "height": 40,
+                  "fill": "transparent",
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "justifyContent": "center",
+                  "children": [
+                    {
+                      "id": "events-day-label-wed-text",
+                      "type": "text",
+                      "name": "Wed Label",
+                      "content": "Wed",
+                      "fontSize": 12,
+                      "fontWeight": 700,
+                      "fill": "#00000099"
+                    }
+                  ]
+                },
+                {
+                  "id": "events-day-label-thu",
+                  "type": "frame",
+                  "name": "Day Label Thu",
+                  "width": 152,
+                  "height": 40,
+                  "fill": "transparent",
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "justifyContent": "center",
+                  "children": [
+                    {
+                      "id": "events-day-label-thu-text",
+                      "type": "text",
+                      "name": "Thu Label",
+                      "content": "Thu",
+                      "fontSize": 12,
+                      "fontWeight": 700,
+                      "fill": "#00000099"
+                    }
+                  ]
+                },
+                {
+                  "id": "events-day-label-fri",
+                  "type": "frame",
+                  "name": "Day Label Fri",
+                  "width": 152,
+                  "height": 40,
+                  "fill": "transparent",
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "justifyContent": "center",
+                  "children": [
+                    {
+                      "id": "events-day-label-fri-text",
+                      "type": "text",
+                      "name": "Fri Label",
+                      "content": "Fri",
+                      "fontSize": 12,
+                      "fontWeight": 700,
+                      "fill": "#00000099"
+                    }
+                  ]
+                },
+                {
+                  "id": "events-day-label-sat",
+                  "type": "frame",
+                  "name": "Day Label Sat",
+                  "width": 152,
+                  "height": 40,
+                  "fill": "transparent",
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "justifyContent": "center",
+                  "children": [
+                    {
+                      "id": "events-day-label-sat-text",
+                      "type": "text",
+                      "name": "Sat Label",
+                      "content": "Sat",
+                      "fontSize": 12,
+                      "fontWeight": 700,
+                      "fill": "#00000099"
+                    }
+                  ]
+                },
+                {
+                  "id": "events-day-label-sun",
+                  "type": "frame",
+                  "name": "Day Label Sun",
+                  "width": 152,
+                  "height": 40,
+                  "fill": "transparent",
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "justifyContent": "center",
+                  "children": [
+                    {
+                      "id": "events-day-label-sun-text",
+                      "type": "text",
+                      "name": "Sun Label",
+                      "content": "Sun",
+                      "fontSize": 12,
+                      "fontWeight": 700,
+                      "fill": "#00000099"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "events-week-row-1",
+              "type": "frame",
+              "name": "Week Row 1",
+              "layout": "horizontal",
+              "height": 120,
+              "fill": "transparent",
+              "gap": 1,
+              "children": [
+                {
+                  "id": "events-w1-cell-mon",
+                  "type": "frame",
+                  "name": "Week1 Mon Cell",
+                  "width": 152,
+                  "height": 120,
+                  "fill": "#ffffff",
+                  "stroke": "#0000001f",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "padding": 4,
+                  "gap": 2,
+                  "children": [
+                    {
+                      "id": "events-w1-mon-date",
+                      "type": "text",
+                      "name": "Week1 Mon Date",
+                      "content": "2",
+                      "fontSize": 12,
+                      "fill": "#00000099"
+                    }
+                  ]
+                },
+                {
+                  "id": "events-w1-cell-tue",
+                  "type": "frame",
+                  "name": "Week1 Tue Cell",
+                  "width": 152,
+                  "height": 120,
+                  "fill": "#ffffff",
+                  "stroke": "#0000001f",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "padding": 4,
+                  "gap": 2,
+                  "children": [
+                    {
+                      "id": "events-w1-tue-date",
+                      "type": "text",
+                      "name": "Week1 Tue Date",
+                      "content": "3",
+                      "fontSize": 12,
+                      "fill": "#00000099"
+                    },
+                    {
+                      "id": "events-w1-tue-event-pill",
+                      "type": "frame",
+                      "name": "Boiler Service Pill",
+                      "cornerRadius": 4,
+                      "height": 20,
+                      "width": 140,
+                      "fill": "#ed6c0220",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "padding": [0, 6],
+                      "children": [
+                        {
+                          "id": "events-w1-tue-event-text",
+                          "type": "text",
+                          "name": "Boiler Service Text",
+                          "content": "Boiler service",
+                          "fontSize": 11,
+                          "fill": "#ed6c02"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "events-w1-cell-wed",
+                  "type": "frame",
+                  "name": "Week1 Wed Cell",
+                  "width": 152,
+                  "height": 120,
+                  "fill": "#ffffff",
+                  "stroke": "#0000001f",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "padding": 4,
+                  "gap": 2,
+                  "children": [
+                    {
+                      "id": "events-w1-wed-date",
+                      "type": "text",
+                      "name": "Week1 Wed Date",
+                      "content": "4",
+                      "fontSize": 12,
+                      "fill": "#00000099"
+                    }
+                  ]
+                },
+                {
+                  "id": "events-w1-cell-thu",
+                  "type": "frame",
+                  "name": "Week1 Thu Cell",
+                  "width": 152,
+                  "height": 120,
+                  "fill": "#ffffff",
+                  "stroke": "#0000001f",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "padding": 4,
+                  "gap": 2,
+                  "children": [
+                    {
+                      "id": "events-w1-thu-date",
+                      "type": "text",
+                      "name": "Week1 Thu Date",
+                      "content": "5",
+                      "fontSize": 12,
+                      "fill": "#00000099"
+                    }
+                  ]
+                },
+                {
+                  "id": "events-w1-cell-fri",
+                  "type": "frame",
+                  "name": "Week1 Fri Cell",
+                  "width": 152,
+                  "height": 120,
+                  "fill": "#ffffff",
+                  "stroke": "#0000001f",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "padding": 4,
+                  "gap": 2,
+                  "children": [
+                    {
+                      "id": "events-w1-fri-date",
+                      "type": "text",
+                      "name": "Week1 Fri Date",
+                      "content": "6",
+                      "fontSize": 12,
+                      "fill": "#00000099"
+                    },
+                    {
+                      "id": "events-w1-fri-event-pill",
+                      "type": "frame",
+                      "name": "Inspection Pill",
+                      "cornerRadius": 4,
+                      "height": 20,
+                      "width": 140,
+                      "fill": "#0288d120",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "padding": [0, 6],
+                      "children": [
+                        {
+                          "id": "events-w1-fri-event-text",
+                          "type": "text",
+                          "name": "Inspection Text",
+                          "content": "Property inspection",
+                          "fontSize": 11,
+                          "fill": "#0288d1"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "events-w1-cell-sat",
+                  "type": "frame",
+                  "name": "Week1 Sat Cell",
+                  "width": 152,
+                  "height": 120,
+                  "fill": "#ffffff",
+                  "stroke": "#0000001f",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "padding": 4,
+                  "gap": 2,
+                  "children": [
+                    {
+                      "id": "events-w1-sat-date",
+                      "type": "text",
+                      "name": "Week1 Sat Date",
+                      "content": "7",
+                      "fontSize": 12,
+                      "fill": "#00000099"
+                    }
+                  ]
+                },
+                {
+                  "id": "events-w1-cell-sun",
+                  "type": "frame",
+                  "name": "Week1 Sun Cell",
+                  "width": 152,
+                  "height": 120,
+                  "fill": "#ffffff",
+                  "stroke": "#0000001f",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "padding": 4,
+                  "gap": 2,
+                  "children": [
+                    {
+                      "id": "events-w1-sun-date",
+                      "type": "text",
+                      "name": "Week1 Sun Date",
+                      "content": "8",
+                      "fontSize": 12,
+                      "fill": "#00000099"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "events-week-row-2",
+              "type": "frame",
+              "name": "Week Row 2",
+              "layout": "horizontal",
+              "height": 120,
+              "fill": "transparent",
+              "gap": 1,
+              "children": [
+                {
+                  "id": "events-w2-cell-mon",
+                  "type": "frame",
+                  "name": "Week2 Mon Cell",
+                  "width": 152,
+                  "height": 120,
+                  "fill": "#ffffff",
+                  "stroke": "#0000001f",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "padding": 4,
+                  "gap": 2,
+                  "children": [
+                    {
+                      "id": "events-w2-mon-date",
+                      "type": "text",
+                      "name": "Week2 Mon Date",
+                      "content": "9",
+                      "fontSize": 12,
+                      "fill": "#00000099"
+                    }
+                  ]
+                },
+                {
+                  "id": "events-w2-cell-tue",
+                  "type": "frame",
+                  "name": "Week2 Tue Cell",
+                  "width": 152,
+                  "height": 120,
+                  "fill": "#ffffff",
+                  "stroke": "#0000001f",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "padding": 4,
+                  "gap": 2,
+                  "children": [
+                    {
+                      "id": "events-w2-tue-date",
+                      "type": "text",
+                      "name": "Week2 Tue Date",
+                      "content": "10",
+                      "fontSize": 12,
+                      "fill": "#00000099"
+                    }
+                  ]
+                },
+                {
+                  "id": "events-w2-cell-wed",
+                  "type": "frame",
+                  "name": "Week2 Wed Cell",
+                  "width": 152,
+                  "height": 120,
+                  "fill": "#ffffff",
+                  "stroke": "#0000001f",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "padding": 4,
+                  "gap": 2,
+                  "children": [
+                    {
+                      "id": "events-w2-wed-date",
+                      "type": "text",
+                      "name": "Week2 Wed Date",
+                      "content": "11",
+                      "fontSize": 12,
+                      "fill": "#00000099"
+                    },
+                    {
+                      "id": "events-w2-wed-event-pill",
+                      "type": "frame",
+                      "name": "Rent Review Pill",
+                      "cornerRadius": 4,
+                      "height": 20,
+                      "width": 140,
+                      "fill": "#1976d220",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "padding": [0, 6],
+                      "children": [
+                        {
+                          "id": "events-w2-wed-event-text",
+                          "type": "text",
+                          "name": "Rent Review Text",
+                          "content": "Rent review",
+                          "fontSize": 11,
+                          "fill": "#1976d2"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "events-w2-cell-thu",
+                  "type": "frame",
+                  "name": "Week2 Thu Cell",
+                  "width": 152,
+                  "height": 120,
+                  "fill": "#ffffff",
+                  "stroke": "#0000001f",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "padding": 4,
+                  "gap": 2,
+                  "children": [
+                    {
+                      "id": "events-w2-thu-date",
+                      "type": "text",
+                      "name": "Week2 Thu Date",
+                      "content": "12",
+                      "fontSize": 12,
+                      "fill": "#00000099"
+                    }
+                  ]
+                },
+                {
+                  "id": "events-w2-cell-fri",
+                  "type": "frame",
+                  "name": "Week2 Fri Cell",
+                  "width": 152,
+                  "height": 120,
+                  "fill": "#ffffff",
+                  "stroke": "#0000001f",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "padding": 4,
+                  "gap": 2,
+                  "children": [
+                    {
+                      "id": "events-w2-fri-date",
+                      "type": "text",
+                      "name": "Week2 Fri Date",
+                      "content": "13",
+                      "fontSize": 12,
+                      "fill": "#00000099"
+                    }
+                  ]
+                },
+                {
+                  "id": "events-w2-cell-sat",
+                  "type": "frame",
+                  "name": "Week2 Sat Cell",
+                  "width": 152,
+                  "height": 120,
+                  "fill": "#ffffff",
+                  "stroke": "#0000001f",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "padding": 4,
+                  "gap": 2,
+                  "children": [
+                    {
+                      "id": "events-w2-sat-date",
+                      "type": "text",
+                      "name": "Week2 Sat Date",
+                      "content": "14",
+                      "fontSize": 12,
+                      "fill": "#00000099"
+                    }
+                  ]
+                },
+                {
+                  "id": "events-w2-cell-sun",
+                  "type": "frame",
+                  "name": "Week2 Sun Cell",
+                  "width": 152,
+                  "height": 120,
+                  "fill": "#ffffff",
+                  "stroke": "#0000001f",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "padding": 4,
+                  "gap": 2,
+                  "children": [
+                    {
+                      "id": "events-w2-sun-date",
+                      "type": "text",
+                      "name": "Week2 Sun Date",
+                      "content": "15",
+                      "fontSize": 12,
+                      "fill": "#00000099"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "events-week-row-3",
+              "type": "frame",
+              "name": "Week Row 3",
+              "layout": "horizontal",
+              "height": 120,
+              "fill": "transparent",
+              "gap": 1,
+              "children": [
+                {
+                  "id": "events-w3-cell-mon",
+                  "type": "frame",
+                  "name": "Week3 Mon Cell",
+                  "width": 152,
+                  "height": 120,
+                  "fill": "#ffffff",
+                  "stroke": "#0000001f",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "padding": 4,
+                  "gap": 2,
+                  "children": [
+                    {
+                      "id": "events-w3-mon-date",
+                      "type": "text",
+                      "name": "Week3 Mon Date",
+                      "content": "16",
+                      "fontSize": 12,
+                      "fill": "#00000099"
+                    }
+                  ]
+                },
+                {
+                  "id": "events-w3-cell-tue",
+                  "type": "frame",
+                  "name": "Week3 Tue Cell",
+                  "width": 152,
+                  "height": 120,
+                  "fill": "#ffffff",
+                  "stroke": "#0000001f",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "padding": 4,
+                  "gap": 2,
+                  "children": [
+                    {
+                      "id": "events-w3-tue-date",
+                      "type": "text",
+                      "name": "Week3 Tue Date",
+                      "content": "17",
+                      "fontSize": 12,
+                      "fill": "#00000099"
+                    },
+                    {
+                      "id": "events-w3-tue-event-pill",
+                      "type": "frame",
+                      "name": "Lease Renewal Pill",
+                      "cornerRadius": 4,
+                      "height": 20,
+                      "width": 140,
+                      "fill": "#2e7d3220",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "padding": [0, 6],
+                      "children": [
+                        {
+                          "id": "events-w3-tue-event-text",
+                          "type": "text",
+                          "name": "Lease Renewal Text",
+                          "content": "Lease renewal",
+                          "fontSize": 11,
+                          "fill": "#2e7d32"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "events-w3-cell-wed",
+                  "type": "frame",
+                  "name": "Week3 Wed Cell",
+                  "width": 152,
+                  "height": 120,
+                  "fill": "#ffffff",
+                  "stroke": "#0000001f",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "padding": 4,
+                  "gap": 2,
+                  "children": [
+                    {
+                      "id": "events-w3-wed-date",
+                      "type": "text",
+                      "name": "Week3 Wed Date",
+                      "content": "18",
+                      "fontSize": 12,
+                      "fill": "#00000099"
+                    }
+                  ]
+                },
+                {
+                  "id": "events-w3-cell-thu",
+                  "type": "frame",
+                  "name": "Week3 Thu Cell",
+                  "width": 152,
+                  "height": 120,
+                  "fill": "#ffffff",
+                  "stroke": "#0000001f",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "padding": 4,
+                  "gap": 2,
+                  "children": [
+                    {
+                      "id": "events-w3-thu-date",
+                      "type": "text",
+                      "name": "Week3 Thu Date",
+                      "content": "19",
+                      "fontSize": 12,
+                      "fill": "#00000099"
+                    },
+                    {
+                      "id": "events-w3-thu-event-pill",
+                      "type": "frame",
+                      "name": "Maintenance Pill",
+                      "cornerRadius": 4,
+                      "height": 20,
+                      "width": 140,
+                      "fill": "#ed6c0220",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "padding": [0, 6],
+                      "children": [
+                        {
+                          "id": "events-w3-thu-event-text",
+                          "type": "text",
+                          "name": "Maintenance Text",
+                          "content": "Plumber visit",
+                          "fontSize": 11,
+                          "fill": "#ed6c02"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "events-w3-cell-fri",
+                  "type": "frame",
+                  "name": "Week3 Fri Cell",
+                  "width": 152,
+                  "height": 120,
+                  "fill": "#ffffff",
+                  "stroke": "#0000001f",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "padding": 4,
+                  "gap": 2,
+                  "children": [
+                    {
+                      "id": "events-w3-fri-date",
+                      "type": "text",
+                      "name": "Week3 Fri Date",
+                      "content": "20",
+                      "fontSize": 12,
+                      "fill": "#00000099"
+                    }
+                  ]
+                },
+                {
+                  "id": "events-w3-cell-sat",
+                  "type": "frame",
+                  "name": "Week3 Sat Cell",
+                  "width": 152,
+                  "height": 120,
+                  "fill": "#ffffff",
+                  "stroke": "#0000001f",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "padding": 4,
+                  "gap": 2,
+                  "children": [
+                    {
+                      "id": "events-w3-sat-date",
+                      "type": "text",
+                      "name": "Week3 Sat Date",
+                      "content": "21",
+                      "fontSize": 12,
+                      "fill": "#00000099"
+                    }
+                  ]
+                },
+                {
+                  "id": "events-w3-cell-sun",
+                  "type": "frame",
+                  "name": "Week3 Sun Cell",
+                  "width": 152,
+                  "height": 120,
+                  "fill": "#ffffff",
+                  "stroke": "#0000001f",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "padding": 4,
+                  "gap": 2,
+                  "children": [
+                    {
+                      "id": "events-w3-sun-date",
+                      "type": "text",
+                      "name": "Week3 Sun Date",
+                      "content": "22",
+                      "fontSize": 12,
+                      "fill": "#00000099"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
