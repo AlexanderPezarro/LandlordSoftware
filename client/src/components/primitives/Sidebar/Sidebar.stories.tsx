@@ -26,8 +26,8 @@ const meta: Meta<typeof Sidebar> = {
   title: 'Primitives/Sidebar',
   component: Sidebar,
   decorators: [
-    (Story) => (
-      <MemoryRouter initialEntries={['/dashboard']}>
+    (Story, context) => (
+      <MemoryRouter initialEntries={[context.parameters.initialEntry ?? '/dashboard']}>
         <div style={{ display: 'flex', minHeight: 400 }}>
           <Story />
           <div style={{ flex: 1, padding: 24 }}>
@@ -122,18 +122,9 @@ export const NoHeader: Story = {
 };
 
 export const ActiveTenants: Story = {
-  decorators: [
-    (Story) => (
-      <MemoryRouter initialEntries={['/tenants']}>
-        <div style={{ display: 'flex', minHeight: 400 }}>
-          <Story />
-          <div style={{ flex: 1, padding: 24 }}>
-            <p>Tenants page content</p>
-          </div>
-        </div>
-      </MemoryRouter>
-    ),
-  ],
+  parameters: {
+    initialEntry: '/tenants',
+  },
   render: () => (
     <Sidebar
       items={mockItems}
